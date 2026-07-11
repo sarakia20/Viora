@@ -55,8 +55,8 @@ export default async function AdminUser(props: {
 
           <TableBody>
             {users?.data.map((user: IUser) => (
-              <TableRow key={user._id}>
-                <TableCell>{formatId(user._id)}</TableCell>
+              <TableRow key={user._id.toString()}>
+                <TableCell>{formatId(user._id.toString())}</TableCell>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
@@ -67,7 +67,7 @@ export default async function AdminUser(props: {
                     <Link href={`/admin/users/${user._id}`}>ویرایش</Link>
                   </Button>
 
-                  <DeleteDialog id={user._id} action={deleteUser} />
+                 <DeleteDialog id={user._id.toString()} action={deleteUser} />
                 </TableCell>
               </TableRow>
             ))}
