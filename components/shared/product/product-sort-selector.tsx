@@ -1,4 +1,5 @@
 'use client'
+
 import {
   Select,
   SelectContent,
@@ -8,7 +9,6 @@ import {
 } from '@/components/ui/select'
 import { getFilterUrl } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import React from 'react'
 
 export default function ProductSortSelector({
   sortOrders,
@@ -27,6 +27,10 @@ export default function ProductSortSelector({
   }
 }) {
   const router = useRouter()
+
+  const selectedLabel =
+    sortOrders.find((s) => s.value === sort)?.name || 'مرتب‌سازی'
+
   return (
     <Select
       onValueChange={(v) => {
@@ -35,16 +39,10 @@ export default function ProductSortSelector({
       value={sort}
     >
       <SelectTrigger className="flex-row-reverse text-right">
-        <SelectValue>
-         مرتب‌سازی: {sortOrders.find((s) => s.value === sort)!.name}
-        </SelectValue>
+        <SelectValue placeholder={selectedLabel} />
       </SelectTrigger>
 
-      <SelectContent
-  dir='rtl'
-  align='end'
-  className='text-right'
->
+      <SelectContent dir="rtl" align="end" className="text-right">
         {sortOrders.map((s) => (
           <SelectItem key={s.value} value={s.value}>
             {s.name}

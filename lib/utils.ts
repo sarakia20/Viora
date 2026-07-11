@@ -191,11 +191,35 @@ export const getFilterUrl = ({
   page?: string
 }) => {
   const newParams = { ...params }
-  if (category) newParams.category = category
-  if (tag) newParams.tag = toSlug(tag)
-  if (price) newParams.price = price
-  if (rating) newParams.rating = rating
-  if (page) newParams.page = page
-  if (sort) newParams.sort = sort
+
+  if (category) {
+    newParams.category = category
+    newParams.q = 'all'
+    newParams.page = '1'
+  }
+
+  if (tag) {
+    newParams.tag = toSlug(tag)
+    newParams.page = '1'
+  }
+
+  if (price) {
+    newParams.price = price
+    newParams.page = '1'
+  }
+
+  if (rating) {
+    newParams.rating = rating
+    newParams.page = '1'
+  }
+
+  if (sort) {
+    newParams.sort = sort
+  }
+
+  if (page) {
+    newParams.page = page
+  }
+
   return `/search?${new URLSearchParams(newParams).toString()}`
 }

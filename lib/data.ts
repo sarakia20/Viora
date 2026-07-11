@@ -379,7 +379,7 @@ We also provide helpful resources such as order tracking, product guides, and FA
         keywords: 'Next Ecommerce, Next.js, Tailwind CSS, MongoDB',
         url: 'https://next-mongo-ecommerce-final.vercel.app',
         logo: '/icons/logo.svg',
-        slogan: 'Spend less, enjoy more.',
+       
         author: 'Next Ecommerce',
         copyright: '2000-2024, Next-Ecommerce.com, Inc. or its affiliates',
         email: 'admin@example.com',

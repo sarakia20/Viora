@@ -443,7 +443,15 @@ export async function getAllProducts({
         }
       : {}
 
-  const categoryFilter = category && category !== 'all' ? { category } : {}
+ const categoryFilter =
+  category && category !== 'all'
+    ? {
+        $or: [
+          { category },
+          { subCategory: category },
+        ],
+      }
+    : {}
   const tagFilter = tag && tag !== 'all' ? { tags: tag } : {}
 
   const ratingFilter =
@@ -479,19 +487,29 @@ export async function getAllProducts({
   const isPublished = { isPublished: true }
 
   const products = await Product.find({
-    ...isPublished,
-    ...queryFilter,
-    ...tagFilter,
-    ...categoryFilter,
-    ...priceFilter,
-    ...ratingFilter,
-  })
-    .sort(order)
-    .skip(limit * (Number(page) - 1))
-    .limit(limit)
-    .lean()
+  ...isPublished,
+  ...queryFilter,
+  ...tagFilter,
+  ...categoryFilter,
+  ...priceFilter,
+  ...ratingFilter,
+})
+  .sort(order)
+  .skip(limit * (Number(page) - 1))
+  .limit(limit)
+  .lean()
+
+const uniqueProducts = Array.from(
+  new Map(
+    products.map((product) => [
+      product._id.toString(),
+      product,
+    ])
+  ).values()
+)
 
   const countProducts = await Product.countDocuments({
+    ...isPublished,
     ...queryFilter,
     ...tagFilter,
     ...categoryFilter,
@@ -500,11 +518,11 @@ export async function getAllProducts({
   })
 
   return {
-    products: JSON.parse(JSON.stringify(products)) as IProduct[],
+   products: JSON.parse(JSON.stringify(uniqueProducts)) as IProduct[],
     totalPages: Math.ceil(countProducts / limit),
     totalProducts: countProducts,
     from: limit * (Number(page) - 1) + 1,
-    to: limit * (Number(page) - 1) + products.length,
+    to: limit * (Number(page) - 1) + uniqueProducts.length,
   }
 }
 

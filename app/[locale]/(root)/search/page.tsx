@@ -1,3 +1,4 @@
+
 import Link from 'next/link'
 
 import Pagination from '@/components/shared/pagination'
@@ -15,6 +16,8 @@ import Rating from '@/components/shared/product/rating'
 import CollapsibleOnMobile from '@/components/shared/collapsible-on-mobile'
 import { getTranslations } from 'next-intl/server'
 import { ChevronLeft } from 'lucide-react'
+
+import SearchSidebar from '@/components/shared/search-sidebar'
 
 const sortOrders = [
   { value: 'price-low-to-high', name: 'قیمت: کم به زیاد' },
@@ -46,6 +49,8 @@ const bathroomAccessoriesSubCategories = [
   'جا مایع',
   'جا دستمال',
 ]
+
+
 const isFaucet = (c: string) =>
   c === 'شیرآلات'
 
@@ -99,6 +104,30 @@ function FilterLink({
       <span>{children}</span>
       <ChevronLeft className='h-4 w-4 text-muted-foreground' />
     </Link>
+  )
+}
+
+function FilterSection({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group border rounded-xl bg-card shadow-sm"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-bold select-none">
+        {title}
+        <ChevronLeft className="h-4 w-4 transition group-open:-rotate-90" />
+      </summary>
+
+      <div className="border-t px-4 py-3 space-y-1">{children}</div>
+    </details>
   )
 }
 
@@ -265,191 +294,25 @@ const cleanCategories = categories.filter(
       </div>
 
       <div className='grid gap-5 bg-background md:grid-cols-[280px_1fr]'>
-        <aside className='order-2 md:order-1'>
-          <CollapsibleOnMobile title={t('Search.Filters')}>
-            <div className='sticky top-4 space-y-4'>
-              <FilterBox title={t('Search.Department')}>
-                <FilterLink
-                  href={getFilterUrl({ category: 'all', params })}
-                  active={category === 'all' || category === ''}
-                >
-                  {t('Search.All')}
-                </FilterLink>
+       <aside className='order-2 md:order-1'>
+  <CollapsibleOnMobile title={t('Search.Filters')}>
+    <div className='sticky top-4 space-y-4'>
 
-                {cleanCategories.map((c: string) => {
-  if (isFaucet(c)) {
-    const isOpen =
-      category === c || faucetSubCategories.includes(category)
+      {/* SIDEBAR جدید (دیجی‌کالا استایل) */}
+      <SearchSidebar
+        categories={cleanCategories}
+        tags={tags}
+        params={params}
+        rating={rating}
+        price={price}
+         tag={tag ?? 'all'}
+      />
 
-    return (
-      <details key={c} className='group' open={isOpen}>
-        <summary className='flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted'>
-          <span className={category === c ? 'font-bold' : ''}>
-            {c}
-          </span>
-        </summary>
+      
 
-        <div className='mt-1 mr-3 space-y-1'>
-          <FilterLink href={getFilterUrl({ category: c, params })}>
-            همه شیرآلات
-          </FilterLink>
-
-          {faucetSubCategories.map((sub) => (
-            <FilterLink
-              key={sub}
-              href={getFilterUrl({ category: sub, params })}
-              active={category === sub}
-            >
-              {sub}
-            </FilterLink>
-          ))}
-        </div>
-      </details>
-    )
-  }
-
-  if (isKitchen(c)) {
-    const isOpen =
-      category === c || kitchenSubCategories.includes(category)
-
-    return (
-      <details key={c} className='group' open={isOpen}>
-        <summary className='flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted'>
-          <span className={category === c ? 'font-bold' : ''}>
-            {c}
-          </span>
-        </summary>
-
-        <div className='mt-1 mr-3 space-y-1'>
-          <FilterLink href={getFilterUrl({ category: c, params })}>
-            همه تجهیزات آشپزخانه
-          </FilterLink>
-
-          {kitchenSubCategories.map((sub) => (
-            <FilterLink
-              key={sub}
-              href={getFilterUrl({ category: sub, params })}
-              active={category === sub}
-            >
-              {sub}
-            </FilterLink>
-          ))}
-        </div>
-      </details>
-    )
-  }
-
-  if (isBathroomAccessories(c)) {
-  const isOpen =
-    category === 'اکسسوری' ||
-    bathroomAccessoriesSubCategories.includes(category)
-
-  return (
-    <details key={c} className='group' open={isOpen}>
-      <summary className='flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted'>
-        <span
-          className={
-            category === 'اکسسوری'
-              ? 'font-bold text-slate-800'
-              : 'text-slate-700'
-          }
-        >
-          اکسسوری
-        </span>
-
-        <ChevronLeft className='h-4 w-4 text-muted-foreground transition group-open:-rotate-90' />
-      </summary>
-
-      <div className='mt-1 mr-3 border-r pr-3 space-y-1'>
-        
-
-        {bathroomAccessoriesSubCategories.map((sub) => (
-          <FilterLink
-            key={sub}
-            href={getFilterUrl({ category: sub, params })}
-            active={category === sub}
-          >
-            {sub}
-          </FilterLink>
-        ))}
-      </div>
-    </details>
-  )
-}
-
-  return (
-    <FilterLink
-      key={c}
-      href={getFilterUrl({ category: c, params })}
-      active={category === c}
-    >
-      {c}
-    </FilterLink>
-  )
-})
-
-        
-  }
-              </FilterBox>
-
-              <FilterBox title={t('Search.Price')}>
-                <FilterLink
-                  href={getFilterUrl({ price: 'all', params })}
-                  active={price === 'all'}
-                >
-                  {t('Search.All')}
-                </FilterLink>
-
-                {prices.map((p) => (
-                  <FilterLink
-                    key={p.value}
-                    href={getFilterUrl({ price: p.value, params })}
-                    active={p.value === price}
-                  >
-                    {p.name}
-                  </FilterLink>
-                ))}
-              </FilterBox>
-
-              <FilterBox title={t('Search.Customer Review')}>
-                <FilterLink
-                  href={getFilterUrl({ rating: 'all', params })}
-                  active={rating === 'all'}
-                >
-                  {t('Search.All')}
-                </FilterLink>
-
-                <FilterLink
-                  href={getFilterUrl({ rating: '4', params })}
-                  active={rating === '4'}
-                >
-                  <span className='flex items-center gap-1'>
-                    <Rating size={4} rating={4} /> {t('Search.& Up')}
-                  </span>
-                </FilterLink>
-              </FilterBox>
-
-              <FilterBox title={t('Search.Tag')}>
-                <FilterLink
-                  href={getFilterUrl({ tag: 'all', params })}
-                  active={tag === 'all' || tag === ''}
-                >
-                  {t('Search.All')}
-                </FilterLink>
-
-                {tags.map((tagItem: string) => (
-                  <FilterLink
-                    key={tagItem}
-                    href={getFilterUrl({ tag: tagItem, params })}
-                    active={toSlug(tagItem) === tag}
-                  >
-                    {getTagName(tagItem)}
-                  </FilterLink>
-                ))}
-              </FilterBox>
-            </div>
-          </CollapsibleOnMobile>
-        </aside>
+    </div>
+  </CollapsibleOnMobile>
+</aside>
 
         <main className='order-1 space-y-4 md:order-2'>
           <div className='rounded-xl border bg-card p-4'>

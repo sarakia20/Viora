@@ -81,12 +81,13 @@ export default function Footer() {
               </Link>
 
               <Link
-                href='https://t.me/yourchannel'
-                target='_blank'
-                className='hover:text-slate-700'
-              >
-                <Send className='h-7 w-7' />
-              </Link>
+  href='https://t.me/Viora_RM'
+  target='_blank'
+  rel='noopener noreferrer'
+  className='hover:text-slate-700'
+>
+  <Send className='h-7 w-7' />
+</Link>
 
               <Link
                 href='https://wa.me/989xxxxxxxxx'

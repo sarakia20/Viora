@@ -36,7 +36,7 @@ export default async function HomePage() {
         text: t('See More'),
         href: '/search',
       },
-      items: categories.map((category) => ({
+      items: categories.map((category: string) => ({
         name: category,
         image: `/images/${toSlug(category)}.jpg`,
         href: `/search?category=${category}`,
