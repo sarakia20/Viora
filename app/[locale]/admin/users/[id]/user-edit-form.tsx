@@ -39,7 +39,10 @@ const UserEditForm = ({ user }: { user: IUser }) => {
 
   const form = useForm<z.infer<typeof UserUpdateSchema>>({
     resolver: zodResolver(UserUpdateSchema),
-    defaultValues: user,
+    defaultValues: {
+  ...user,
+  _id: user._id.toString(),
+},
   })
 
   const { toast } = useToast()
@@ -48,7 +51,7 @@ const UserEditForm = ({ user }: { user: IUser }) => {
     try {
       const res = await updateUser({
         ...values,
-        _id: user._id,
+         _id: user._id.toString(),
       })
 
       if (!res.success) {
