@@ -37,11 +37,11 @@ export default async function OrderDetailsPage(props: {
         <span>›</span>
         <Link href='/account/orders'>سفارش‌های من</Link>
         <span>›</span>
-        <span>سفارش {formatId(order._id)}</span>
+        <span>سفارش {formatId(order._id.toString())}</span>
       </div>
 
       <h1 className='h1-bold py-4'>
-        سفارش {formatId(order._id)}
+        سفارش {formatId(order._id.toString())}
       </h1>
 
       <OrderDetailsForm
