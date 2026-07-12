@@ -63,7 +63,7 @@ const user = await User.findOne({
 
           if (isMatch) {
             return {
-              id: user._id,
+              id: user._id.toString(),
               name: user.name,
               email: user.email || `${user.phone}@phone.local`,
               role: user.role,
