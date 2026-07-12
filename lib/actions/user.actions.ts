@@ -18,7 +18,7 @@ export async function registerUser(userSignUp: IUserSignUp) {
     const user = await UserSignUpSchema.parseAsync({
       name: userSignUp.name,
       phone: userSignUp.phone,
-      email: userSignUp.email || undefined,
+     
       password: userSignUp.password,
       confirmPassword: userSignUp.confirmPassword,
     })
@@ -27,7 +27,7 @@ export async function registerUser(userSignUp: IUserSignUp) {
 
     await User.create({
       ...user,
-      email: user.email || undefined,
+     
       password: await bcrypt.hash(user.password, 5),
     })
 
