@@ -150,7 +150,7 @@ export async function deleteProduct(id: string) {
 
 export async function getProductById(productId: string) {
   if (isSkipDb) {
-    const product = mockProducts.find((p) => p._id === productId)
+    const product = mockProducts.find((p) => p._id.toString() === productId)
     return JSON.parse(JSON.stringify(product || null)) as IProduct
   }
 
@@ -350,7 +350,7 @@ export async function getRelatedProductsByCategory({
 
   if (isSkipDb) {
     const filtered = mockProducts.filter(
-      (p) => p.isPublished && p.category === category && p._id !== productId
+      (p) => p.isPublished && p.category === category && p._id.toString() !== productId
     )
 
     const start = (Number(page) - 1) * limit
