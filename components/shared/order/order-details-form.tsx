@@ -170,13 +170,13 @@ export default function OrderDetailsForm({
             {isAdmin && !isPaid && paymentMethod === 'Cash On Delivery' && (
               <ActionButton
                 caption='ثبت پرداخت'
-                action={() => updateOrderToPaid(order._id)}
+                action={() => updateOrderToPaid(order._id.toString())}
               />
             )}
             {isAdmin && isPaid && !isDelivered && (
               <ActionButton
                 caption='ثبت تحویل سفارش'
-                action={() => deliverOrder(order._id)}
+                action={() => deliverOrder(order._id.toString())}
               />
             )}
           </CardContent>
