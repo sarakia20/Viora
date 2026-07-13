@@ -150,7 +150,7 @@ export default function OrderDetailsForm({
             {!isPaid && paymentMethod === 'Cash On Delivery' && (
               <Button
                 className='w-full rounded-full'
-                onClick={() => router.push(`/account/orders/${order._id}`)}
+                onClick={() => router.push(`/account/orders/${order._id.toString()}`)}
               >
                 مشاهده سفارش
               </Button>

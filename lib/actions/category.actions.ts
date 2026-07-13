@@ -36,7 +36,7 @@ export async function updateCategory(data: {
   id: string
   name: string
   slug: string
-   parentId?: string | null
+  parentId?: string | null
 }) {
   try {
     await connectToDatabase()
@@ -44,7 +44,7 @@ export async function updateCategory(data: {
     await Category.findByIdAndUpdate(data.id, {
       name: data.name,
       slug: data.slug,
-       parentId: data.parentId || null,
+      parentId: data.parentId || null,
     })
 
     revalidatePath('/admin/categories')

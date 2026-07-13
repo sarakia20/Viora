@@ -174,5 +174,4 @@
    }
    ```
 
-5. commit changes and push to GitHub
-6. go to https://nextjs-amazona.vercel.app
+

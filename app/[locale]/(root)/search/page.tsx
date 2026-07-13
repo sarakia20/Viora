@@ -328,7 +328,7 @@ const cleanCategories = categories.filter(
             )}
 
             {data.products.map((product: IProduct) => (
-              <ProductCard key={product._id} product={product} />
+              <ProductCard key={product._id.toString()} product={product} />
             ))}
           </div>
 
