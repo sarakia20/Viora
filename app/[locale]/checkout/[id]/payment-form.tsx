@@ -63,7 +63,7 @@ export default function OrderDetailsForm({
     return status
   }
   const handleCreatePayPalOrder = async () => {
-    const res = await createPayPalOrder(order._id)
+    const res = await createPayPalOrder(order._id.toString())
     if (!res.success)
       return toast({
         description: res.message,
@@ -72,7 +72,7 @@ export default function OrderDetailsForm({
     return res.data
   }
   const handleApprovePayPalOrder = async (data: { orderID: string }) => {
-    const res = await approvePayPalOrder(order._id, data)
+    const res = await approvePayPalOrder(order._id.toString(), data)
     toast({
       description: res.message,
       variant: res.success ? 'default' : 'destructive',
@@ -142,7 +142,7 @@ export default function OrderDetailsForm({
               >
                 <StripeForm
                   priceInCents={Math.round(order.totalPrice * 100)}
-                  orderId={order._id}
+                  orderId={order._id.toString()}
                 />
               </Elements>
             )}
