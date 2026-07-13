@@ -60,7 +60,7 @@ PurchaseReceiptEmail.PreviewProps = {
     paymentMethod: 'PayPal',
     expectedDeliveryDate: new Date(),
     isDelivered: true,
-  } as IOrder,
+  } as unknown as IOrder,
 } satisfies OrderInformationProps
 const dateFormatter = new Intl.DateTimeFormat('en', { dateStyle: 'medium' })
 
