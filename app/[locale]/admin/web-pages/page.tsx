@@ -48,8 +48,8 @@ export default async function WebPageAdminPage() {
 
           <TableBody>
             {webPages.map((webPage: IWebPage) => (
-              <TableRow key={webPage._id}>
-                <TableCell>{formatId(webPage._id)}</TableCell>
+              <TableRow key={webPage._id.toString()}>
+                <TableCell>{formatId(webPage._id.toString())}</TableCell>
                 <TableCell>{webPage.title}</TableCell>
                 <TableCell>{webPage.slug}</TableCell>
 
