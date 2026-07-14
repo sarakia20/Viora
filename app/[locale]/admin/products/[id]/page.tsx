@@ -37,7 +37,7 @@ const UpdateProduct = async (props: UpdateProductProps) => {
         <ProductForm
           type='Update'
           product={product}
-          productId={product._id}
+          productId={product._id.toString()}
         />
       </div>
     </main>
