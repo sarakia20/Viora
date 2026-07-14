@@ -32,7 +32,7 @@ const UpdateWebPage = async (props: UpdateWebPageProps) => {
         <WebPageForm
           type='Update'
           webPage={webPage}
-          webPageId={webPage._id}
+          webPageId={webPage._id.toString()}
         />
       </div>
     </main>
