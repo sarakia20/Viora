@@ -59,13 +59,13 @@ export default async function WebPageAdminPage() {
 
                 <TableCell className='flex gap-1'>
                   <Button asChild variant='outline' size='sm'>
-                    <Link href={`/admin/web-pages/${webPage._id}`}>
+                   <Link href={`/admin/web-pages/${webPage._id.toString()}`}>
                       ویرایش
                     </Link>
                   </Button>
 
                   <DeleteDialog
-                    id={webPage._id}
+                 id={webPage._id.toString()}
                     action={deleteWebPage}
                   />
                 </TableCell>
