@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next'
-import withNextIntl from 'next-intl/plugin'
+import createNextIntlPlugin from 'next-intl/plugin'
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -11,10 +13,9 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'utfs.io',
-        port: '',
       },
     ],
   },
 }
 
-export default withNextIntl()(nextConfig)
+export default withNextIntl(nextConfig)
