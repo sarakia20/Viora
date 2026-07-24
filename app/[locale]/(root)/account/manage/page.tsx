@@ -18,7 +18,7 @@ export default async function ProfilePage() {
     <div className='mb-24'>
       <SessionProvider session={session}>
         <div className='flex gap-2 '>
-          <Link href='/account'>Your Account</Link>
+          <Link href='/account'>حساب کاربری</Link>
           <span>›</span>
           <span>{PAGE_TITLE}</span>
         </div>
@@ -26,13 +26,13 @@ export default async function ProfilePage() {
         <Card className='max-w-2xl '>
           <CardContent className='p-4 flex justify-between flex-wrap'>
             <div>
-              <h3 className='font-bold'>Name</h3>
+              <h3 className='font-bold'>نام</h3>
               <p>{session?.user.name}</p>
             </div>
             <div>
               <Link href='/account/manage/name'>
                 <Button className='rounded-full w-32' variant='outline'>
-                  Edit
+                  ویرایش
                 </Button>
               </Link>
             </div>
@@ -40,9 +40,9 @@ export default async function ProfilePage() {
           <Separator />
           <CardContent className='p-4 flex justify-between flex-wrap'>
             <div>
-              <h3 className='font-bold'>Email</h3>
+              <h3 className='font-bold'>ایمیل</h3>
               <p>{session?.user.email}</p>
-              <p>will be implemented in the next version</p>
+              <p>در نسخه بعدی اضافه خواهد شد</p>
             </div>
             <div>
               <Link href='#'>
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
                   className='rounded-full w-32'
                   variant='outline'
                 >
-                  Edit
+                  ویرایش
                 </Button>
               </Link>
             </div>
@@ -59,9 +59,9 @@ export default async function ProfilePage() {
           <Separator />
           <CardContent className='p-4 flex justify-between flex-wrap'>
             <div>
-              <h3 className='font-bold'>Password</h3>
+              <h3 className='font-bold'>رمز عبور</h3>
               <p>************</p>
-              <p>will be implemented in the next version</p>
+              <p>در نسخه بعدی اضافه خواهد شد</p>
             </div>
             <div>
               <Link href='#'>
@@ -70,7 +70,7 @@ export default async function ProfilePage() {
                   className='rounded-full w-32'
                   variant='outline'
                 >
-                  Edit
+                  ویرایش
                 </Button>
               </Link>
             </div>
