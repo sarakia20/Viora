@@ -1,118 +1,160 @@
 'use client'
+
 import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import ProductPrice from '@/components/shared/product/product-price'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { CheckCircle2Icon } from 'lucide-react'
+import { CheckCircle2Icon, ShieldCheck, Truck } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import useCartStore from '@/hooks/use-cart-store'
-import useSettingStore from '@/hooks/use-setting-store'
 import { useTranslations } from 'next-intl'
 
 export default function CartAddItem({ itemId }: { itemId: string }) {
   const {
     cart: { items, itemsPrice },
   } = useCartStore()
-  const {
-    setting: {
-      common: { freeShippingMinPrice },
-    },
-  } = useSettingStore()
-  const item = items.find((x) => x.clientId === itemId)
 
-  const t = useTranslations()
+  const item = items.find((x) => x.clientId === itemId)
+  const t = useTranslations('Cart')
+
   if (!item) return notFound()
+
+  const totalItems = items.reduce((sum, cartItem) => {
+    return sum + cartItem.quantity
+  }, 0)
+
   return (
-    <div>
-      <div className='grid grid-cols-1 md:grid-cols-2 md:gap-4'>
-        <Card className='w-full rounded-none'>
-          <CardContent className='flex h-full items-center justify-center  gap-3 py-4'>
-            <Link href={`/product/${item.slug}`}>
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={80}
-                height={80}
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                }}
-              />
-            </Link>
-            <div>
-              <h3 className='text-xl font-bold flex gap-2 my-2'>
-                <CheckCircle2Icon className='h-6 w-6 text-green-700' />
-                {t('Cart.Added to cart')}
-              </h3>
-              <p className='text-sm'>
-                <span className='font-bold'> {t('Cart.Color')}: </span>{' '}
-                {item.color ?? '-'}
-              </p>
-              <p className='text-sm'>
-                <span className='font-bold'> {t('Cart.Size')}: </span>{' '}
-                {item.size ?? '-'}
-              </p>
+    <div className='bg-muted/30 py-6'>
+      <div className='mx-auto max-w-5xl px-4'>
+        <Card className='overflow-hidden rounded-2xl border bg-background shadow-sm'>
+          <CardContent className='p-0'>
+            <div className='border-b bg-green-50 px-5 py-4'>
+              <div className='flex items-center gap-2 text-green-800'>
+                <CheckCircle2Icon className='h-6 w-6' />
+
+                <h1 className='text-lg font-bold'>
+                  {t('Added to cart')}
+                </h1>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className='w-full rounded-none'>
-          <CardContent className='p-4 h-full'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-              <div className='flex justify-center items-center'>
-                {itemsPrice < freeShippingMinPrice ? (
-                  <div className='text-center '>
-                    {t('Cart.Add')}{' '}
-                    <span className='text-green-700'>
-                      <ProductPrice
-                        price={freeShippingMinPrice - itemsPrice}
-                        plain
-                      />
-                    </span>{' '}
-                    {t(
-                      'Cart.of eligible items to your order to qualify for FREE Shipping'
+
+            <div className='grid gap-6 p-5 md:grid-cols-[1fr_320px] md:p-7'>
+              <div className='flex flex-col gap-5 sm:flex-row'>
+                <Link
+                  href={`/product/${item.slug}`}
+                  className='flex h-40 w-full shrink-0 items-center justify-center rounded-xl border bg-white p-3 sm:w-40'
+                >
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    width={150}
+                    height={150}
+                    className='max-h-full w-auto object-contain'
+                  />
+                </Link>
+
+                <div className='flex-1'>
+                  <Link href={`/product/${item.slug}`}>
+                    <h2 className='text-lg font-bold leading-8 hover:underline'>
+                      {item.name}
+                    </h2>
+                  </Link>
+
+                  <div className='mt-4 space-y-2 text-sm text-muted-foreground'>
+                    {item.color && (
+                      <p>
+                        <span className='font-medium text-foreground'>
+                          {t('Color')}:
+                        </span>{' '}
+                        {item.color}
+                      </p>
                     )}
-                  </div>
-                ) : (
-                  <div className='flex items-center'>
-                    <div>
-                      <span className='text-green-700'>
-                        Your order qualifies for FREE Shipping.
+
+                    {item.size && (
+                      <p>
+                        <span className='font-medium text-foreground'>
+                          {t('Size')}:
+                        </span>{' '}
+                        {item.size}
+                      </p>
+                    )}
+
+                    <p>
+                      <span className='font-medium text-foreground'>
+                        {t('Quantity')}:
                       </span>{' '}
-                      Choose this option at checkout.
+                      {item.quantity}
+                    </p>
+                  </div>
+
+                  <div className='mt-5 flex flex-wrap gap-4 text-sm'>
+                    <div className='flex items-center gap-2'>
+                      <Truck className='h-5 w-5 text-green-700' />
+                      <span>ارسال سریع به سراسر کشور</span>
+                    </div>
+
+                    <div className='flex items-center gap-2'>
+                      <ShieldCheck className='h-5 w-5 text-green-700' />
+                      <span>تضمین اصالت کالا</span>
                     </div>
                   </div>
-                )}
-              </div>
-              <div className='lg:border-l lg:border-muted lg:pl-3 flex flex-col items-center gap-3  '>
-                <div className='flex gap-3'>
-                  <span className='text-lg font-bold'>Cart Subtotal:</span>
-                  <ProductPrice className='text-2xl' price={itemsPrice} />
                 </div>
+              </div>
+
+              <div className='rounded-xl border bg-muted/30 p-5'>
+                <div className='flex items-center justify-between border-b pb-4'>
+                  <span className='font-bold'>
+                    {t('Subtotal')}
+                  </span>
+
+                  <ProductPrice
+                    className='text-xl font-bold'
+                    price={itemsPrice}
+                  />
+                </div>
+
+                <div className='mt-3 text-sm text-muted-foreground'>
+                  {totalItems} {t('items')}
+                </div>
+
                 <Link
                   href='/checkout'
-                  className={cn(buttonVariants(), 'rounded-full w-full')}
+                  className={cn(
+                    buttonVariants(),
+                    'mt-5 h-11 w-full rounded-xl text-base'
+                  )}
                 >
-                  Proceed to checkout (
-                  {items.reduce((a, c) => a + c.quantity, 0)} items)
+                  {t('Proceed to Checkout')}
                 </Link>
+
                 <Link
                   href='/cart'
                   className={cn(
                     buttonVariants({ variant: 'outline' }),
-                    'rounded-full w-full'
+                    'mt-3 h-11 w-full rounded-xl text-base'
                   )}
                 >
-                  {t('Cart.Go to Cart')}
+                  {t('Go to Cart')}
+                </Link>
+
+                <Link
+                  href='/'
+                  className='mt-4 block text-center text-sm text-muted-foreground hover:text-foreground'
+                >
+                  ادامه خرید
                 </Link>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        <div className='mt-8'>
+          <BrowsingHistoryList />
+        </div>
       </div>
-      <BrowsingHistoryList />
     </div>
   )
 }
