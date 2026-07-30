@@ -1,4 +1,5 @@
 import createMiddleware from 'next-intl/middleware'
+import { NextResponse } from 'next/server'
 import { routing } from './i18n/routing'
 
 import NextAuth from 'next-auth'
@@ -15,33 +16,53 @@ const publicPages = [
   '/page/(.*)',
 ]
 
+const oldLocales = ['en', 'en-US', 'fr', 'ar']
+
 const intlMiddleware = createMiddleware(routing)
 
 const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
+  const pathname = req.nextUrl.pathname
+
+  // حذف زبان‌های قدیمی از ابتدای آدرس
+  const oldLocale = oldLocales.find(
+    (locale) =>
+      pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
+  )
+
+  if (oldLocale) {
+    const newPathname =
+      pathname.replace(new RegExp(`^/${oldLocale}`), '') || '/'
+
+    const url = req.nextUrl.clone()
+    url.pathname = newPathname
+
+    return NextResponse.redirect(url)
+  }
+
   const publicPathnameRegex = RegExp(
-    `^(/(${routing.locales.join('|')}))?(${publicPages
-      .flatMap((p) => (p === '/' ? ['', '/'] : p))
+    `^(${publicPages
+      .flatMap((page) => (page === '/' ? ['', '/'] : page))
       .join('|')})/?$`,
     'i'
   )
 
-  const isPublicPage = publicPathnameRegex.test(req.nextUrl.pathname)
+  const isPublicPage = publicPathnameRegex.test(pathname)
 
   if (isPublicPage) {
     return intlMiddleware(req)
   }
 
   if (!req.auth) {
-    const newUrl = new URL(
-      `/sign-in?callbackUrl=${encodeURIComponent(
-        req.nextUrl.pathname
-      )}`,
-      req.url
+    const signInUrl = new URL('/sign-in', req.url)
+
+    signInUrl.searchParams.set(
+      'callbackUrl',
+      `${pathname}${req.nextUrl.search}`
     )
 
-    return Response.redirect(newUrl)
+    return NextResponse.redirect(signInUrl)
   }
 
   return intlMiddleware(req)
