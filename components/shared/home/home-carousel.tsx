@@ -17,7 +17,10 @@ import { ICarousel } from '@/types'
 
 export function HomeCarousel({ items }: { items: ICarousel[] }) {
   const plugin = React.useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: true })
+    Autoplay({
+      delay: 4500,
+      stopOnInteraction: true,
+    })
   )
 
   const t = useTranslations('Home')
@@ -54,29 +57,29 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
         {items.map((item) => (
           <CarouselItem key={item.title} className='pl-0'>
             <Link href={item.url} className='block'>
-              <div className='relative h-[320px] w-full overflow-hidden sm:h-[380px] md:h-[430px] lg:h-[480px]'>
+              <div className='relative aspect-[2/1] w-full overflow-hidden bg-[#f4f2ef] sm:aspect-[8/3]'>
                 <Image
                   src={item.image}
                   alt={item.title}
                   fill
                   priority
                   sizes='100vw'
-                  className='object-cover object-center'
+                  className='object-contain object-center'
                 />
 
-                <div className='absolute inset-0 bg-black/10' />
+                <div className='absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-white/55 to-transparent' />
 
-                <div className='absolute inset-0 flex items-center justify-center px-12 text-center md:justify-start md:px-24'>
-                  <div className='flex max-w-[320px] flex-col items-center md:max-w-[520px]'>
-                    <h2 className='text-3xl font-bold leading-tight text-slate-900 sm:text-4xl md:text-5xl'>
+                <div className='absolute inset-y-0 left-0 flex w-[46%] items-center justify-center px-7 text-center sm:px-10 md:px-14 lg:px-20'>
+                  <div className='w-full max-w-xl'>
+                    <h2 className='text-base font-bold leading-tight text-slate-900 xs:text-lg sm:text-2xl md:text-4xl lg:text-5xl'>
                       {item.title}
                     </h2>
 
-                    <p className='mt-3 text-base leading-7 text-slate-700 md:text-xl'>
+                    <p className='mt-1 hidden text-xs leading-5 text-slate-700 xs:block sm:mt-2 sm:text-sm md:mt-4 md:text-lg lg:text-xl'>
                       {getSubtitle(item.title)}
                     </p>
 
-                    <Button className='mt-6 h-11 rounded-xl bg-slate-900 px-7 text-sm font-bold text-white hover:bg-slate-800 md:h-12 md:px-8'>
+                    <Button className='mt-2 h-8 rounded-lg bg-slate-900 px-3 text-[10px] font-bold text-white hover:bg-slate-800 xs:text-xs sm:mt-3 sm:h-9 sm:px-4 md:mt-6 md:h-11 md:px-6 md:text-sm'>
                       {t(item.buttonCaption)}
                     </Button>
                   </div>
@@ -87,8 +90,8 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
         ))}
       </CarouselContent>
 
-      <CarouselPrevious className='left-3 h-10 w-10 md:left-8' />
-      <CarouselNext className='right-3 h-10 w-10 md:right-8' />
+      <CarouselPrevious className='left-2 h-8 w-8 border-white/70 bg-white/85 sm:left-4 md:left-8 md:h-10 md:w-10' />
+      <CarouselNext className='right-2 h-8 w-8 border-white/70 bg-white/85 sm:right-4 md:right-8 md:h-10 md:w-10' />
     </Carousel>
   )
 }

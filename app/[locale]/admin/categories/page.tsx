@@ -8,12 +8,12 @@ export default async function CategoriesPage() {
 
   return (
     <div className='space-y-6'>
-      <h1 className='text-2xl font-bold'>مدیریت دسته‌بندی‌ها</h1>
+      <h1 className='text-xl font-bold sm:text-2xl'>مدیریت دسته‌بندی‌ها</h1>
 
       <CategoryForm categories={categories} />
 
-      <div className='rounded-xl border bg-card overflow-hidden'>
-        <table className='w-full'>
+      <div className='overflow-x-auto rounded-xl border bg-card'>
+        <table className='w-full min-w-[640px]'>
           <thead>
   <tr className='border-b bg-muted'>
     <th className='p-3 text-right'>نام</th>

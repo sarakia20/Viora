@@ -71,15 +71,15 @@ export default async function HomePage() {
   return (
     <>
       <HomeCarousel items={carousels} />
-      <div className='md:p-4 md:space-y-4 bg-border'>
+      <div className='space-y-3 bg-border p-3 sm:p-4 md:space-y-4'>
         <HomeCard cards={cards} />
-        <Card className='w-full rounded-none'>
-          <CardContent className='p-4 items-center gap-3'>
+        <Card className='w-full overflow-hidden rounded-xl'>
+          <CardContent className='items-center gap-3 p-3 sm:p-4'>
             <ProductSlider title={t("Today's Deals")} products={todaysDeals} />
           </CardContent>
         </Card>
-        <Card className='w-full rounded-none'>
-          <CardContent className='p-4 items-center gap-3'>
+        <Card className='w-full overflow-hidden rounded-xl'>
+          <CardContent className='items-center gap-3 p-3 sm:p-4'>
             <ProductSlider
               title={t('Best Selling Products')}
               products={bestSellingProducts}
@@ -89,7 +89,7 @@ export default async function HomePage() {
         </Card>
       </div>
 
-      <div className='p-4 bg-background'>
+      <div className='bg-background px-3 py-6 sm:p-4'>
         <BrowsingHistoryList />
       </div>
     </>

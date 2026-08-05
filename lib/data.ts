@@ -378,7 +378,7 @@ We also provide helpful resources such as order tracking, product guides, and FA
           'NxtAmzn is a sample Ecommerce website built with Next.js, Tailwind CSS, and MongoDB.',
         keywords: 'Next Ecommerce, Next.js, Tailwind CSS, MongoDB',
         url: 'https://next-mongo-ecommerce-final.vercel.app',
-        logo: '/icons/logo.svg',
+        logo: '/icons/viora-logo.png',
         slogan: '',
         author: 'Next Ecommerce',
         copyright: '2000-2024, Next-Ecommerce.com, Inc. or its affiliates',

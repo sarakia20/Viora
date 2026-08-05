@@ -45,7 +45,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className='mx-auto mb-10 grid max-w-3xl grid-cols-3 gap-6 border-y border-slate-100 py-8'>
+          <div className='mx-auto mb-10 grid max-w-3xl grid-cols-1 gap-5 border-y border-slate-100 py-8 xs:grid-cols-3 xs:gap-3 sm:gap-6'>
             {services.map((item) => {
               const Icon = item.icon
 

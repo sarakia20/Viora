@@ -162,8 +162,8 @@ export default function OrderDetailsForm({
   )
 
   return (
-    <main className='max-w-6xl mx-auto'>
-      <div className='grid md:grid-cols-4 gap-6'>
+    <main className='mx-auto w-full max-w-6xl'>
+      <div className='grid min-w-0 gap-4 md:grid-cols-4 md:gap-6'>
         <div className='md:col-span-3'>
           {/* Shipping Address */}
           <div>

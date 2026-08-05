@@ -1,9 +1,9 @@
 export default function AboutPage() {
   return (
-    <main className="max-w-5xl mx-auto px-4 py-10 text-right">
+    <main className="mx-auto max-w-5xl px-3 py-6 text-right sm:px-4 sm:py-10">
 
       <div className="rounded-3xl bg-slate-900 text-white p-10 mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-3">درباره ویورا</h1>
+        <h1 className="mb-3 text-2xl font-bold sm:text-3xl">درباره ویورا</h1>
         <p className="text-slate-300">
           از سال ۱۳۹۰ همراه مطمئن شما در تجهیزات ساختمانی
         </p>

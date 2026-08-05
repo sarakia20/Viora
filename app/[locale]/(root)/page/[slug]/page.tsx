@@ -29,7 +29,7 @@ export default async function ProductDetailsPage(props: {
   if (!webPage) notFound()
 
   return (
-    <div className='p-4 max-w-3xl mx-auto'>
+    <div className='mx-auto w-full max-w-3xl py-2 sm:p-4'>
       <h1 className='h1-bold py-4'>{webPage.title}</h1>
       <section className='text-justify text-lg mb-20 web-page-content'>
         <ReactMarkdown>{webPage.content}</ReactMarkdown>

@@ -33,7 +33,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
 
   const t = useTranslations()
   return (
-    <div className='flex items-center gap-2'>
+    <div className='flex flex-wrap items-center justify-center gap-2'>
       <Button
         size='lg'
         variant='outline'

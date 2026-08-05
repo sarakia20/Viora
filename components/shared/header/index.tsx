@@ -12,52 +12,82 @@ export default async function Header() {
   const categories = await getAllCategories()
   const { site } = await getSetting()
   const t = await getTranslations()
+  const logoSrc = site.logo === '/icons/logo.svg' ? '/icons/viora-logo.png' : site.logo
 
   return (
     <header className='sticky top-0 z-50 bg-white text-slate-700 shadow-sm border-b border-slate-200'>
-      <div className='px-3 md:px-5'>
-        <div className='flex h-16 items-center justify-between gap-4'>
+
+      <div className='mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-6'>
+
+        {/* Main header */}
+        <div className='flex min-h-16 items-center justify-between gap-2'>
+
           <Link
             href='/'
-            className='flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-xl md:text-2xl font-extrabold text-slate-900 hover:bg-slate-100 transition'
+            className='flex shrink-0 items-center gap-2 rounded-lg px-1 py-1 text-lg font-extrabold text-slate-900 md:px-2 md:text-2xl'
           >
             <Image
-              src={site.logo}
-              width={38}
-              height={38}
+              src={logoSrc}
+              width={36}
+              height={36}
               alt={`${site.name} logo`}
               className='rounded-md'
             />
-            <span>{site.name}</span>
+
+            <span className='hidden xs:block'>
+              {site.name}
+            </span>
           </Link>
 
-          <div className='hidden md:block flex-1 max-w-2xl'>
+
+          <div className='hidden flex-1 px-4 md:block'>
             <Search />
           </div>
 
+
           <Menu />
+
         </div>
 
-        <div className='md:hidden pb-3'>
+
+        {/* Mobile search */}
+        <div className='pb-3 md:hidden'>
           <Search />
         </div>
+
       </div>
 
-      <div className='relative flex h-11 items-center gap-2 border-t border-slate-100 bg-slate-50 px-3 md:px-5 text-sm text-slate-700'>
-        <Sidebar categories={categories} />
 
-        <div className='flex items-center gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide'>
-          {data.headerMenus.map((menu) => (
-            <Link
-              href={menu.href}
-              key={menu.href}
-              className='rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm transition'
-            >
-              {t('Header.' + menu.name)}
-            </Link>
-          ))}
+      {/* Navigation */}
+      <div className='border-t border-slate-100 bg-slate-50'>
+
+        <div className='mx-auto flex h-11 max-w-[1440px] items-center gap-2 overflow-hidden px-3 sm:px-4 lg:px-6'>
+
+          <Sidebar categories={categories} />
+
+
+          <div className='flex flex-1 gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide'>
+
+            {data.headerMenus
+              .slice(0, 4)
+              .map((menu) => (
+
+              <Link
+                href={menu.href}
+                key={menu.href}
+                className='shrink-0 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-slate-900'
+              >
+                {t('Header.' + menu.name)}
+              </Link>
+
+            ))}
+
+          </div>
+
         </div>
+
       </div>
+
     </header>
   )
 }

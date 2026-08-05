@@ -59,7 +59,7 @@ export default function OverviewReport() {
           <h1 className='h1-bold'>داشبورد مدیریت</h1>
         </div>
         {/* First Row */}
-        <div className='flex gap-4'>
+        <div className='grid grid-cols-1 gap-4 xs:grid-cols-2 lg:grid-cols-4'>
           {[...Array(4)].map((_, index) => (
             <Skeleton key={index} className='h-36 w-full' />
           ))}
@@ -71,14 +71,14 @@ export default function OverviewReport() {
         </div>
 
         {/* Third Row */}
-        <div className='flex gap-4'>
+        <div className='grid gap-4 md:grid-cols-2'>
           {[...Array(2)].map((_, index) => (
             <Skeleton key={index} className='h-60 w-full' />
           ))}
         </div>
 
         {/* Fourth Row */}
-        <div className='flex gap-4'>
+        <div className='grid gap-4 md:grid-cols-2'>
           {[...Array(2)].map((_, index) => (
             <Skeleton key={index} className='h-60 w-full' />
           ))}
@@ -87,12 +87,12 @@ export default function OverviewReport() {
     )
   return (
     <div>
-      <div className='flex items-center justify-between mb-2'>
+      <div className='mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='h1-bold'>{t('Dashboard')}</h1>
         <CalendarDateRangePicker defaultDate={date} setDate={setDate} />
       </div>
       <div className='space-y-4'>
-        <div className='grid gap-4  grid-cols-2 lg:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-3 xs:grid-cols-2 lg:grid-cols-4 lg:gap-4'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='text-sm font-medium'>
@@ -100,8 +100,8 @@ export default function OverviewReport() {
               </CardTitle>
               <BadgeDollarSign />
             </CardHeader>
-            <CardContent className='space-y-2'>
-              <div className='text-2xl font-bold'>
+            <CardContent className='space-y-2 p-4 pt-0 sm:p-6 sm:pt-0'>
+              <div className='text-lg font-bold sm:text-2xl'>
                 <ProductPrice price={data.totalSales} plain />
               </div>
               <div>

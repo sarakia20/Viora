@@ -74,7 +74,14 @@ html[lang^='fa'] body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    min-width: 320px;
+  }
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
   }
 }
 
@@ -93,10 +100,10 @@ a.highlight-link {
     @apply p-3 hover:bg-muted hover:no-underline;
   }
   .h1-bold {
-    @apply font-bold text-2xl lg:text-3xl;
+    @apply text-xl font-bold sm:text-2xl lg:text-3xl;
   }
   .h2-bold {
-    @apply font-bold text-lg lg:text-xl;
+    @apply text-base font-bold sm:text-lg lg:text-xl;
   }
   .flex-between {
     @apply flex justify-between items-center;

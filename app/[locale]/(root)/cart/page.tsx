@@ -36,10 +36,10 @@ export default function CartPage() {
   const t = useTranslations()
   return (
     <div>
-      <div className='grid grid-cols-1 md:grid-cols-4  md:gap-4'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-4'>
         {items.length === 0 ? (
-          <Card className='col-span-4 rounded-none'>
-            <CardHeader className='text-3xl  '>
+            <Card className='col-span-4 rounded-xl'>
+            <CardHeader className='text-xl sm:text-3xl'>
                سبد خرید شما خالی است
             </CardHeader>
            <CardContent>
@@ -50,9 +50,9 @@ export default function CartPage() {
           </Card>
         ) : (
           <>
-            <div className='col-span-3'>
-              <Card className='rounded-none'>
-                <CardHeader className='text-3xl pb-0'>
+            <div className='lg:col-span-3'>
+              <Card className='rounded-xl'>
+                <CardHeader className='pb-0 text-xl sm:text-3xl'>
                   سبد خرید
                 </CardHeader>
                 <CardContent className='p-4'>
@@ -63,10 +63,10 @@ export default function CartPage() {
                   {items.map((item) => (
                     <div
                       key={item.clientId}
-                      className='flex flex-col md:flex-row justify-between py-4 border-b gap-4'
+                      className='flex flex-col justify-between gap-4 border-b py-4 sm:flex-row'
                     >
                       <Link href={`/product/${item.slug}`}>
-                        <div className='relative w-40 h-40'>
+                        <div className='relative mx-auto h-40 w-40 sm:mx-0'>
                           <Image
                             src={item.image}
                             alt={item.name}
@@ -101,7 +101,7 @@ export default function CartPage() {
   </p>
 )}
                         </div>
-                        <div className='flex gap-2 items-center'>
+                        <div className='flex flex-wrap items-center gap-2'>
                           <div className='flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 w-fit'>
   <button
     type='button'
@@ -138,7 +138,7 @@ export default function CartPage() {
                           </Button>
                         </div>
                       </div>
-                      <div>
+                      <div className='sm:min-w-28'>
                         <p className='text-right'>
                           {item.quantity > 1 && (
                             <>
@@ -159,7 +159,7 @@ export default function CartPage() {
                     </div>
                   ))}
 
-                  <div className='flex justify-end text-lg my-2'>
+                  <div className='my-3 flex flex-wrap justify-end gap-1 text-base sm:text-lg'>
                      جمع کل (
                     {items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
                     کالا):
@@ -171,7 +171,7 @@ export default function CartPage() {
               </Card>
             </div>
             <div>
-              <Card className='rounded-none'>
+              <Card className='rounded-xl lg:sticky lg:top-40'>
                 <CardContent className='py-4 space-y-4'>
                   
                   <div className='space-y-4'>

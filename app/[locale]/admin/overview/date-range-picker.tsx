@@ -35,7 +35,7 @@ export function CalendarDateRangePicker({
             id='date'
             variant='outline'
             className={cn(
-              'justify-start text-right font-normal',
+              'w-full justify-start overflow-hidden text-right text-xs font-normal sm:w-auto sm:text-sm',
               !calendarDate && 'text-muted-foreground'
             )}
           >
@@ -59,7 +59,7 @@ export function CalendarDateRangePicker({
 
         <PopoverContent
           onCloseAutoFocus={() => setCalendarDate(defaultDate)}
-          className='w-auto p-0'
+          className='max-w-[calc(100vw-1.5rem)] overflow-x-auto p-0'
           align='end'
         >
           <Calendar
@@ -67,10 +67,10 @@ export function CalendarDateRangePicker({
             defaultMonth={defaultDate?.from}
             selected={calendarDate}
             onSelect={setCalendarDate}
-            numberOfMonths={2}
+            numberOfMonths={1}
           />
 
-          <div className='flex gap-4 p-4 pt-0'>
+          <div className='flex flex-wrap gap-2 p-4 pt-0'>
             <PopoverClose asChild>
               <Button onClick={() => setDate(calendarDate)}>
                 اعمال فیلتر

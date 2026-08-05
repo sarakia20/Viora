@@ -34,10 +34,10 @@ export default async function SignInPage(props: {
   return (
     <div className='w-full'>
       <Card>
-        <CardHeader>
-          <CardTitle className='text-2xl'>ورود به حساب کاربری</CardTitle>
+        <CardHeader className='p-4 sm:p-6'>
+          <CardTitle className='text-xl sm:text-2xl'>ورود به حساب کاربری</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='p-4 pt-0 sm:p-6 sm:pt-0'>
           <div>
             <CredentialsSignInForm />
            

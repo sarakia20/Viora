@@ -16,12 +16,12 @@ type CardItem = {
 
 export function HomeCard({ cards }: { cards: CardItem[] }) {
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 md:gap-4'>
+    <div className='flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:overflow-visible md:pb-0 lg:grid-cols-4'>
       {cards.map((card) => (
-        <Card key={card.title} className='rounded-none flex flex-col'>
+        <Card key={card.title} className='flex min-w-[280px] snap-start flex-col overflow-hidden rounded-xl xs:min-w-[300px] md:min-w-0'>
           <CardContent className='p-4 flex-1'>
-            <h3 className='text-xl font-bold mb-4'>{card.title}</h3>
-            <div className='grid grid-cols-2 gap-4'>
+            <h3 className='mb-4 text-lg font-bold sm:text-xl'>{card.title}</h3>
+            <div className='grid grid-cols-2 gap-3 sm:gap-4'>
               {card.items.map((item, index) => (
   <Link
     key={`${item.name}-${index}`}

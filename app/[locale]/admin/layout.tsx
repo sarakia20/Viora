@@ -16,10 +16,10 @@ export default async function AdminLayout({
     <>
       <div className='flex flex-col min-h-screen bg-slate-50'>
         <div className='bg-white border-b shadow-sm'>
-          <div className='flex h-16 items-center px-4'>
+          <div className='mx-auto flex h-16 w-full max-w-[1440px] items-center px-3 sm:px-4'>
             <Link href='/' className='flex items-center gap-2'>
               <Image
-                src='/icons/logo.svg'
+                src='/icons/viora-logo.png'
                 width={40}
                 height={40}
                 alt={`${site.name} logo`}
@@ -33,12 +33,12 @@ export default async function AdminLayout({
             </div>
           </div>
 
-          <div className='border-t bg-white'>
-            <AdminNav className='flex md:hidden px-4 py-3' />
+          <div className='border-t bg-white md:hidden'>
+            <AdminNav className='flex px-3 py-2 sm:px-4' />
           </div>
         </div>
 
-        <div className='flex-1 p-6'>
+        <div className='mx-auto w-full max-w-[1440px] flex-1 px-3 py-4 sm:px-4 lg:p-6'>
           {children}
         </div>
       </div>

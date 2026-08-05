@@ -61,12 +61,12 @@ export default async function ProductDetails(props: {
       <AddToBrowsingHistory id={product._id.toString()} category={product.category} />
 
       <section>
-        <div className='grid grid-cols-1 md:grid-cols-5'>
-          <div className='col-span-2'>
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
+          <div className='min-w-0 md:col-span-2'>
             <ProductGallery images={product.images} />
           </div>
 
-          <div className='flex w-full flex-col gap-2 md:p-5 col-span-2'>
+          <div className='flex min-w-0 w-full flex-col gap-2 md:col-span-2 md:p-5'>
             <div className='flex flex-col gap-3'>
               <p className='p-medium-16 rounded-full bg-grey-500/10 text-grey-500'>
                 برند: {product.brand}
@@ -113,7 +113,7 @@ export default async function ProductDetails(props: {
             </div>
           </div>
 
-          <div>
+          <div className='md:sticky md:top-40 md:self-start'>
             <Card>
               <CardContent className='p-4 flex flex-col gap-4'>
                 <ProductPrice price={product.price} />
@@ -159,14 +159,14 @@ export default async function ProductDetails(props: {
         </div>
       </section>
 
-      <section className='mt-16'>
+      <section className='mt-10 sm:mt-16'>
         <ProductSlider
           products={relatedProducts.data}
           title='محصولات مشابه'
         />
       </section>
 
-      <section className='mt-12'>
+      <section className='mt-10 sm:mt-12'>
         <ProductSlider
           products={relatedProducts.data}
           title='پرفروش‌ترین‌ها'
@@ -177,8 +177,8 @@ export default async function ProductDetails(props: {
         <BrowsingHistoryList />
       </section>
 
-      <section className='mt-16 pb-12' id='reviews'>
-  <div className='rounded-2xl border border-slate-200 bg-white p-6 md:p-8'>
+      <section className='mt-10 pb-8 sm:mt-16 sm:pb-12' id='reviews'>
+  <div className='rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 md:p-8'>
     <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-6'>
       <div className='space-y-2'>
         <h2 className='text-2xl font-bold text-slate-900'>نظرات کاربران</h2>
@@ -187,7 +187,7 @@ export default async function ProductDetails(props: {
         </p>
       </div>
 
-      <button className='h-11 rounded-full bg-slate-900 px-8 text-white hover:bg-slate-800'>
+      <button className='h-11 w-full rounded-full bg-slate-900 px-8 text-white hover:bg-slate-800 sm:w-auto'>
         ثبت نظر
       </button>
     </div>

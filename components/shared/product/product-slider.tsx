@@ -26,6 +26,7 @@ export default function ProductSlider({
       <Carousel
         opts={{
           align: 'start',
+          containScroll: 'trimSnaps',
         }}
         className='w-full'
       >
@@ -35,8 +36,8 @@ export default function ProductSlider({
       key={product._id.toString()}
       className={
         hideDetails
-          ? 'md:basis-1/4 lg:basis-1/6'
-          : 'md:basis-1/3 lg:basis-1/5'
+          ? 'basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6'
+          : 'basis-[82%] xs:basis-2/3 sm:basis-1/2 md:basis-1/3 lg:basis-1/5'
       }
     >
       <ProductCard

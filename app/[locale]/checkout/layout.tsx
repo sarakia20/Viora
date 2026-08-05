@@ -9,15 +9,15 @@ export default function CheckoutLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className='p-4'>
-      <header className='bg-card mb-4 border-b'>
-        <div className='max-w-6xl mx-auto flex justify-between items-center'>
+    <div className='min-h-screen px-3 py-3 sm:p-4'>
+      <header className='mb-4 border-b bg-card'>
+        <div className='mx-auto flex max-w-6xl items-center justify-between gap-3'>
           <Link href='/'>
             <Image
-              src='/icons/logo.svg'
+              src='/icons/viora-logo.png'
               alt='logo'
-              width={70}
-              height={70}
+              width={56}
+              height={56}
               style={{
                 maxWidth: '100%',
                 height: 'auto',
@@ -25,7 +25,7 @@ export default function CheckoutLayout({
             />
           </Link>
           <div>
-            <h1 className='text-3xl'> ثبت سفارش</h1>
+            <h1 className='text-lg font-bold sm:text-2xl md:text-3xl'> ثبت سفارش</h1>
           </div>
           <div>
             <Link href='/page/help'>

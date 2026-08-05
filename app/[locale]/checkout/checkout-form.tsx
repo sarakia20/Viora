@@ -226,8 +226,8 @@ const CheckoutForm = () => {
   )
 
   return (
-    <main className='max-w-6xl mx-auto highlight-link'>
-      <div className='grid md:grid-cols-4 gap-6'>
+    <main className='mx-auto w-full max-w-6xl highlight-link'>
+      <div className='grid min-w-0 gap-4 md:grid-cols-4 md:gap-6'>
         <div className='md:col-span-3'>
           {/* shipping address */}
           <div>
@@ -271,8 +271,8 @@ const CheckoutForm = () => {
                     )}
                     className='space-y-4'
                   >
-                    <Card className='md:ml-8 my-4'>
-                      <CardContent className='p-4 space-y-2'>
+                    <Card className='my-4 md:ml-8'>
+                      <CardContent className='space-y-2 p-3 sm:p-4'>
                         <div className='text-lg font-bold mb-2'>
                            اطلاعات آدرس
                         </div>
@@ -546,7 +546,7 @@ const CheckoutForm = () => {
     {items.map((item, _index) => (
       <div
         key={_index}
-        className='flex gap-4 py-3 border-b last:border-b-0'
+        className='flex min-w-0 flex-col gap-3 border-b py-3 last:border-b-0 xs:flex-row xs:gap-4'
       >
         <div className='relative w-16 h-16'>
           <Image
@@ -558,7 +558,7 @@ const CheckoutForm = () => {
           />
         </div>
 
-        <div className='flex-1'>
+        <div className='min-w-0 flex-1'>
           <p className='font-semibold'>
             {item.name}
             {item.color && `، ${item.color}`}
@@ -660,7 +660,7 @@ const CheckoutForm = () => {
 </div>
 </CardContent>
                   <CardFooter className='p-4  border-t'>
-  <Button onClick={handlePlaceOrder} className='rounded-full font-bold px-8'>
+  <Button onClick={handlePlaceOrder} className='w-full rounded-full px-8 font-bold sm:w-auto'>
     ثبت نهایی سفارش
   </Button>
 </CardFooter>
