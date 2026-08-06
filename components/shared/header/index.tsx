@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { getAllCategories } from '@/lib/actions/product.actions'
 import Menu from './menu'
 import Search from './search'
 import data from '@/lib/data'
@@ -9,7 +8,6 @@ import { getSetting } from '@/lib/actions/setting.actions'
 import { getTranslations } from 'next-intl/server'
 
 export default async function Header() {
-  const categories = await getAllCategories()
   const { site } = await getSetting()
   const t = await getTranslations()
   const logoSrc = site.logo === '/icons/logo.svg' ? '/icons/viora-logo.png' : site.logo
@@ -61,9 +59,9 @@ export default async function Header() {
       {/* Navigation */}
       <div className='border-t border-slate-100 bg-slate-50'>
 
-        <div className='mx-auto flex h-11 max-w-[1440px] items-center gap-2 overflow-hidden px-3 sm:px-4 lg:px-6'>
+        <div className='mx-auto flex h-11 max-w-[1440px] items-center gap-2 overflow-visible px-3 sm:px-4 lg:px-6'>
 
-          <Sidebar categories={categories} />
+          <Sidebar />
 
 
           <div className='flex flex-1 gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide'>

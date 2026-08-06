@@ -35,11 +35,7 @@ const categoryGroups: Record<string, string[]> = {
 const getCategoryHref = (category: string) =>
   `/search?category=${encodeURIComponent(category)}`
 
-export default function Sidebar({
-  categories,
-}: {
-  categories: string[]
-}) {
+export default function Sidebar() {
   const [desktopOpen, setDesktopOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState(
