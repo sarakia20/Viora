@@ -37,8 +37,8 @@ export default function ProductPrice({
     setting.availableCurrencies.find((c) => c.code === setting.currency) ||
     setting.availableCurrencies[0]
 
-  const convertedPrice = round2(currency.convertRate * price)
-  const convertedListPrice = round2(currency.convertRate * listPrice)
+const convertedPrice = round2(price)
+const convertedListPrice = round2(listPrice)
 
   const hasDiscount =
     convertedListPrice > 0 && convertedListPrice > convertedPrice
