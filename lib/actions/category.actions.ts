@@ -3,9 +3,11 @@
 import { connectToDatabase } from '@/lib/db'
 import Category from '@/lib/db/models/category.model'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function deleteCategory(id: string) {
   try {
+    await requireAdmin()
     await connectToDatabase()
 
     await Category.findByIdAndDelete(id)
@@ -25,6 +27,7 @@ export async function deleteCategory(id: string) {
 }
 
 export async function getCategoryById(id: string) {
+  await requireAdmin()
   await connectToDatabase()
 
   const category = await Category.findById(id).lean()
@@ -39,6 +42,7 @@ export async function updateCategory(data: {
   parentId?: string | null
 }) {
   try {
+    await requireAdmin()
     await connectToDatabase()
 
     await Category.findByIdAndUpdate(data.id, {
@@ -77,6 +81,7 @@ export async function createCategory(data: {
   parentId?: string | null
 }) {
   try {
+    await requireAdmin()
     await connectToDatabase()
 
     const category = await Category.create({

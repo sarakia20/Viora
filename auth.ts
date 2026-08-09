@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(client),
   providers: [
     Google({
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
 
     CredentialsProvider({
@@ -51,9 +51,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const login = credentials.phone as string
 
-const user = await User.findOne({
-  $or: [{ phone: login }, { email: login }],
-})
+        const user = await User.findOne({
+          $or: [{ phone: login }, { email: login }],
+        })
 
         if (user && user.password) {
           const isMatch = await bcrypt.compare(

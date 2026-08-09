@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getSetting } from './setting.actions'
+import { requireAdmin } from '../auth-guard'
 
 // CREATE
 export async function registerUser(userSignUp: IUserSignUp) {
@@ -28,7 +29,7 @@ export async function registerUser(userSignUp: IUserSignUp) {
     await User.create({
       ...user,
      
-      password: await bcrypt.hash(user.password, 5),
+      password: await bcrypt.hash(user.password, 12),
     })
 
     return { success: true, message: 'حساب کاربری با موفقیت ایجاد شد' }
@@ -40,6 +41,8 @@ export async function registerUser(userSignUp: IUserSignUp) {
 // DELETE
 export async function deleteUser(id: string) {
   try {
+    const session = await requireAdmin()
+    if (session.user.id === id) throw new Error('You cannot delete your own account')
     await connectToDatabase()
 
     const res = await User.findByIdAndDelete(id)
@@ -60,6 +63,7 @@ export async function deleteUser(id: string) {
 // UPDATE
 export async function updateUser(user: z.infer<typeof UserUpdateSchema>) {
   try {
+    await requireAdmin()
     await connectToDatabase()
 
     const dbUser = await User.findById(user._id)
@@ -133,6 +137,7 @@ export async function getAllUsers({
   limit?: number
   page: number
 }) {
+  await requireAdmin()
   const {
     common: { pageSize },
   } = await getSetting()
@@ -157,6 +162,7 @@ export async function getAllUsers({
 }
 
 export async function getUserById(userId: string) {
+  await requireAdmin()
   await connectToDatabase()
 
   const user = await User.findById(userId)

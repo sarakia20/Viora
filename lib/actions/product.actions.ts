@@ -9,6 +9,7 @@ import { ProductInputSchema, ProductUpdateSchema } from '../validator'
 import { IProductInput } from '@/types'
 import { z } from 'zod'
 import { getSetting } from './setting.actions'
+import { requireAdmin } from '../auth-guard'
 
 const isSkipDb = process.env.SKIP_DB === 'true'
 
@@ -83,6 +84,7 @@ function sortProducts(products: IProduct[], sort?: string) {
 }
 
 export async function createProduct(dataInput: IProductInput) {
+  await requireAdmin()
   if (isSkipDb) {
     return {
       success: false,
@@ -105,6 +107,7 @@ export async function createProduct(dataInput: IProductInput) {
 }
 
 export async function updateProduct(dataInput: z.infer<typeof ProductUpdateSchema>) {
+  await requireAdmin()
   if (isSkipDb) {
     return {
       success: false,
@@ -127,6 +130,7 @@ export async function updateProduct(dataInput: z.infer<typeof ProductUpdateSchem
 }
 
 export async function deleteProduct(id: string) {
+  await requireAdmin()
   if (isSkipDb) {
     return {
       success: false,
@@ -149,6 +153,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getProductById(productId: string) {
+  await requireAdmin()
   if (isSkipDb) {
     const product = mockProducts.find((p) => p._id.toString() === productId)
     return JSON.parse(JSON.stringify(product || null)) as IProduct
@@ -170,6 +175,7 @@ export async function getAllProductsForAdmin({
   sort?: string
   limit?: number
 }) {
+  await requireAdmin()
   const {
     common: { pageSize },
   } = await getSetting()

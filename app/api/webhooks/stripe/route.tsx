@@ -31,6 +31,15 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Bad Request', { status: 400 })
     }
 
+    const expectedAmount = Math.round(order.totalPrice * 100)
+    if (charge.currency !== 'usd' || pricePaidInCents !== expectedAmount) {
+      return new NextResponse('Payment amount mismatch', { status: 400 })
+    }
+
+    if (order.isPaid) {
+      return NextResponse.json({ message: 'Order already paid' })
+    }
+
     order.isPaid = true
     order.paidAt = new Date()
     order.paymentResult = {

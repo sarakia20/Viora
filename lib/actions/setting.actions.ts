@@ -6,6 +6,7 @@ import Setting from '../db/models/setting.model'
 import { connectToDatabase } from '../db'
 import { formatError } from '../utils'
 import { cookies } from 'next/headers'
+import { requireAdmin } from '../auth-guard'
 
 const globalForSettings = global as unknown as {
   cachedSettings: ISettingInput | null
@@ -14,6 +15,7 @@ const globalForSettings = global as unknown as {
 const isSkipDb = process.env.SKIP_DB === 'true'
 
 export const getNoCachedSetting = async (): Promise<ISettingInput> => {
+  await requireAdmin()
   if (isSkipDb) return data.settings[0] as ISettingInput
 
   await connectToDatabase()
@@ -36,6 +38,7 @@ export const getSetting = async (): Promise<ISettingInput> => {
 }
 
 export const updateSetting = async (newSetting: ISettingInput) => {
+  await requireAdmin()
   if (isSkipDb) {
     return {
       success: false,

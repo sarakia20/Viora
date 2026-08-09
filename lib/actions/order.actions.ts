@@ -14,6 +14,18 @@ import Product from '../db/models/product.model'
 import User from '../db/models/user.model'
 import mongoose from 'mongoose'
 import { getSetting } from './setting.actions'
+import { requireAdmin, requireUser } from '../auth-guard'
+
+async function getOrderAccessFilter(orderId: string) {
+  const session = await requireUser()
+  await connectToDatabase()
+  const currentUser = await User.findById(session.user.id).select('role').lean()
+
+  return {
+    _id: orderId,
+    ...(currentUser?.role === 'Admin' ? {} : { user: session.user.id }),
+  }
+}
 
 // CREATE
 export const createOrder = async (clientSideCart: Cart) => {
@@ -35,7 +47,7 @@ export const createOrder = async (clientSideCart: Cart) => {
     return { success: false, message: formatError(error) }
   }
 }
-export const createOrderFromCart = async (
+const createOrderFromCart = async (
   clientSideCart: Cart,
   userId: string
 ) => {
@@ -64,6 +76,7 @@ export const createOrderFromCart = async (
 
 export async function updateOrderToPaid(orderId: string) {
   try {
+    await requireAdmin()
     await connectToDatabase()
     const order = await Order.findById(orderId).populate<{
       user: { email: string; name: string }
@@ -118,6 +131,7 @@ const updateProductStock = async (orderId: string) => {
 }
 export async function deliverOrder(orderId: string) {
   try {
+    await requireAdmin()
     await connectToDatabase()
     const order = await Order.findById(orderId).populate<{
       user: { email: string; name: string }
@@ -138,6 +152,7 @@ export async function deliverOrder(orderId: string) {
 // DELETE
 export async function deleteOrder(id: string) {
   try {
+    await requireAdmin()
     await connectToDatabase()
     const res = await Order.findByIdAndDelete(id)
     if (!res) throw new Error('Order not found')
@@ -160,6 +175,7 @@ export async function getAllOrders({
   limit?: number
   page: number
 }) {
+  await requireAdmin()
   const {
     common: { pageSize },
   } = await getSetting()
@@ -209,14 +225,14 @@ export async function getMyOrders({
 }
 export async function getOrderById(orderId: string): Promise<IOrder> {
   await connectToDatabase()
-  const order = await Order.findById(orderId)
+  const order = await Order.findOne(await getOrderAccessFilter(orderId))
   return JSON.parse(JSON.stringify(order))
 }
 
 export async function createPayPalOrder(orderId: string) {
   await connectToDatabase()
   try {
-    const order = await Order.findById(orderId)
+    const order = await Order.findOne(await getOrderAccessFilter(orderId))
     if (order) {
       const paypalOrder = await paypal.createOrder(order.totalPrice)
       order.paymentResult = {
@@ -245,7 +261,9 @@ export async function approvePayPalOrder(
 ) {
   await connectToDatabase()
   try {
-    const order = await Order.findById(orderId).populate('user', 'email')
+    const order = await Order.findOne(
+      await getOrderAccessFilter(orderId)
+    ).populate('user', 'email')
     if (!order) throw new Error('Order not found')
 
     const captureData = await paypal.capturePayment(data.orderID)
@@ -253,8 +271,19 @@ export async function approvePayPalOrder(
       !captureData ||
       captureData.id !== order.paymentResult?.id ||
       captureData.status !== 'COMPLETED'
-    )
+    ) {
       throw new Error('Error in paypal payment')
+    }
+
+    const capturedAmount = Number(
+      captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value
+    )
+    if (
+      !Number.isFinite(capturedAmount) ||
+      Math.abs(capturedAmount - order.totalPrice) > 0.01
+    ) {
+      throw new Error('Error in paypal payment')
+    }
     order.isPaid = true
     order.paidAt = new Date()
     order.paymentResult = {
@@ -325,6 +354,7 @@ export const calcDeliveryDateAndPrice = async ({
 
 // GET ORDERS BY USER
 export async function getOrderSummary(date: DateRange) {
+  await requireAdmin()
   await connectToDatabase()
 
   const ordersCount = await Order.countDocuments({
