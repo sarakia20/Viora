@@ -85,12 +85,14 @@ export default async function ProductDetails(props: {
 
               <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
                 <div className='flex gap-3'>
-                  <ProductPrice
-                    price={product.price}
-                    listPrice={product.listPrice}
-                    isDeal={product.tags.includes('todays-deal')}
-                    forListing={false}
-                  />
+                  {product.countInStock > 0 && (
+  <ProductPrice
+    price={product.price}
+    listPrice={product.listPrice}
+    isDeal={product.tags.includes('todays-deal')}
+    forListing={false}
+  />
+)}
                 </div>
               </div>
             </div>
@@ -116,7 +118,9 @@ export default async function ProductDetails(props: {
           <div className='md:sticky md:top-40 md:self-start'>
             <Card>
               <CardContent className='p-4 flex flex-col gap-4'>
-                <ProductPrice price={product.price} />
+                {product.countInStock > 0 && (
+  <ProductPrice price={product.price} />
+)}
 
                 {product.countInStock > 0 && product.countInStock <= 3 && (
                   <div className='text-destructive font-bold'>
@@ -136,23 +140,25 @@ export default async function ProductDetails(props: {
                   </div>
                 )}
 
-                <div className='flex justify-center items-center'>
-  <AddToCart
-    item={{
-      clientId: generateId(),
-      product: product._id.toString(),
-      countInStock: product.countInStock,
-      name: product.name,
-      slug: product.slug,
-      category: product.category,
-      price: round2(product.price),
-      quantity: 1,
-      image: product.images[0],
-      size: size || product.sizes[0],
-      color: color || product.colors[0],
-    }}
-  />
-</div>
+{product.countInStock > 0 && (
+  <div className='flex justify-center items-center'>
+    <AddToCart
+      item={{
+        clientId: generateId(),
+        product: product._id.toString(),
+        countInStock: product.countInStock,
+        name: product.name,
+        slug: product.slug,
+        category: product.category,
+        price: round2(product.price),
+        quantity: 1,
+        image: product.images[0],
+        size: size || product.sizes[0],
+        color: color || product.colors[0],
+      }}
+    />
+  </div>
+)}
               </CardContent>
             </Card>
           </div>

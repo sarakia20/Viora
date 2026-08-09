@@ -9,27 +9,51 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-const categoryGroups: Record<string, string[]> = {
+type CategoryItem = {
+  title: string
+  children?: string[]
+}
+
+const categoryGroups: Record<string, CategoryItem[]> = {
   'چینی آلات بهداشتی': [
-    'توالت فرنگی',
-    'توالت ایرانی',
-    'روشویی',
-    'فلاش تانک',
+    { title: 'توالت فرنگی' },
+    { title: 'توالت ایرانی' },
+    { title: 'روشویی' },
+    { title: 'فلاش تانک' },
   ],
-  'تجهیزات آشپزخانه': ['هود', 'سینک', 'گاز', 'فر'],
+
+  'تجهیزات آشپزخانه': [
+    { title: 'هود' },
+    {
+      title: 'سینک',
+      children: [
+        'گرانیتی',
+        'استیل توکار',
+        'سینک های دست ساز',
+      ],
+    },
+    { title: 'گاز' },
+    { title: 'فر' },
+  ],
+
   شیرآلات: [
-    'شیر آشپزخانه',
-    'شیر روشویی',
-    'ست شیرآلات',
-    'شیرآلات توکار',
+    { title: 'شیر آشپزخانه' },
+    { title: 'شیر روشویی' },
+    { title: 'ست شیرآلات' },
+    { title: 'شیرآلات توکار' },
   ],
+
   'کاشی و سرامیک': [
-    'کاشی',
-    'سرامیک',
-    'کاشی دیوار',
-    'سرامیک کف',
+    { title: 'کاشی' },
+    { title: 'سرامیک' },
+    { title: 'کاشی دیوار' },
+    { title: 'سرامیک کف' },
   ],
-  اکسسوری: ['جامایع', 'جا دستمال کاغذی'],
+
+  اکسسوری: [
+    { title: 'جامایع' },
+    { title: 'جا دستمال کاغذی' },
+  ],
 }
 
 const getCategoryHref = (category: string) =>
@@ -38,10 +62,18 @@ const getCategoryHref = (category: string) =>
 export default function Sidebar() {
   const [desktopOpen, setDesktopOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+
   const [activeCategory, setActiveCategory] = useState(
     'چینی آلات بهداشتی'
   )
+
   const [expandedMobileCategory, setExpandedMobileCategory] =
+    useState<string | null>(null)
+
+  const [expandedMobileChild, setExpandedMobileChild] =
+    useState<string | null>(null)
+
+  const [activeDesktopChild, setActiveDesktopChild] =
     useState<string | null>(null)
 
   const megaItems = Object.keys(categoryGroups).map((category) => ({
@@ -56,6 +88,9 @@ export default function Sidebar() {
   const closeAllMenus = () => {
     setDesktopOpen(false)
     setMobileOpen(false)
+    setExpandedMobileCategory(null)
+    setExpandedMobileChild(null)
+    setActiveDesktopChild(null)
   }
 
   useEffect(() => {
@@ -68,7 +103,8 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile trigger */}
+      {/* ================= MOBILE ================= */}
+
       <button
         type='button'
         onClick={() => setMobileOpen(true)}
@@ -79,7 +115,6 @@ export default function Sidebar() {
         <span>همه</span>
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div className='fixed inset-0 z-[9999] md:hidden'>
           <button
@@ -143,17 +178,67 @@ export default function Sidebar() {
                     </div>
 
                     {isExpanded && (
-                      <div className='grid grid-cols-2 gap-2 pb-4'>
-                        {item.children.map((child) => (
-                          <Link
-                            key={child}
-                            href={getCategoryHref(child)}
-                            onClick={closeAllMenus}
-                            className='rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-700'
-                          >
-                            {child}
-                          </Link>
-                        ))}
+                      <div className='space-y-2 pb-4'>
+                        {item.children.map((child) => {
+                          const childExpanded =
+                            expandedMobileChild === child.title
+
+                          return (
+                            <div
+                              key={child.title}
+                              className='overflow-hidden rounded-xl bg-slate-50'
+                            >
+                              <div className='flex items-center'>
+                                <Link
+                                  href={getCategoryHref(child.title)}
+                                  onClick={closeAllMenus}
+                                  className='flex-1 px-3 py-3 text-sm font-medium text-slate-800'
+                                >
+                                  {child.title}
+                                </Link>
+
+                                {child.children &&
+                                  child.children.length > 0 && (
+                                    <button
+                                      type='button'
+                                      onClick={() =>
+                                        setExpandedMobileChild(
+                                          childExpanded
+                                            ? null
+                                            : child.title
+                                        )
+                                      }
+                                      className='flex h-11 w-11 items-center justify-center'
+                                      aria-label={`نمایش زیرمجموعه‌های ${child.title}`}
+                                    >
+                                      <ChevronDown
+                                        className={`h-4 w-4 text-slate-500 transition-transform ${
+                                          childExpanded
+                                            ? 'rotate-180'
+                                            : ''
+                                        }`}
+                                      />
+                                    </button>
+                                  )}
+                              </div>
+
+                              {child.children && childExpanded && (
+                                <div className='border-t border-slate-200 bg-white px-3 py-2'>
+                                  {child.children.map((subChild) => (
+                                    <Link
+                                      key={subChild}
+                                      href={getCategoryHref(subChild)}
+                                      onClick={closeAllMenus}
+                                      className='block border-b border-slate-100 py-3 pr-3 text-sm text-slate-600 last:border-b-0 hover:text-slate-900'
+                                    >
+                                      {subChild}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
@@ -174,11 +259,15 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Desktop trigger and mega menu */}
+      {/* ================= DESKTOP ================= */}
+
       <div
         className='relative hidden md:block'
         onMouseEnter={() => setDesktopOpen(true)}
-        onMouseLeave={() => setDesktopOpen(false)}
+        onMouseLeave={() => {
+          setDesktopOpen(false)
+          setActiveDesktopChild(null)
+        }}
       >
         <button
           type='button'
@@ -190,16 +279,18 @@ export default function Sidebar() {
         </button>
 
         {desktopOpen && (
-          <div className='absolute right-0 top-full z-[9999] flex min-h-[420px] w-[min(820px,calc(100vw-2rem))] overflow-hidden rounded-b-xl border bg-white shadow-2xl'>
+          <div className='absolute right-0 top-full z-[9999] flex min-h-[440px] w-[min(900px,calc(100vw-2rem))] overflow-hidden rounded-b-xl border bg-white shadow-2xl'>
+            {/* Main categories */}
             <div className='w-64 shrink-0 border-l bg-slate-50 py-2'>
               {megaItems.map((item) => (
                 <Link
                   key={item.title}
                   href={getCategoryHref(item.title)}
                   onClick={closeAllMenus}
-                  onMouseEnter={() =>
+                  onMouseEnter={() => {
                     setActiveCategory(item.title)
-                  }
+                    setActiveDesktopChild(null)
+                  }}
                   className={`flex items-center justify-between px-4 py-3 text-sm font-medium transition ${
                     activeCategory === item.title
                       ? 'bg-white text-slate-900'
@@ -207,11 +298,13 @@ export default function Sidebar() {
                   }`}
                 >
                   <span>{item.title}</span>
+
                   <ChevronLeft className='h-4 w-4 text-slate-400' />
                 </Link>
               ))}
             </div>
 
+            {/* Children */}
             <div className='flex-1 bg-white p-6'>
               {activeItem && (
                 <>
@@ -224,17 +317,62 @@ export default function Sidebar() {
                     <ChevronLeft className='h-4 w-4' />
                   </Link>
 
-                  <div className='grid grid-cols-2 gap-x-10 gap-y-4'>
-                    {activeItem.children.map((child) => (
-                      <Link
-                        key={child}
-                        href={getCategoryHref(child)}
-                        onClick={closeAllMenus}
-                        className='border-r-2 border-slate-800 pr-3 text-sm font-medium text-slate-700 transition hover:text-slate-950'
-                      >
-                        {child}
-                      </Link>
-                    ))}
+                  <div className='grid grid-cols-2 gap-x-12 gap-y-3'>
+                    {activeItem.children.map((child) => {
+                      const isOpen =
+                        activeDesktopChild === child.title
+
+                      return (
+                        <div
+                          key={child.title}
+                          className='self-start'
+                          onMouseEnter={() => {
+                            if (child.children?.length) {
+                              setActiveDesktopChild(child.title)
+                            } else {
+                              setActiveDesktopChild(null)
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (child.children?.length) {
+                              setActiveDesktopChild(null)
+                            }
+                          }}
+                        >
+                          <Link
+                            href={getCategoryHref(child.title)}
+                            onClick={closeAllMenus}
+                            className='flex items-center justify-between rounded-lg border-r-2 border-slate-900 px-3 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50'
+                          >
+                            <span>{child.title}</span>
+
+                            {child.children &&
+                              child.children.length > 0 && (
+                                <ChevronDown
+                                  className={`h-4 w-4 text-slate-400 transition-transform ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                />
+                              )}
+                          </Link>
+
+                          {child.children && isOpen && (
+                            <div className='mr-5 mt-1 space-y-1 border-r border-slate-200 pr-4'>
+                              {child.children.map((subChild) => (
+                                <Link
+                                  key={subChild}
+                                  href={getCategoryHref(subChild)}
+                                  onClick={closeAllMenus}
+                                  className='block rounded-md px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-50 hover:text-slate-900'
+                                >
+                                  {subChild}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </>
               )}
