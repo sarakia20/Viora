@@ -158,12 +158,13 @@ export default function SearchSidebar({
 
   return (
     <div className='space-y-4'>
-      <FilterSection
-        title='دسته‌بندی'
-        id='category'
-        openSection={openSection}
-        toggle={toggle}
-      >
+      {['all', ''].includes(currentCategory) && (
+        <FilterSection
+          title='دسته‌بندی'
+          id='category'
+          openSection={openSection}
+          toggle={toggle}
+        >
         <FilterLink
           href={getFilterUrl({ category: 'all', params })}
           active={currentCategory === 'all' || currentCategory === ''}
@@ -268,7 +269,8 @@ export default function SearchSidebar({
             </FilterLink>
           )
         })}
-      </FilterSection>
+        </FilterSection>
+      )}
 
       {currentCategory === 'سینک' && (
         <FilterSection
