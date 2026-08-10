@@ -10,8 +10,14 @@ import {
   getAllCategories,
 } from '@/lib/actions/product.actions'
 import { getSetting } from '@/lib/actions/setting.actions'
-import { toSlug } from '@/lib/utils'
 import { getTranslations } from 'next-intl/server'
+
+const categoryImages: Record<string, string> = {
+  اکسسوری: '/images/category-accessory.jpg',
+  'توالت ایرانی': '/images/category-iranian-toilet.jpg',
+  'توالت فرنگی': '/images/category-western-toilet.jpg',
+  سینک: '/images/category-sink.jpg',
+}
 
 export default async function HomePage() {
   const t = await getTranslations('Home')
@@ -38,7 +44,7 @@ export default async function HomePage() {
       },
       items: categories.map((category: string) => ({
         name: category,
-        image: `/images/${toSlug(category)}.jpg`,
+        image: categoryImages[category] || '/images/category-default.jpg',
         href: `/search?category=${category}`,
       })),
     },
