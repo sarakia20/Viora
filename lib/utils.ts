@@ -168,6 +168,8 @@ export function formatId(id: string) {
 export const getFilterUrl = ({
   params,
   category,
+  subCategory,
+  brand,
   tag,
   sort,
   price,
@@ -177,6 +179,8 @@ export const getFilterUrl = ({
   params: {
     q?: string
     category?: string
+    subCategory?: string
+    brand?: string
     tag?: string
     price?: string
     rating?: string
@@ -185,6 +189,8 @@ export const getFilterUrl = ({
   }
   tag?: string
   category?: string
+  subCategory?: string
+  brand?: string
   sort?: string
   price?: string
   rating?: string
@@ -195,6 +201,16 @@ export const getFilterUrl = ({
   if (category) {
     newParams.category = category
     newParams.q = 'all'
+    newParams.page = '1'
+  }
+
+  if (subCategory) {
+    newParams.subCategory = subCategory
+    newParams.page = '1'
+  }
+
+  if (brand) {
+    newParams.brand = brand
     newParams.page = '1'
   }
 

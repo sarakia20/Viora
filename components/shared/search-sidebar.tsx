@@ -23,6 +23,9 @@ const kitchenSubCategories = ['هود', 'سینک', 'گاز']
 
 const bathroomAccessoriesSubCategories = ['جا مایع', 'جا دستمال']
 
+const sinkSubCategories = ['گرانیتی', 'استیل توکار', 'سینک های دست ساز']
+const brands = ['میکس پلاس', 'سیمر']
+
 function getTagName(tag: string) {
   switch (tag) {
     case 'Best Seller':
@@ -131,6 +134,8 @@ export default function SearchSidebar({
   params: {
     q?: string
     category?: string
+    subCategory?: string
+    brand?: string
     tag?: string
     price?: string
     rating?: string
@@ -148,6 +153,8 @@ export default function SearchSidebar({
   }
 
   const currentCategory = params.category || 'all'
+  const currentSubCategory = params.subCategory || 'all'
+  const currentBrand = params.brand || 'all'
 
   return (
     <div className='space-y-4'>
@@ -261,6 +268,56 @@ export default function SearchSidebar({
             </FilterLink>
           )
         })}
+      </FilterSection>
+
+      {currentCategory === 'سینک' && (
+        <FilterSection
+          title='نوع سینک'
+          id='subCategory'
+          openSection={openSection}
+          toggle={toggle}
+        >
+          <FilterLink
+            href={getFilterUrl({ subCategory: 'all', params })}
+            active={currentSubCategory === 'all' || currentSubCategory === ''}
+          >
+            همه
+          </FilterLink>
+
+          {sinkSubCategories.map((subCategory) => (
+            <FilterLink
+              key={subCategory}
+              href={getFilterUrl({ subCategory, params })}
+              active={currentSubCategory === subCategory}
+            >
+              {subCategory}
+            </FilterLink>
+          ))}
+        </FilterSection>
+      )}
+
+      <FilterSection
+        title='برند'
+        id='brand'
+        openSection={openSection}
+        toggle={toggle}
+      >
+        <FilterLink
+          href={getFilterUrl({ brand: 'all', params })}
+          active={currentBrand === 'all' || currentBrand === ''}
+        >
+          همه
+        </FilterLink>
+
+        {brands.map((brand) => (
+          <FilterLink
+            key={brand}
+            href={getFilterUrl({ brand, params })}
+            active={currentBrand === brand}
+          >
+            {brand}
+          </FilterLink>
+        ))}
       </FilterSection>
 
       <FilterSection

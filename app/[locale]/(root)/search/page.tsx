@@ -150,6 +150,8 @@ export async function generateMetadata(props: {
   searchParams: Promise<{
     q: string
     category: string
+    subCategory: string
+    brand: string
     tag: string
     price: string
     rating: string
@@ -192,6 +194,8 @@ export default async function SearchPage(props: {
   searchParams: Promise<{
     q: string
     category: string
+    subCategory: string
+    brand: string
     tag: string
     price: string
     rating: string
@@ -204,6 +208,8 @@ export default async function SearchPage(props: {
   const {
     q = 'all',
     category = 'all',
+    subCategory = 'all',
+    brand = 'all',
     tag = 'all',
     price = 'all',
     rating = 'all',
@@ -211,12 +217,24 @@ export default async function SearchPage(props: {
     page = '1',
   } = searchParams
 
-  const params = { q, category, tag, price, rating, sort, page }
+  const params = {
+    q,
+    category,
+    subCategory,
+    brand,
+    tag,
+    price,
+    rating,
+    sort,
+    page,
+  }
 
   const categories = await getAllCategories()
   const tags = await getAllTags()
   const data = await getAllProducts({
     category,
+    subCategory,
+    brand,
     tag,
     query: q,
     price,
@@ -259,6 +277,24 @@ const cleanCategories = categories.filter(
       </span>
     )}
 
+    {subCategory !== 'all' && subCategory !== '' && (
+      <Link
+        href={getFilterUrl({ subCategory: 'all', params })}
+        className='rounded-full border bg-slate-50 px-3 py-1 text-sm'
+      >
+        {subCategory} ×
+      </Link>
+    )}
+
+    {brand !== 'all' && brand !== '' && (
+      <Link
+        href={getFilterUrl({ brand: 'all', params })}
+        className='rounded-full border bg-slate-50 px-3 py-1 text-sm'
+      >
+        {brand} ×
+      </Link>
+    )}
+
     {tag !== 'all' && tag !== '' && (
       <span className='rounded-full border bg-slate-50 px-3 py-1 text-sm'>
         {tag === 'best-seller' ? 'پرفروش‌ترین' : tag}
@@ -279,6 +315,8 @@ const cleanCategories = categories.filter(
 
     {((q !== 'all' && q !== '') ||
       category !== 'all' ||
+      subCategory !== 'all' ||
+      brand !== 'all' ||
       tag !== 'all' ||
       rating !== 'all' ||
       price !== 'all') && (

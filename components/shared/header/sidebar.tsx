@@ -59,6 +59,9 @@ const categoryGroups: Record<string, CategoryItem[]> = {
 const getCategoryHref = (category: string) =>
   `/search?category=${encodeURIComponent(category)}`
 
+const getSubCategoryHref = (category: string, subCategory: string) =>
+  `/search?category=${encodeURIComponent(category)}&subCategory=${encodeURIComponent(subCategory)}`
+
 export default function Sidebar() {
   const [desktopOpen, setDesktopOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -227,7 +230,14 @@ export default function Sidebar() {
                                   {child.children.map((subChild) => (
                                     <Link
                                       key={subChild}
-                                      href={getCategoryHref(subChild)}
+                                      href={
+                                        child.title === 'سینک'
+                                          ? getSubCategoryHref(
+                                              child.title,
+                                              subChild
+                                            )
+                                          : getCategoryHref(subChild)
+                                      }
                                       onClick={closeAllMenus}
                                       className='block border-b border-slate-100 py-3 pr-3 text-sm text-slate-600 last:border-b-0 hover:text-slate-900'
                                     >
@@ -361,7 +371,14 @@ export default function Sidebar() {
                               {child.children.map((subChild) => (
                                 <Link
                                   key={subChild}
-                                  href={getCategoryHref(subChild)}
+                                  href={
+                                    child.title === 'سینک'
+                                      ? getSubCategoryHref(
+                                          child.title,
+                                          subChild
+                                        )
+                                      : getCategoryHref(subChild)
+                                  }
                                   onClick={closeAllMenus}
                                   className='block rounded-md px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-50 hover:text-slate-900'
                                 >

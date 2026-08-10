@@ -23,12 +23,16 @@ const mockProducts = data.products.map((product, index) => ({
 function filterProducts({
   query,
   category,
+  subCategory,
+  brand,
   tag,
   price,
   rating,
 }: {
   query?: string
   category?: string
+  subCategory?: string
+  brand?: string
   tag?: string
   price?: string
   rating?: string
@@ -45,6 +49,18 @@ function filterProducts({
     }
 
     if (category && category !== 'all' && product.category !== category) {
+      return false
+    }
+
+    if (
+      subCategory &&
+      subCategory !== 'all' &&
+      product.subCategory !== subCategory
+    ) {
+      return false
+    }
+
+    if (brand && brand !== 'all' && product.brand !== brand) {
       return false
     }
 
@@ -395,6 +411,8 @@ export async function getAllProducts({
   limit,
   page,
   category,
+  subCategory,
+  brand,
   tag,
   price,
   rating,
@@ -402,6 +420,8 @@ export async function getAllProducts({
 }: {
   query: string
   category: string
+  subCategory?: string
+  brand?: string
   tag: string
   limit?: number
   page: number
@@ -419,6 +439,8 @@ export async function getAllProducts({
     const filtered = filterProducts({
       query,
       category,
+      subCategory,
+      brand,
       tag,
       price,
       rating,
@@ -449,15 +471,11 @@ export async function getAllProducts({
         }
       : {}
 
- const categoryFilter =
-  category && category !== 'all'
-    ? {
-        $or: [
-          { category },
-          { subCategory: category },
-        ],
-      }
-    : {}
+  const categoryFilter =
+    category && category !== 'all' ? { category } : {}
+  const subCategoryFilter =
+    subCategory && subCategory !== 'all' ? { subCategory } : {}
+  const brandFilter = brand && brand !== 'all' ? { brand } : {}
   const tagFilter = tag && tag !== 'all' ? { tags: tag } : {}
 
   const ratingFilter =
@@ -497,6 +515,8 @@ export async function getAllProducts({
   ...queryFilter,
   ...tagFilter,
   ...categoryFilter,
+  ...subCategoryFilter,
+  ...brandFilter,
   ...priceFilter,
   ...ratingFilter,
 })
@@ -519,6 +539,8 @@ const uniqueProducts = Array.from(
     ...queryFilter,
     ...tagFilter,
     ...categoryFilter,
+    ...subCategoryFilter,
+    ...brandFilter,
     ...priceFilter,
     ...ratingFilter,
   })

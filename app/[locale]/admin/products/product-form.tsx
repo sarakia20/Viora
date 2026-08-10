@@ -30,6 +30,7 @@ const productDefaultValues: IProductInput = {
   name: '',
   slug: '',
   category: '',
+  subCategory: '',
   images: [],
   brand: '',
   description: '',
@@ -165,6 +166,23 @@ const ProductForm = ({
                 <FormControl>
                   <Input placeholder='دسته‌بندی محصول' {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='subCategory'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>زیر دسته‌بندی</FormLabel>
+                <FormControl>
+                  <Input placeholder='مثلا: گرانیتی' {...field} />
+                </FormControl>
+                <FormDescription>
+                  اگر محصول زیر دسته‌بندی ندارد، خالی بگذارید.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
