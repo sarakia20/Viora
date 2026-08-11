@@ -18,6 +18,7 @@ import { getTranslations } from 'next-intl/server'
 import { ChevronLeft } from 'lucide-react'
 
 import SearchSidebar from '@/components/shared/search-sidebar'
+import MobileSearchControls from '@/components/shared/mobile-search-controls'
 
 const sortOrders = [
   { value: 'price-low-to-high', name: 'قیمت: کم به زیاد' },
@@ -263,12 +264,25 @@ const cleanCategories = categories.filter(
       </p>
     </div>
 
-    <ProductSortSelector
-      sortOrders={sortOrders}
-      sort={sort}
-      params={params}
-    />
+    <div className='hidden md:block'>
+      <ProductSortSelector
+        sortOrders={sortOrders}
+        sort={sort}
+        params={params}
+      />
+    </div>
   </div>
+
+  <MobileSearchControls
+    categories={cleanCategories}
+    tags={tags}
+    params={params}
+    rating={rating}
+    price={price}
+    tag={tag ?? 'all'}
+    sortOrders={sortOrders}
+    sort={sort}
+  />
 
   <div className='mt-4 flex flex-wrap gap-2'>
     {category !== 'all' && category !== '' && (
@@ -332,7 +346,7 @@ const cleanCategories = categories.filter(
       </div>
 
       <div className='grid gap-5 bg-background md:grid-cols-[280px_1fr]'>
-       <aside className='order-2 md:order-1'>
+       <aside className='hidden md:order-1 md:block'>
   <CollapsibleOnMobile title={t('Search.Filters')}>
     <div className='sticky top-4 space-y-4'>
 

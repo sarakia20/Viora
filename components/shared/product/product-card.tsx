@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { IProduct } from '@/lib/db/models/product.model'
 
 import Rating from './rating'
-import {  generateId, round2 } from '@/lib/utils'
+import { generateId, round2 } from '@/lib/utils'
 import ProductPrice from './product-price'
 import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
@@ -42,6 +42,11 @@ const ProductCard = ({
             />
           </div>
         )}
+        {hideDetails && product.countInStock === 0 && (
+          <span className='absolute bottom-2 right-2 rounded-md bg-background/90 px-2 py-1 text-sm font-bold text-red-600 shadow-sm'>
+            ناموجود
+          </span>
+        )}
       </div>
     </Link>
   )
@@ -65,12 +70,18 @@ const ProductCard = ({
 </div>
 
 
-      <ProductPrice
-        isDeal={product.tags.includes('todays-deal')}
-        price={product.price}
-        listPrice={product.listPrice}
-        forListing
-      />
+      {product.countInStock > 0 ? (
+        <ProductPrice
+          isDeal={product.tags.includes('todays-deal')}
+          price={product.price}
+          listPrice={product.listPrice}
+          forListing
+        />
+      ) : (
+        <div className='flex min-h-[38px] w-full items-center justify-end'>
+          <span className='font-bold text-red-600'>ناموجود</span>
+        </div>
+      )}
     </div>
   )
   const AddButton = () => (
@@ -102,7 +113,7 @@ const ProductCard = ({
           <div className='p-3 flex-1 text-center'>
             <ProductDetails />
           </div>
-          {!hideAddToCart && <AddButton />}
+          {!hideAddToCart && product.countInStock > 0 && <AddButton />}
         </>
       )}
     </div>
@@ -117,7 +128,7 @@ const ProductCard = ({
             <ProductDetails />
           </CardContent>
           <CardFooter className='p-3'>
-            {!hideAddToCart && <AddButton />}
+            {!hideAddToCart && product.countInStock > 0 && <AddButton />}
           </CardFooter>
         </>
       )}
