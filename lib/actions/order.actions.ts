@@ -40,7 +40,7 @@ export const createOrder = async (clientSideCart: Cart) => {
     )
     return {
       success: true,
-      message: 'Order placed successfully',
+      message: 'سفارش شما با موفقیت ثبت شد',
       data: { orderId: createdOrder._id.toString() },
     }
   } catch (error) {
