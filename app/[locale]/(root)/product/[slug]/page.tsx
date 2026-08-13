@@ -18,20 +18,55 @@ import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
 
+const SITE_URL = 'https://viora-store.ir'
+const SITE_NAME = 'فروشگاه ویورا'
+
+function getAbsoluteUrl(path: string) {
+  return new URL(path, SITE_URL).toString()
+}
+
+function getSeoDescription(name: string, description?: string) {
+  const fallback = `خرید ${name} از فروشگاه ویورا با مشاهده مشخصات، قیمت و وضعیت موجودی محصول.`
+  const value = description?.trim().replace(/\s+/g, ' ') || fallback
+
+  return value.length > 160 ? `${value.slice(0, 157).trimEnd()}…` : value
+}
+
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
   const t = await getTranslations()
   const params = await props.params
-  const product = await getProductBySlug(params.slug)
+  const product = await getProductBySlug(params.slug).catch(() => null)
 
   if (!product) {
     return { title: t('Product.Product not found') }
   }
 
+  const title = `خرید ${product.name} | ${SITE_NAME}`
+  const description = getSeoDescription(product.name, product.description)
+  const canonical = getAbsoluteUrl(`/product/${product.slug}`)
+  const image = product.images.find((item) => item?.trim())
+  const images = image ? [getAbsoluteUrl(image)] : undefined
+
   return {
-    title: product.name,
-    description: product.description,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: SITE_NAME,
+      type: 'website',
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images,
+    },
   }
 }
 
@@ -48,6 +83,42 @@ export default async function ProductDetails(props: {
   const session = await auth()
   const product = await getProductBySlug(slug)
 
+  const canonical = getAbsoluteUrl(`/product/${product.slug}`)
+  const description = getSeoDescription(product.name, product.description)
+  const images = product.images
+    .filter((image) => image?.trim())
+    .map(getAbsoluteUrl)
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description,
+    image: images,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand,
+    },
+    offers: {
+      '@type': 'Offer',
+      url: canonical,
+      priceCurrency: 'IRR',
+      price: product.price * 10,
+      availability:
+        product.countInStock > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+    },
+    ...(product.numReviews > 0 && product.avgRating > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.avgRating,
+            reviewCount: product.numReviews,
+          },
+        }
+      : {}),
+  }
+
   const relatedProducts = await getRelatedProductsByCategory({
     category: product.category,
     productId: product._id.toString(),
@@ -58,6 +129,12 @@ export default async function ProductDetails(props: {
 
   return (
     <div>
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       <AddToBrowsingHistory id={product._id.toString()} category={product.category} />
 
       <section>
