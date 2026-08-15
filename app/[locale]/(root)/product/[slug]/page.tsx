@@ -11,6 +11,7 @@ import { generateId, round2 } from '@/lib/utils'
 import SelectVariant from '@/components/shared/product/select-variant'
 import ProductPrice from '@/components/shared/product/product-price'
 import ProductGallery from '@/components/shared/product/product-gallery'
+import ProductVariantDetails from '@/components/shared/product/product-variant-details'
 import AddToBrowsingHistory from '@/components/shared/product/add-to-browsing-history'
 import { Separator } from '@/components/ui/separator'
 import BrowsingHistoryList from '@/components/shared/browsing-history-list'
@@ -138,6 +139,12 @@ export default async function ProductDetails(props: {
       <AddToBrowsingHistory id={product._id.toString()} category={product.category} />
 
       <section>
+        {product.variants && product.variants.length > 0 ? (
+          <ProductVariantDetails
+            product={product}
+            initialSize={size || product.sizes[0] || ''}
+          />
+        ) : (
         <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
           <div className='min-w-0 md:col-span-2'>
             <ProductGallery images={product.images} />
@@ -240,6 +247,7 @@ export default async function ProductDetails(props: {
             </Card>
           </div>
         </div>
+        )}
       </section>
 
       <section className='mt-10 sm:mt-16'>

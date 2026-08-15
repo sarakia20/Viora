@@ -45,6 +45,17 @@ export const ProductInputSchema = z.object({
   tags: z.array(z.string()).default([]),
   sizes: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),
+  variants: z
+    .array(
+      z.object({
+        color: z.string(),
+        image: z.string(),
+        price: z.number(),
+        listPrice: z.number(),
+        countInStock: z.number(),
+      })
+    )
+    .optional(),
   avgRating: z.coerce
     .number()
     .min(0, 'Average rating must be at least 0')

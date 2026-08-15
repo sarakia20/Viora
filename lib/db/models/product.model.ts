@@ -69,6 +69,17 @@ const productSchema = new Schema<IProduct>(
       default: ['White', 'Red', 'Black'],
     },
 
+    variants: [
+      {
+        color: String,
+        image: String,
+        price: Number,
+        listPrice: Number,
+        countInStock: Number,
+        _id: false,
+      },
+    ],
+
     sizes: {
       type: [String],
       default: ['S', 'M', 'L'],
