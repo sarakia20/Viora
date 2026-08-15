@@ -194,7 +194,14 @@ export default function Sidebar() {
                             >
                               <div className='flex items-center'>
                                 <Link
-                                  href={getCategoryHref(child.title)}
+                                  href={
+                                    item.title === 'اکسسوری'
+                                      ? getSubCategoryHref(
+                                          item.title,
+                                          child.title
+                                        )
+                                      : getCategoryHref(child.title)
+                                  }
                                   onClick={closeAllMenus}
                                   className='flex-1 px-3 py-3 text-sm font-medium text-slate-800'
                                 >
@@ -351,7 +358,14 @@ export default function Sidebar() {
                           }}
                         >
                           <Link
-                            href={getCategoryHref(child.title)}
+                            href={
+                              activeItem.title === 'اکسسوری'
+                                ? getSubCategoryHref(
+                                    activeItem.title,
+                                    child.title
+                                  )
+                                : getCategoryHref(child.title)
+                            }
                             onClick={closeAllMenus}
                             className='flex items-center justify-between rounded-lg border-r-2 border-slate-900 px-3 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50'
                           >
