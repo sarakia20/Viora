@@ -34,6 +34,7 @@ const categoryGroups: Record<string, CategoryItem[]> = {
     },
     { title: 'گاز' },
     { title: 'فر' },
+    { title: 'ماکروویو' },
   ],
 
   شیرآلات: [
