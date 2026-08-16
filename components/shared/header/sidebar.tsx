@@ -16,7 +16,13 @@ type CategoryItem = {
 
 const categoryGroups: Record<string, CategoryItem[]> = {
   'چینی آلات بهداشتی': [
-    { title: 'توالت فرنگی' },
+    {
+      title: 'توالت فرنگی',
+      children: [
+        'توالت فرنگی یک تکه',
+        'توالت فرنگی وال هنگ',
+      ],
+    },
     { title: 'توالت ایرانی' },
     { title: 'روشویی' },
     { title: 'فلاش تانک' },
@@ -239,7 +245,8 @@ export default function Sidebar() {
                                     <Link
                                       key={subChild}
                                       href={
-                                        child.title === 'سینک'
+                                        child.title === 'سینک' ||
+                                        child.title === 'توالت فرنگی'
                                           ? getSubCategoryHref(
                                               child.title,
                                               subChild
@@ -387,7 +394,8 @@ export default function Sidebar() {
                                 <Link
                                   key={subChild}
                                   href={
-                                    child.title === 'سینک'
+                                    child.title === 'سینک' ||
+                                    child.title === 'توالت فرنگی'
                                       ? getSubCategoryHref(
                                           child.title,
                                           subChild
