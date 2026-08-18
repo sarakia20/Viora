@@ -119,6 +119,48 @@ export default async function ProductDetails(props: {
         }
       : {}),
   }
+  const categoryParams = new URLSearchParams({ category: product.category })
+  const subCategory = product.subCategory?.trim()
+  const breadcrumbItems = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'خانه',
+      item: SITE_URL,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: product.category,
+      item: getAbsoluteUrl(`/search?${categoryParams.toString()}`),
+    },
+  ]
+
+  if (subCategory) {
+    const subCategoryParams = new URLSearchParams({
+      category: product.category,
+      subCategory,
+    })
+    breadcrumbItems.push({
+      '@type': 'ListItem',
+      position: breadcrumbItems.length + 1,
+      name: subCategory,
+      item: getAbsoluteUrl(`/search?${subCategoryParams.toString()}`),
+    })
+  }
+
+  breadcrumbItems.push({
+    '@type': 'ListItem',
+    position: breadcrumbItems.length + 1,
+    name: product.name,
+    item: canonical,
+  })
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems,
+  }
 
   const relatedProducts = await getRelatedProductsByCategory({
     category: product.category,
@@ -134,6 +176,12 @@ export default async function ProductDetails(props: {
         type='application/ld+json'
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c'),
         }}
       />
       <AddToBrowsingHistory id={product._id.toString()} category={product.category} />

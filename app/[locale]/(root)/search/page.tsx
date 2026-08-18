@@ -284,6 +284,50 @@ export default async function SearchPage(props: {
     sort = 'best-selling',
     page = '1',
   } = searchParams
+  const hasCategory = Boolean(category && category !== 'all')
+  const hasSubCategory = Boolean(subCategory && subCategory !== 'all')
+  const breadcrumbItems = hasCategory
+    ? [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'خانه',
+          item: SITE_URL,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: category,
+          item: new URL(
+            `/search?${new URLSearchParams({ category }).toString()}`,
+            SITE_URL
+          ).toString(),
+        },
+        ...(hasSubCategory
+          ? [
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: subCategory,
+                item: new URL(
+                  `/search?${new URLSearchParams({
+                    category,
+                    subCategory,
+                  }).toString()}`,
+                  SITE_URL
+                ).toString(),
+              },
+            ]
+          : []),
+      ]
+    : null
+  const breadcrumbJsonLd = breadcrumbItems
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbItems,
+      }
+    : null
 
   const params = {
     q,
@@ -322,6 +366,14 @@ const cleanCategories = categories.filter(
 
   return (
     <div className='space-y-4'>
+      {breadcrumbJsonLd && (
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+      )}
       <div className='rounded-xl border bg-card p-4'>
   <div className='flex flex-wrap items-center justify-between gap-3'>
     <div>
