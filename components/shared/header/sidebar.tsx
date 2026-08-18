@@ -201,7 +201,8 @@ export default function Sidebar() {
                               <div className='flex items-center'>
                                 <Link
                                   href={
-                                    item.title === 'اکسسوری'
+                                    item.title === 'اکسسوری' ||
+                                    item.title === 'شیرآلات'
                                       ? getSubCategoryHref(
                                           item.title,
                                           child.title
@@ -366,7 +367,8 @@ export default function Sidebar() {
                         >
                           <Link
                             href={
-                              activeItem.title === 'اکسسوری'
+                              activeItem.title === 'اکسسوری' ||
+                              activeItem.title === 'شیرآلات'
                                 ? getSubCategoryHref(
                                     activeItem.title,
                                     child.title
