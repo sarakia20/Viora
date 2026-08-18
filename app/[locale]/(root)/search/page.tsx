@@ -1,5 +1,6 @@
 
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
@@ -147,47 +148,113 @@ function FilterBox({
   )
 }
 
-export async function generateMetadata(props: {
-  searchParams: Promise<{
-    q: string
-    category: string
-    subCategory: string
-    brand: string
-    tag: string
-    price: string
-    rating: string
-    sort: string
-    page: string
-  }>
-}) {
-  const searchParams = await props.searchParams
-  const t = await getTranslations()
-  const {
-    q = 'all',
-    category = 'all',
-    tag = 'all',
-    price = 'all',
-    rating = 'all',
-  } = searchParams
+type SearchMetadataParams = Record<string, string | string[] | undefined>
 
-  if (
-    (q !== 'all' && q !== '') ||
-    category !== 'all' ||
-    tag !== 'all' ||
-    rating !== 'all' ||
-    price !== 'all'
-  ) {
-    return {
-      title: `${t('Search.Search')} ${q !== 'all' ? q : ''}
-          ${category !== 'all' ? ` : ${t('Search.Category')} ${category}` : ''}
-          ${tag !== 'all' ? ` : ${t('Search.Tag')} ${tag}` : ''}
-          ${price !== 'all' ? ` : ${t('Search.Price')} ${price}` : ''}
-          ${rating !== 'all' ? ` : ${t('Search.Rating')} ${rating}` : ''}`,
-    }
-  }
+const SITE_URL = 'https://viora-store.ir'
+const SITE_NAME = 'ویورا'
+
+const categorySeo: Record<string, { title: string; description: string }> = {
+  سینک: {
+    title: 'خرید سینک ظرفشویی | قیمت و انواع سینک آشپزخانه | ویورا',
+    description:
+      'انواع سینک ظرفشویی و آشپزخانه را با بررسی مدل‌ها، مشخصات و قیمت در فروشگاه ویورا مقایسه و انتخاب کنید.',
+  },
+  شیرآلات: {
+    title: 'خرید شیرآلات ساختمانی | قیمت انواع شیرآلات | ویورا',
+    description:
+      'انواع شیرآلات ساختمانی را با مشاهده مدل‌ها، مشخصات و قیمت در فروشگاه ویورا بررسی و برای فضای مورد نظر خود انتخاب کنید.',
+  },
+  'توالت فرنگی': {
+    title: 'خرید توالت فرنگی | قیمت انواع توالت فرنگی | ویورا',
+    description:
+      'مدل‌های مختلف توالت فرنگی را با بررسی مشخصات، طراحی و قیمت در فروشگاه ویورا مقایسه و انتخاب کنید.',
+  },
+  اکسسوری: {
+    title: 'خرید اکسسوری سرویس بهداشتی | قیمت و مدل‌ها | ویورا',
+    description:
+      'انواع اکسسوری سرویس بهداشتی را با مشاهده مدل‌ها، کاربرد و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.',
+  },
+}
+
+const subCategorySeo: Record<string, { title: string; description: string }> = {
+  'شیر آشپزخانه': {
+    title: 'خرید شیر آشپزخانه | قیمت انواع شیر ظرفشویی | ویورا',
+    description:
+      'انواع شیر آشپزخانه و شیر ظرفشویی را با بررسی طراحی، مشخصات و قیمت در فروشگاه ویورا مقایسه و انتخاب کنید.',
+  },
+  جامایع: {
+    title: 'خرید جامایع | قیمت انواع جا مایع سرویس بهداشتی | ویورا',
+    description:
+      'مدل‌های مختلف جامایع سرویس بهداشتی را با مشاهده طراحی، جنس و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.',
+  },
+  'جا مایع': {
+    title: 'خرید جامایع | قیمت انواع جا مایع سرویس بهداشتی | ویورا',
+    description:
+      'مدل‌های مختلف جامایع سرویس بهداشتی را با مشاهده طراحی، جنس و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.',
+  },
+  'توالت فرنگی یک تکه': {
+    title: 'خرید توالت فرنگی یک تکه | قیمت و مدل‌ها | ویورا',
+    description:
+      'انواع توالت فرنگی یک تکه را با بررسی ابعاد، طراحی، مشخصات و قیمت در فروشگاه ویورا مقایسه و انتخاب کنید.',
+  },
+  'توالت فرنگی وال هنگ': {
+    title: 'خرید توالت فرنگی وال هنگ | قیمت و مدل‌ها | ویورا',
+    description:
+      'انواع توالت فرنگی وال هنگ را با بررسی طراحی، ابعاد، مشخصات و قیمت در فروشگاه ویورا مقایسه و انتخاب کنید.',
+  },
+}
+
+function getSingleParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export async function generateMetadata(props: {
+  searchParams: Promise<SearchMetadataParams>
+}): Promise<Metadata> {
+  const searchParams = await props.searchParams
+  const category = getSingleParam(searchParams.category)?.trim()
+  const subCategory = getSingleParam(searchParams.subCategory)?.trim()
+  const hasCategory = Boolean(category && category !== 'all')
+  const hasSubCategory = Boolean(subCategory && subCategory !== 'all')
+  const seo = hasSubCategory
+    ? subCategorySeo[subCategory!] ?? {
+        title: `خرید ${subCategory} | قیمت و مدل‌ها | ویورا`,
+        description: `انواع ${subCategory} را با مشاهده مدل‌ها، مشخصات و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.`,
+      }
+    : hasCategory
+      ? categorySeo[category!] ?? {
+          title: `خرید ${category} | قیمت و مدل‌ها | ویورا`,
+          description: `انواع ${category} را با مشاهده مدل‌ها، مشخصات و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.`,
+        }
+      : {
+          title: 'جستجوی محصولات | ویورا',
+          description: 'محصولات فروشگاه ویورا را جستجو و بر اساس نیاز خود مقایسه کنید.',
+        }
+
+  const canonicalParams = new URLSearchParams()
+  if (hasCategory) canonicalParams.set('category', category!)
+  if (hasSubCategory) canonicalParams.set('subCategory', subCategory!)
+  const query = canonicalParams.toString()
+  const canonical = new URL(`/search${query ? `?${query}` : ''}`, SITE_URL).toString()
+  const allowedParams = new Set(['category', 'subCategory'])
+  const hasExtraFilters = Object.keys(searchParams).some(
+    (key) => !allowedParams.has(key)
+  )
+  const indexable = hasCategory && !hasExtraFilters
 
   return {
-    title: t('Search.Search Products'),
+    title: { absolute: seo.title },
+    description: seo.description,
+    alternates: { canonical },
+    robots: { index: indexable, follow: true },
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      url: canonical,
+      siteName: SITE_NAME,
+      type: 'website',
+      locale: 'fa_IR',
+    },
   }
 }
 
