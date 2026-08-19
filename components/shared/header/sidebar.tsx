@@ -25,7 +25,13 @@ const categoryGroups: Record<string, CategoryItem[]> = {
     },
     { title: 'توالت ایرانی' },
     { title: 'روشویی' },
-    { title: 'فلاش تانک' },
+    {
+      title: 'فلاش تانک',
+      children: [
+        'فلاش تانک توکار',
+        'فلاش تانک روکار',
+      ],
+    },
   ],
 
   'تجهیزات آشپزخانه': [
