@@ -13,6 +13,7 @@ const publicPages = [
   '/cart',
   '/cart/(.*)',
   '/product/(.*)',
+  '/category/(.*)',
   '/page/(.*)',
 ]
 
