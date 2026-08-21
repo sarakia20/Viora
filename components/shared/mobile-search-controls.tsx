@@ -27,6 +27,7 @@ type SearchParams = {
 
 export default function MobileSearchControls({
   categories,
+  brands,
   tags,
   params,
   rating,
@@ -36,6 +37,7 @@ export default function MobileSearchControls({
   sort,
 }: {
   categories: string[]
+  brands: string[]
   tags: string[]
   params: SearchParams
   rating: string
@@ -63,6 +65,7 @@ export default function MobileSearchControls({
           </SheetHeader>
           <SearchSidebar
             categories={categories}
+            brands={brands}
             tags={tags}
             params={params}
             rating={rating}

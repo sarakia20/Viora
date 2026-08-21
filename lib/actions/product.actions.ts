@@ -271,6 +271,41 @@ export async function getAllCategories() {
    return JSON.parse(JSON.stringify(categories))
 }
 
+export async function getBrandsByCategory({
+  category,
+  subCategory,
+}: {
+  category?: string
+  subCategory?: string
+}) {
+  const matchesSelection = (product: IProduct) =>
+    product.isPublished &&
+    (!category || category === 'all' || product.category === category) &&
+    (!subCategory ||
+      subCategory === 'all' ||
+      product.subCategory === subCategory)
+
+  const brands = isSkipDb
+    ? mockProducts.filter(matchesSelection).map((product) => product.brand)
+    : await (async () => {
+        await connectToDatabase()
+        return Product.find({
+          isPublished: true,
+          ...(category && category !== 'all' ? { category } : {}),
+          ...(subCategory && subCategory !== 'all' ? { subCategory } : {}),
+        }).distinct('brand')
+      })()
+
+  return Array.from(
+    new Set(
+      brands
+        .filter((brand): brand is string => typeof brand === 'string')
+        .map((brand) => brand.trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, 'fa'))
+}
+
 export async function getProductsForCard({
   tag,
   limit = 4,

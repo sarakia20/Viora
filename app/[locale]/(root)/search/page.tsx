@@ -9,6 +9,7 @@ import {
   getAllCategories,
   getAllProducts,
   getAllTags,
+  getBrandsByCategory,
 } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
@@ -343,6 +344,7 @@ export default async function SearchPage(props: {
 
   const categories = await getAllCategories()
   const tags = await getAllTags()
+  const brands = await getBrandsByCategory({ category, subCategory })
   const data = await getAllProducts({
     category,
     subCategory,
@@ -394,6 +396,7 @@ const cleanCategories = categories.filter(
 
   <MobileSearchControls
     categories={cleanCategories}
+    brands={brands}
     tags={tags}
     params={params}
     rating={rating}
@@ -472,6 +475,7 @@ const cleanCategories = categories.filter(
       {/* SIDEBAR جدید (دیجی‌کالا استایل) */}
       <SearchSidebar
         categories={cleanCategories}
+        brands={brands}
         tags={tags}
         params={params}
         rating={rating}

@@ -241,9 +241,20 @@ export default async function ProductDetails(props: {
 
             <div className='flex flex-col gap-2'>
               <p className='p-bold-20 text-grey-600'>توضیحات:</p>
-              <p className='p-medium-16 lg:p-regular-18 leading-8 whitespace-pre-line'>
-  {product.description}
-</p>
+              <div className='p-medium-16 lg:p-regular-18 space-y-1 leading-8'>
+                {product.description
+                  .split(/\r?\n/)
+                  .map((line) => line.trim())
+                  .filter(Boolean)
+                  .map((line, index) => (
+                    <p key={index} className='flex items-start gap-2'>
+                      <span className='text-green-600' aria-hidden='true'>
+                        ✓
+                      </span>
+                      <span>{line}</span>
+                    </p>
+                  ))}
+              </div>
             </div>
           </div>
 

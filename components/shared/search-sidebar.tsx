@@ -24,7 +24,6 @@ const kitchenSubCategories = ['هود', 'سینک', 'گاز']
 const bathroomAccessoriesSubCategories = ['جا مایع', 'جا دستمال']
 
 const sinkSubCategories = ['گرانیتی', 'استیل توکار', 'سینک های دست ساز']
-const brands = ['میکس پلاس', 'سیمر']
 
 function getTagName(tag: string) {
   switch (tag) {
@@ -123,6 +122,7 @@ function CategoryGroup({
 
 export default function SearchSidebar({
   categories,
+  brands,
   tags,
   params,
   rating,
@@ -130,6 +130,7 @@ export default function SearchSidebar({
   tag,
 }: {
   categories: string[]
+  brands: string[]
   tags: string[]
   params: {
     q?: string
