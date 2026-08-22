@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import Pagination from '@/components/shared/pagination'
@@ -123,7 +124,7 @@ export default async function CategoryPage(props: {
 
       <header className='rounded-xl border bg-card p-5 sm:p-7'>
         <h1 className='text-2xl font-bold sm:text-3xl'>
-          {category.productCategory}
+          {category.h1}
         </h1>
         <p className='mt-3 max-w-4xl leading-8 text-muted-foreground'>
           {category.intro}
@@ -156,6 +157,36 @@ export default async function CategoryPage(props: {
           <Pagination page={page} totalPages={data.totalPages} />
         )}
       </section>
+
+      {page === 1 && (
+        <section
+          aria-labelledby='category-guide-title'
+          className='mx-auto max-w-4xl space-y-5 pb-4 text-right leading-8'
+          dir='rtl'
+        >
+          <h2 id='category-guide-title' className='text-xl font-bold sm:text-2xl'>
+            {category.guideTitle}
+          </h2>
+          <div className='space-y-4 text-sm text-muted-foreground sm:text-base'>
+            {category.guideParagraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+          {category.guideLinks && (
+            <nav aria-label='دسته‌های مرتبط' className='flex flex-wrap gap-x-5 gap-y-2'>
+              {category.guideLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className='font-medium text-primary underline-offset-4 hover:underline'
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+        </section>
+      )}
     </div>
   )
 }
