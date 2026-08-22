@@ -22,6 +22,10 @@ const ProductCard = ({
   hideBorder?: boolean
   hideAddToCart?: boolean
 }) => {
+  const imageSizes = hideDetails
+    ? '(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 17vw'
+    : '(max-width: 639px) 82vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw'
+
   const ProductImage = () => (
     <Link href={`/product/${product.slug}`}>
       <div className='relative h-40 sm:h-52'>
@@ -30,6 +34,7 @@ const ProductCard = ({
             src={product.images[0]}
             hoverSrc={product.images[1]}
             alt={product.name}
+            sizes={imageSizes}
           />
         ) : (
           <div className='relative h-40 sm:h-52'>
@@ -37,7 +42,7 @@ const ProductCard = ({
               src={product.images[0]}
               alt={product.name}
               fill
-              sizes='80vw'
+              sizes={imageSizes}
               className='object-contain'
             />
           </div>

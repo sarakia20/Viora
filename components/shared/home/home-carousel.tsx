@@ -18,7 +18,7 @@ import { ICarousel } from '@/types'
 export function HomeCarousel({ items }: { items: ICarousel[] }) {
   const plugin = React.useRef(
     Autoplay({
-      delay: 4500,
+      delay: 10000,
       stopOnInteraction: true,
     })
   )
@@ -54,7 +54,7 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
       onMouseLeave={plugin.current.reset}
     >
       <CarouselContent className='ml-0'>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <CarouselItem key={item.title} className='pl-0'>
             <Link href={item.url} className='block'>
               <div className='relative aspect-[2/1] w-full overflow-hidden bg-[#f4f2ef] sm:aspect-[8/3]'>
@@ -62,7 +62,8 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
                   src={item.image}
                   alt={item.title}
                   fill
-                  priority
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
                   sizes='100vw'
                   className='object-contain object-center lg:object-cover'
                 />

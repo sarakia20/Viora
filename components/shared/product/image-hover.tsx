@@ -1,26 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 const ImageHover = ({
   src,
   hoverSrc,
   alt,
+  sizes,
 }: {
   src: string
   hoverSrc: string
   alt: string
+  sizes: string
 }) => {
   const [isHovered, setIsHovered] = useState(false)
-  let hoverTimeout: any
+  const [shouldLoadHover, setShouldLoadHover] = useState(false)
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isPointerOver = useRef(false)
+  const isHoverDelayElapsed = useRef(false)
+  const isHoverImageLoaded = useRef(false)
+
   const handleMouseEnter = () => {
-    hoverTimeout = setTimeout(() => setIsHovered(true), 1000) // 1 second delay
+    isPointerOver.current = true
+    setShouldLoadHover(true)
+    hoverTimeout.current = setTimeout(() => {
+      isHoverDelayElapsed.current = true
+      if (isHoverImageLoaded.current) setIsHovered(true)
+    }, 1000)
   }
 
   const handleMouseLeave = () => {
-    clearTimeout(hoverTimeout)
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current)
+    isPointerOver.current = false
+    isHoverDelayElapsed.current = false
     setIsHovered(false)
+  }
+
+  const handleHoverImageLoad = () => {
+    isHoverImageLoaded.current = true
+    if (isPointerOver.current && isHoverDelayElapsed.current) {
+      setIsHovered(true)
+    }
   }
 
   return (
@@ -33,20 +54,23 @@ const ImageHover = ({
         src={src}
         alt={alt}
         fill
-        sizes='80vw'
+        sizes={sizes}
         className={`object-contain transition-opacity duration-500 ${
           isHovered ? 'opacity-0' : 'opacity-100'
         }`}
       />
-      <Image
-        src={hoverSrc}
-        alt={alt}
-        fill
-        sizes='80vw'
-        className={`absolute inset-0 object-contain transition-opacity duration-500 ${
-          isHovered ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
+      {shouldLoadHover && (
+        <Image
+          src={hoverSrc}
+          alt={alt}
+          fill
+          sizes={sizes}
+          onLoad={handleHoverImageLoad}
+          className={`absolute inset-0 object-contain transition-opacity duration-500 ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
     </div>
   )
 }
