@@ -66,6 +66,9 @@ export default async function AppLayout({
       dir={getDirection(locale) === 'rtl' ? 'rtl' : 'ltr'}
       suppressHydrationWarning
     >
+      <head>
+        <meta name="enamad" content="139992475" />
+      </head>
       <body
         className={`min-h-screen ${geistSans.variable} ${geistMono.variable} ${vazir.variable} antialiased`}
       >
