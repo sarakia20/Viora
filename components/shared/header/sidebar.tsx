@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { getCategoryLandingPath } from '@/lib/category-config'
 
 type CategoryItem = {
   title: string
@@ -70,6 +71,7 @@ const categoryGroups: Record<string, CategoryItem[]> = {
 }
 
 const getCategoryHref = (category: string) =>
+  getCategoryLandingPath(category) ??
   `/search?category=${encodeURIComponent(category)}`
 
 const getSubCategoryHref = (category: string, subCategory: string) =>

@@ -104,3 +104,11 @@ export type CategorySlug = keyof typeof categoryConfig
 export function getCategoryConfig(slug: string): CategoryConfig | undefined {
   return categoryConfig[slug as CategorySlug]
 }
+
+export function getCategoryLandingPath(productCategory: string) {
+  const category = Object.values(categoryConfig).find(
+    (item) => item.productCategory === productCategory
+  )
+
+  return category ? `/category/${category.slug}` : undefined
+}

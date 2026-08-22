@@ -10,6 +10,7 @@ import {
   getAllCategories,
 } from '@/lib/actions/product.actions'
 import { getSetting } from '@/lib/actions/setting.actions'
+import { getCategoryLandingPath } from '@/lib/category-config'
 import { getTranslations } from 'next-intl/server'
 
 const categoryImages: Record<string, string> = {
@@ -45,7 +46,8 @@ export default async function HomePage() {
       items: categories.map((category: string) => ({
         name: category,
         image: categoryImages[category] || '/images/category-default.jpg',
-        href: `/search?category=${category}`,
+        href:
+          getCategoryLandingPath(category) ?? `/search?category=${category}`,
       })),
     },
     {

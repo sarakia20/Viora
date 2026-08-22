@@ -18,6 +18,7 @@ import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
+import { getCategoryLandingPath } from '@/lib/category-config'
 
 const SITE_URL = 'https://viora-store.ir'
 const SITE_NAME = 'فروشگاه ویورا'
@@ -127,6 +128,7 @@ export default async function ProductDetails(props: {
       : {}),
   }
   const categoryParams = new URLSearchParams({ category: product.category })
+  const categoryLandingPath = getCategoryLandingPath(product.category)
   const subCategory = product.subCategory?.trim()
   const breadcrumbItems = [
     {
@@ -139,7 +141,9 @@ export default async function ProductDetails(props: {
       '@type': 'ListItem',
       position: 2,
       name: product.category,
-      item: getAbsoluteUrl(`/search?${categoryParams.toString()}`),
+      item: getAbsoluteUrl(
+        categoryLandingPath ?? `/search?${categoryParams.toString()}`
+      ),
     },
   ]
 
