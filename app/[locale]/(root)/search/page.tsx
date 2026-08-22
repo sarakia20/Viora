@@ -12,6 +12,7 @@ import {
   getBrandsByCategory,
 } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
+import { categoryConfig } from '@/lib/category-config'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
@@ -236,12 +237,24 @@ export async function generateMetadata(props: {
   if (hasCategory) canonicalParams.set('category', category!)
   if (hasSubCategory) canonicalParams.set('subCategory', subCategory!)
   const query = canonicalParams.toString()
-  const canonical = new URL(`/search${query ? `?${query}` : ''}`, SITE_URL).toString()
+  const searchCanonical = new URL(
+    `/search${query ? `?${query}` : ''}`,
+    SITE_URL
+  ).toString()
   const allowedParams = new Set(['category', 'subCategory'])
   const hasExtraFilters = Object.keys(searchParams).some(
     (key) => !allowedParams.has(key)
   )
-  const indexable = hasCategory && !hasExtraFilters
+  const landingCategory = Object.values(categoryConfig).find(
+    (item) => item.productCategory === category
+  )
+  const isCategoryOnlyLandingSearch = Boolean(
+    landingCategory && hasCategory && !hasSubCategory && !hasExtraFilters
+  )
+  const canonical = isCategoryOnlyLandingSearch
+    ? new URL(`/category/${landingCategory!.slug}`, SITE_URL).toString()
+    : searchCanonical
+  const indexable = hasCategory && !hasExtraFilters && !isCategoryOnlyLandingSearch
 
   return {
     title: { absolute: seo.title },

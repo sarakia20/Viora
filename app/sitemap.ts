@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 
 import { connectToDatabase } from '@/lib/db'
 import Product from '@/lib/db/models/product.model'
+import { categoryConfig } from '@/lib/category-config'
 
 const SITE_URL = 'https://viora-store.ir'
 
@@ -14,6 +15,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/page/about-us',
   ].map((route) => ({ url: `${SITE_URL}${route}` }))
 
+  const categoryRoutes: MetadataRoute.Sitemap = Object.values(
+    categoryConfig
+  ).map((category) => ({
+    url: `${SITE_URL}/category/${category.slug}`,
+  }))
+
   await connectToDatabase()
 
   const products = await Product.find({ isPublished: true })
@@ -25,5 +32,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(product.updatedAt ? { lastModified: product.updatedAt } : {}),
   }))
 
-  return [...staticRoutes, ...productRoutes]
+  return [...staticRoutes, ...categoryRoutes, ...productRoutes]
 }
