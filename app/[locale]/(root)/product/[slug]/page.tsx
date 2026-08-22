@@ -89,12 +89,19 @@ export default async function ProductDetails(props: {
   const images = product.images
     .filter((image) => image?.trim())
     .map(getAbsoluteUrl)
+  const initialVariant = product.variants?.[0]
+  const variantImage = initialVariant?.image?.trim()
+    ? getAbsoluteUrl(initialVariant.image)
+    : undefined
+  const schemaImages = variantImage
+    ? [variantImage, ...images.filter((image) => image !== variantImage)]
+    : images
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description,
-    image: images,
+    image: schemaImages,
     brand: {
       '@type': 'Brand',
       name: product.brand,
@@ -103,9 +110,9 @@ export default async function ProductDetails(props: {
       '@type': 'Offer',
       url: canonical,
       priceCurrency: 'IRR',
-      price: product.price * 10,
+      price: (initialVariant?.price ?? product.price) * 10,
       availability:
-        product.countInStock > 0
+        (initialVariant?.countInStock ?? product.countInStock) > 0
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
     },
