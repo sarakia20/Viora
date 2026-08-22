@@ -4,7 +4,6 @@ import {
   Headphones,
   Truck,
   Instagram,
-  MessageCircle,
   Send,
 } from 'lucide-react'
 
@@ -73,38 +72,20 @@ export default function Footer() {
 
             <div className='flex items-center justify-center gap-5 text-slate-400'>
               <Link
-                href='https://instagram.com'
+                href='https://t.me/Viora_RM'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='hover:text-slate-700'
+              >
+                <Send className='h-7 w-7' />
+              </Link>
+
+              <Link
+                href='https://www.instagram.com/viora.rm'
                 target='_blank'
                 className='hover:text-slate-700'
               >
                 <Instagram className='h-7 w-7' />
-              </Link>
-
-              <Link
-  href='https://t.me/Viora_RM'
-  target='_blank'
-  rel='noopener noreferrer'
-  className='hover:text-slate-700'
->
-  <Send className='h-7 w-7' />
-</Link>
-
-              <Link
-                href='https://wa.me/989xxxxxxxxx'
-                target='_blank'
-                className='hover:text-slate-700'
-              >
-                <MessageCircle className='h-7 w-7' />
-              </Link>
-
-              <Link
-                href='https://ble.ir'
-                target='_blank'
-                className='hover:text-slate-700'
-              >
-                <div className='flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-bold'>
-                  ب
-                </div>
               </Link>
             </div>
           </div>
