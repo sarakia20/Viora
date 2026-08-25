@@ -45,7 +45,14 @@ const categoryGroups: Record<string, CategoryItem[]> = {
         'سینک های دست ساز',
       ],
     },
-    { title: 'گاز' },
+    {
+      title: 'اجاق گاز',
+      children: [
+        'اجاق گاز استیل',
+        'اجاق گاز شیشه‌ای',
+        'اجاق گاز برقی',
+      ],
+    },
     { title: 'فر' },
     { title: 'ماکروویو' },
   ],
@@ -255,6 +262,7 @@ export default function Sidebar() {
                                       key={subChild}
                                       href={
                                         child.title === 'سینک' ||
+                                        child.title === 'اجاق گاز' ||
                                         child.title === 'توالت فرنگی'
                                           ? getSubCategoryHref(
                                               child.title,
@@ -405,6 +413,7 @@ export default function Sidebar() {
                                   key={subChild}
                                   href={
                                     child.title === 'سینک' ||
+                                    child.title === 'اجاق گاز' ||
                                     child.title === 'توالت فرنگی'
                                       ? getSubCategoryHref(
                                           child.title,
