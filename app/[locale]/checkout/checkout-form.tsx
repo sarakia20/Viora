@@ -190,7 +190,7 @@ const CheckoutForm = () => {
       {shippingPrice === undefined ? (
         '--'
       ) : shippingPrice === 0 ? (
-        'رایگان'
+        'ارسال رایگان'
       ) : (
         <ProductPrice price={shippingPrice} plain />
       )}

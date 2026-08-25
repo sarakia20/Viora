@@ -328,8 +328,7 @@ export const calcDeliveryDateAndPrice = async ({
   const shippingPrice =
     !shippingAddress || !deliveryDate
       ? undefined
-      : deliveryDate.freeShippingMinPrice > 0 &&
-          itemsPrice >= deliveryDate.freeShippingMinPrice
+      : shippingAddress.city === 'تهران'
         ? 0
         : deliveryDate.shippingPrice
 

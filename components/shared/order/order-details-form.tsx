@@ -139,7 +139,11 @@ export default function OrderDetailsForm({
               <div>هزینه ارسال</div>
               <div>
                 {' '}
-                <ProductPrice price={shippingPrice} plain />
+                {shippingPrice === 0 ? (
+                  'ارسال رایگان'
+                ) : (
+                  <ProductPrice price={shippingPrice} plain />
+                )}
               </div>
             </div>
             <div className='flex justify-between'>

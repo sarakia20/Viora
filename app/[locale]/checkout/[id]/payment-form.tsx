@@ -97,7 +97,7 @@ export default function OrderDetailsForm({
                 {shippingPrice === undefined ? (
                   '--'
                 ) : shippingPrice === 0 ? (
-                  'رایگان'
+                  'ارسال رایگان'
                 ) : (
                   <ProductPrice price={shippingPrice} plain />
                 )}
