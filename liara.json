@@ -1,1 +1,8 @@
-{"next":{"modifyConfig":false}}
+{
+  "next": {
+    "modifyConfig": false
+  },
+  "node": {
+    "mirror": false
+  }
+}
