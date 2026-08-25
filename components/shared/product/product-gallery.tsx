@@ -4,7 +4,13 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Zoom from 'react-medium-image-zoom'
 import 'react-medium-image-zoom/dist/styles.css'
-export default function ProductGallery({ images }: { images: string[] }) {
+export default function ProductGallery({
+  images,
+  productName,
+}: {
+  images: string[]
+  productName: string
+}) {
   const [selectedImage, setSelectedImage] = useState(0)
   return (
     <div className='flex min-w-0 flex-col-reverse gap-3 sm:flex-row sm:gap-2'>
@@ -24,7 +30,12 @@ export default function ProductGallery({ images }: { images: string[] }) {
                 : 'ring-1 ring-gray-300'
             }`}
           >
-            <Image src={image} alt={'product image'} width={48} height={48} />
+            <Image
+              src={image}
+              alt={`${productName} - تصویر ${index + 1}`}
+              width={48}
+              height={48}
+            />
           </button>
         ))}
       </div>
@@ -34,7 +45,7 @@ export default function ProductGallery({ images }: { images: string[] }) {
           <div className='relative h-[300px] xs:h-[360px] sm:h-[440px] lg:h-[500px]'>
             <Image
               src={images[selectedImage]}
-              alt={'product image'}
+              alt={productName}
               fill
               sizes='90vw'
               className='object-contain'

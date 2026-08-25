@@ -27,7 +27,70 @@ function getAbsoluteUrl(path: string) {
   return new URL(path, SITE_URL).toString()
 }
 
-function getSeoDescription(name: string, description?: string) {
+function truncateSeoDescription(value: string, maxLength = 160) {
+  if (value.length <= maxLength) return value
+
+  const shortened = value.slice(0, maxLength - 1).trimEnd()
+  const lastSpace = shortened.lastIndexOf(' ')
+  const result = lastSpace > 0 ? shortened.slice(0, lastSpace) : shortened
+
+  return `${result.replace(/[،؛:,.!?؟]+$/u, '')}…`
+}
+
+function getSeoDescription(product: {
+  name: string
+  category: string
+  brand: string
+  description?: string
+}) {
+  const lines = product.description
+    ?.split(/\r?\n/)
+    .map((line) => line.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+
+  if (lines && lines.join(' ').length >= 30) {
+    const prose: string[] = []
+    const specifications: string[] = []
+
+    for (const line of lines) {
+      const label = line.match(/^([^:：]{2,24})\s*[:：]\s*(.+)$/u)
+
+      if (label) {
+        const [, key, value] = label
+        const isRedundantBrand =
+          key.trim() === 'برند' &&
+          product.name.includes(value.trim())
+
+        if (!isRedundantBrand) specifications.push(`${key.trim()} ${value.trim()}`)
+      } else {
+        prose.push(line)
+      }
+    }
+
+    const proseText = prose.join(' ').replace(/[.؟!]$/u, '')
+    const specificationText = specifications.join('، ')
+    const value = [
+      proseText && `${proseText}.`,
+      specificationText && `مشخصات: ${specificationText}.`,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    if (value) return truncateSeoDescription(value)
+  }
+
+  const details = [
+    !product.name.includes(product.brand) && `برند ${product.brand}`,
+    !product.name.includes(product.category) && `دسته ${product.category}`,
+  ].filter(Boolean)
+  const context = details.length > 0 ? ` (${details.join('، ')})` : ''
+
+  return truncateSeoDescription(
+    `مشخصات، قیمت و وضعیت موجودی ${product.name}${context} را در ویورا بررسی کنید.`
+  )
+}
+
+function getSchemaDescription(name: string, description?: string) {
   const fallback = `خرید ${name} از فروشگاه ویورا با مشاهده مشخصات، قیمت و وضعیت موجودی محصول.`
   const value = description?.trim().replace(/\s+/g, ' ') || fallback
 
@@ -45,8 +108,9 @@ export async function generateMetadata(props: {
     return { title: t('Product.Product not found') }
   }
 
-  const title = `خرید ${product.name} | ${SITE_NAME}`
-  const description = getSeoDescription(product.name, product.description)
+  const title = `خرید ${product.name}`
+  const openGraphTitle = `${title} | ${SITE_NAME}`
+  const description = getSeoDescription(product)
   const canonical = getAbsoluteUrl(`/product/${product.slug}`)
   const image = product.images.find((item) => item?.trim())
   const images = image ? [getAbsoluteUrl(image)] : undefined
@@ -56,7 +120,7 @@ export async function generateMetadata(props: {
     description,
     alternates: { canonical },
     openGraph: {
-      title,
+      title: openGraphTitle,
       description,
       url: canonical,
       siteName: SITE_NAME,
@@ -65,7 +129,7 @@ export async function generateMetadata(props: {
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: openGraphTitle,
       description,
       images,
     },
@@ -86,7 +150,7 @@ export default async function ProductDetails(props: {
   const product = await getProductBySlug(slug)
 
   const canonical = getAbsoluteUrl(`/product/${product.slug}`)
-  const description = getSeoDescription(product.name, product.description)
+  const description = getSchemaDescription(product.name, product.description)
   const images = product.images
     .filter((image) => image?.trim())
     .map(getAbsoluteUrl)
@@ -97,6 +161,28 @@ export default async function ProductDetails(props: {
   const schemaImages = variantImage
     ? [variantImage, ...images.filter((image) => image !== variantImage)]
     : images
+  const offers = product.variants?.length
+    ? product.variants.map((variant) => ({
+        '@type': 'Offer',
+        name: variant.color,
+        url: canonical,
+        priceCurrency: 'IRR',
+        price: variant.price * 10,
+        availability:
+          variant.countInStock > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+      }))
+    : {
+        '@type': 'Offer',
+        url: canonical,
+        priceCurrency: 'IRR',
+        price: product.price * 10,
+        availability:
+          product.countInStock > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+      }
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -107,16 +193,7 @@ export default async function ProductDetails(props: {
       '@type': 'Brand',
       name: product.brand,
     },
-    offers: {
-      '@type': 'Offer',
-      url: canonical,
-      priceCurrency: 'IRR',
-      price: (initialVariant?.price ?? product.price) * 10,
-      availability:
-        (initialVariant?.countInStock ?? product.countInStock) > 0
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-    },
+    offers,
     ...(product.numReviews > 0 && product.avgRating > 0
       ? {
           aggregateRating: {
@@ -206,7 +283,7 @@ export default async function ProductDetails(props: {
         ) : (
         <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
           <div className='min-w-0 md:col-span-2'>
-            <ProductGallery images={product.images} />
+            <ProductGallery images={product.images} productName={product.name} />
           </div>
 
           <div className='flex min-w-0 w-full flex-col gap-2 md:col-span-2 md:p-5'>

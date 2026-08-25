@@ -42,7 +42,11 @@ export default function ProductVariantDetails({
   return (
     <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
       <div className='min-w-0 md:col-span-2'>
-        <ProductGallery key={image} images={galleryImages} />
+        <ProductGallery
+          key={image}
+          images={galleryImages}
+          productName={product.name}
+        />
       </div>
 
       <div className='flex min-w-0 w-full flex-col gap-2 md:col-span-2 md:p-5'>
