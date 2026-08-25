@@ -333,11 +333,9 @@ export const calcDeliveryDateAndPrice = async ({
         ? 0
         : deliveryDate.shippingPrice
 
-  const taxPrice = !shippingAddress ? undefined : round2(itemsPrice * 0.15)
+  const taxPrice = 0
   const totalPrice = round2(
-    itemsPrice +
-      (shippingPrice ? round2(shippingPrice) : 0) +
-      (taxPrice ? round2(taxPrice) : 0)
+    itemsPrice + (shippingPrice ? round2(shippingPrice) : 0)
   )
   return {
     availableDeliveryDates,

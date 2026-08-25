@@ -40,7 +40,6 @@ export default function OrderDetailsForm({
     shippingAddress,
     items,
     itemsPrice,
-    taxPrice,
     shippingPrice,
     totalPrice,
     paymentMethod,
@@ -101,16 +100,6 @@ export default function OrderDetailsForm({
                   'رایگان'
                 ) : (
                   <ProductPrice price={shippingPrice} plain />
-                )}
-              </span>
-            </div>
-            <div className='flex justify-between'>
-              <span> مالیات:</span>
-              <span>
-                {taxPrice === undefined ? (
-                  '--'
-                ) : (
-                  <ProductPrice price={taxPrice} plain />
                 )}
               </span>
             </div>

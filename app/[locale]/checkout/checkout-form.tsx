@@ -197,19 +197,6 @@ const CheckoutForm = () => {
     </span>
   </div>
 
-  <div className='border-t border-slate-200' />
-
-  <div className='flex justify-between'>
-    <span>مالیات:</span>
-    <span>
-      {taxPrice === undefined ? (
-        '--'
-      ) : (
-        <ProductPrice price={taxPrice} plain />
-      )}
-    </span>
-  </div>
-
   <div className='border-t border-slate-300' />
 
   <div className='flex justify-between pt-2 font-bold text-lg'>
