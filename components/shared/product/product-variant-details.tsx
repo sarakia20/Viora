@@ -23,6 +23,12 @@ export default function ProductVariantDetails({
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(initialSize)
   const selectedVariant = variants[selectedVariantIndex] ?? variants[0]
+  const variantLabel =
+    variants.length > 0 &&
+    (product.category === 'توالت ایرانی' ||
+      product.category === 'توالت فرنگی')
+      ? 'درجه کیفیت'
+      : 'رنگ'
 
   if (!selectedVariant) return null
 
@@ -71,7 +77,7 @@ export default function ProductVariantDetails({
         </div>
 
         <div className='space-y-2'>
-          <div className='font-medium'>رنگ:</div>
+          <div className='font-medium'>{variantLabel}:</div>
           <div className='flex flex-wrap gap-2'>
             {variants.map((variant, index) => (
               <button
