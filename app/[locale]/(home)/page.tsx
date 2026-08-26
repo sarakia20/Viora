@@ -45,7 +45,7 @@ export default async function HomePage() {
       },
       items: categories.map((category: string) => ({
         name: category,
-        image: categoryImages[category] || '/images/category-default.jpg',
+        image: categoryImages[category],
         href:
           getCategoryLandingPath(category) ?? `/search?category=${category}`,
       })),

@@ -9,7 +9,7 @@ type CardItem = {
   items: {
     name: string
     items?: string[]
-    image: string
+    image?: string
     href: string
   }[]
 }
@@ -28,13 +28,15 @@ export function HomeCard({ cards }: { cards: CardItem[] }) {
                   href={item.href}
                   className='flex flex-col'
                 >
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    className='aspect-square object-scale-down max-w-full h-auto mx-auto'
-                    height={120}
-                    width={120}
-                  />
+                  {item.image && (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      className='aspect-square object-scale-down max-w-full h-auto mx-auto'
+                      height={120}
+                      width={120}
+                    />
+                  )}
                   <p className='text-center text-sm whitespace-nowrap overflow-hidden text-ellipsis'>
                     {item.name}
                   </p>
