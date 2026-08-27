@@ -217,7 +217,8 @@ export default function Sidebar() {
                                 <Link
                                   href={
                                     item.title === 'اکسسوری' ||
-                                    item.title === 'شیرآلات'
+                                    item.title === 'شیرآلات' ||
+                                    item.title === 'چینی آلات بهداشتی'
                                       ? getSubCategoryHref(
                                           item.title,
                                           child.title
@@ -384,7 +385,8 @@ export default function Sidebar() {
                           <Link
                             href={
                               activeItem.title === 'اکسسوری' ||
-                              activeItem.title === 'شیرآلات'
+                              activeItem.title === 'شیرآلات' ||
+                              activeItem.title === 'چینی آلات بهداشتی'
                                 ? getSubCategoryHref(
                                     activeItem.title,
                                     child.title

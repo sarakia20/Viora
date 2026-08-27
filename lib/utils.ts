@@ -200,6 +200,7 @@ export const getFilterUrl = ({
 
   if (category) {
     newParams.category = category
+    newParams.subCategory = 'all'
     newParams.q = 'all'
     newParams.page = '1'
   }

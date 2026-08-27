@@ -67,7 +67,7 @@ export default async function AppLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta name="enamad" content="139992475" />
+        <meta name="enamad" content="13997475" />
       </head>
       <body
         className={`min-h-screen ${geistSans.variable} ${geistMono.variable} ${vazir.variable} antialiased`}
