@@ -8,6 +8,7 @@ import { routing } from '@/i18n/routing'
 import { notFound } from 'next/navigation'
 import { getSetting } from '@/lib/actions/setting.actions'
 import { cookies } from 'next/headers'
+import { SITE_ORIGIN } from '@/lib/site-url'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +28,7 @@ const vazir = Vazirmatn({
 
 export async function generateMetadata() {
   const {
-    site: { slogan, name, description, url },
+    site: { slogan, name, description },
   } = await getSetting()
   return {
     title: {
@@ -35,7 +36,7 @@ export async function generateMetadata() {
       default: `${name}. ${slogan}`,
     },
     description: description,
-    metadataBase: new URL(url),
+    metadataBase: SITE_ORIGIN,
   }
 }
 

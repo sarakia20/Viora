@@ -12,6 +12,14 @@ import {
 import { getSetting } from '@/lib/actions/setting.actions'
 import { getCategoryLandingPath } from '@/lib/category-config'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
+import { getAbsoluteUrl } from '@/lib/site-url'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: getAbsoluteUrl('/'),
+  },
+}
 
 const categoryImages: Record<string, string> = {
   اکسسوری: '/images/category-accessory.jpg',

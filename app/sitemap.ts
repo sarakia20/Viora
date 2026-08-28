@@ -3,34 +3,38 @@ import type { MetadataRoute } from 'next'
 import { connectToDatabase } from '@/lib/db'
 import Product from '@/lib/db/models/product.model'
 import { categoryConfig } from '@/lib/category-config'
+import { getAbsoluteUrl } from '@/lib/site-url'
 
-const SITE_URL = 'https://viora-store.ir'
-
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     '',
-    '/search',
     '/page/about-us',
-  ].map((route) => ({ url: `${SITE_URL}${route}` }))
+  ].map((route) => ({ url: getAbsoluteUrl(route || '/') }))
 
   const categoryRoutes: MetadataRoute.Sitemap = Object.values(
     categoryConfig
   ).map((category) => ({
-    url: `${SITE_URL}/category/${category.slug}`,
+    url: getAbsoluteUrl(`/category/${category.slug}`),
   }))
 
-  await connectToDatabase()
+  let productRoutes: MetadataRoute.Sitemap = []
 
-  const products = await Product.find({ isPublished: true })
-    .select('slug updatedAt')
-    .lean<Array<{ slug: string; updatedAt?: Date }>>()
+  try {
+    await connectToDatabase()
 
-  const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-    url: `${SITE_URL}/product/${product.slug}`,
-    ...(product.updatedAt ? { lastModified: product.updatedAt } : {}),
-  }))
+    const products = await Product.find({ isPublished: true })
+      .select('slug updatedAt')
+      .lean<Array<{ slug: string; updatedAt?: Date }>>()
+
+    productRoutes = products.map((product) => ({
+      url: getAbsoluteUrl(`/product/${product.slug}`),
+      ...(product.updatedAt ? { lastModified: product.updatedAt } : {}),
+    }))
+  } catch (error) {
+    console.error('Failed to load products for sitemap:', error)
+  }
 
   return [...staticRoutes, ...categoryRoutes, ...productRoutes]
 }

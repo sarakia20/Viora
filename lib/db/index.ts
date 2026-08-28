@@ -1,7 +1,17 @@
 import mongoose from 'mongoose'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const cached = (global as any).mongoose || { conn: null, promise: null }
+type MongooseCache = {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
+
+const globalWithMongoose = global as typeof globalThis & {
+  mongoose?: MongooseCache
+}
+
+const cached = globalWithMongoose.mongoose ?? { conn: null, promise: null }
+
+globalWithMongoose.mongoose = cached
 
 export const connectToDatabase = async (
   MONGODB_URI = process.env.MONGODB_URI
@@ -10,9 +20,16 @@ export const connectToDatabase = async (
 
   if (!MONGODB_URI) throw new Error('MONGODB_URI is missing')
 
-  cached.promise = cached.promise || mongoose.connect(MONGODB_URI)
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI)
+  }
 
-  cached.conn = await cached.promise
+  try {
+    cached.conn = await cached.promise
+  } catch (error) {
+    cached.promise = null
+    throw error
+  }
 
   return cached.conn
 }

@@ -22,6 +22,7 @@ import { ChevronLeft } from 'lucide-react'
 
 import SearchSidebar from '@/components/shared/search-sidebar'
 import MobileSearchControls from '@/components/shared/mobile-search-controls'
+import { SITE_URL } from '@/lib/site-url'
 
 const sortOrders = [
   { value: 'price-low-to-high', name: 'قیمت: کم به زیاد' },
@@ -152,7 +153,6 @@ function FilterBox({
 
 type SearchMetadataParams = Record<string, string | string[] | undefined>
 
-const SITE_URL = 'https://viora-store.ir'
 const SITE_NAME = 'ویورا'
 
 const categorySeo: Record<string, { title: string; description: string }> = {

@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 
+import { getAbsoluteUrl } from '@/lib/site-url'
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -7,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin', '/api', '/cart', '/checkout'],
     },
-    sitemap: 'https://viora-store.ir/sitemap.xml',
+    sitemap: getAbsoluteUrl('/sitemap.xml'),
   }
 }

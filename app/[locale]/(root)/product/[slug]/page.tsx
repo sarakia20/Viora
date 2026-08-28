@@ -19,13 +19,9 @@ import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
 import { getCategoryLandingPath } from '@/lib/category-config'
+import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
 
-const SITE_URL = 'https://viora-store.ir'
 const SITE_NAME = 'فروشگاه ویورا'
-
-function getAbsoluteUrl(path: string) {
-  return new URL(path, SITE_URL).toString()
-}
 
 function truncateSeoDescription(value: string, maxLength = 160) {
   if (value.length <= maxLength) return value
@@ -186,6 +182,7 @@ export default async function ProductDetails(props: {
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    url: canonical,
     name: product.name,
     description,
     image: schemaImages,

@@ -7,8 +7,8 @@ import ProductCard from '@/components/shared/product/product-card'
 import { getCategoryConfig } from '@/lib/category-config'
 import { getAllProducts } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
+import { SITE_URL } from '@/lib/site-url'
 
-const SITE_URL = 'https://viora-store.ir'
 const SITE_NAME = 'ویورا'
 
 function getPageNumber(value: string | string[] | undefined) {

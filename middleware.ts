@@ -17,7 +17,7 @@ const publicPages = [
   '/page/(.*)',
 ]
 
-const oldLocales = ['en', 'en-US', 'fr', 'ar']
+const nonCanonicalLocales = ['fa', 'en', 'en-US', 'fr', 'ar']
 
 const intlMiddleware = createMiddleware(routing)
 
@@ -27,14 +27,14 @@ export default auth((req) => {
   const pathname = req.nextUrl.pathname
 
   // حذف زبان‌های قدیمی از ابتدای آدرس
-  const oldLocale = oldLocales.find(
+  const nonCanonicalLocale = nonCanonicalLocales.find(
     (locale) =>
       pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
   )
 
-  if (oldLocale) {
+  if (nonCanonicalLocale) {
     const newPathname =
-      pathname.replace(new RegExp(`^/${oldLocale}`), '') || '/'
+      pathname.replace(new RegExp(`^/${nonCanonicalLocale}`), '') || '/'
 
     const url = req.nextUrl.clone()
     url.pathname = newPathname
