@@ -264,6 +264,7 @@ export default function Sidebar() {
                                       href={
                                         child.title === 'سینک' ||
                                         child.title === 'اجاق گاز' ||
+                                        child.title === 'فلاش تانک' ||
                                         child.title === 'توالت فرنگی'
                                           ? getSubCategoryHref(
                                               child.title,
@@ -416,6 +417,7 @@ export default function Sidebar() {
                                   href={
                                     child.title === 'سینک' ||
                                     child.title === 'اجاق گاز' ||
+                                    child.title === 'فلاش تانک' ||
                                     child.title === 'توالت فرنگی'
                                       ? getSubCategoryHref(
                                           child.title,
