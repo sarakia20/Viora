@@ -258,17 +258,21 @@ export async function getAllProductsForAdmin({
 }
 
 export async function getAllCategories() {
+  const requiredCategories = ['کف شور']
+
   if (isSkipDb) {
-    return Array.from(
+    const categories = Array.from(
       new Set(mockProducts.filter((p) => p.isPublished).map((p) => p.category))
     )
+
+    return Array.from(new Set([...categories, ...requiredCategories]))
   }
 
   await connectToDatabase()
   const categories = await Product.find({ isPublished: true }).distinct(
     'category'
   )
-   return JSON.parse(JSON.stringify(categories))
+  return Array.from(new Set([...categories, ...requiredCategories]))
 }
 
 export async function getBrandsByCategory({

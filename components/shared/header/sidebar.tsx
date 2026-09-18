@@ -75,6 +75,11 @@ const categoryGroups: Record<string, CategoryItem[]> = {
     { title: 'جامایع' },
     { title: 'جا دستمال کاغذی' },
   ],
+
+  'کف شور': [
+    { title: 'کف شور خطی' },
+    { title: 'کف شور مربعی' },
+  ],
 }
 
 const getCategoryHref = (category: string) =>
@@ -218,6 +223,7 @@ export default function Sidebar() {
                                   href={
                                     item.title === 'اکسسوری' ||
                                     item.title === 'شیرآلات' ||
+                                    item.title === 'کف شور' ||
                                     item.title === 'چینی آلات بهداشتی'
                                       ? getSubCategoryHref(
                                           item.title,
@@ -387,6 +393,7 @@ export default function Sidebar() {
                             href={
                               activeItem.title === 'اکسسوری' ||
                               activeItem.title === 'شیرآلات' ||
+                              activeItem.title === 'کف شور' ||
                               activeItem.title === 'چینی آلات بهداشتی'
                                 ? getSubCategoryHref(
                                     activeItem.title,

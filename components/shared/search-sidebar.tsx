@@ -25,6 +25,8 @@ const bathroomAccessoriesSubCategories = ['جا مایع', 'جا دستمال']
 
 const sinkSubCategories = ['گرانیتی', 'استیل توکار', 'سینک های دست ساز']
 
+const floorDrainSubCategories = ['کف شور خطی', 'کف شور مربعی']
+
 function getTagName(tag: string) {
   switch (tag) {
     case 'Best Seller':
@@ -273,9 +275,9 @@ export default function SearchSidebar({
         </FilterSection>
       )}
 
-      {currentCategory === 'سینک' && (
+      {(currentCategory === 'سینک' || currentCategory === 'کف شور') && (
         <FilterSection
-          title='نوع سینک'
+          title={currentCategory === 'کف شور' ? 'نوع کف شور' : 'نوع سینک'}
           id='subCategory'
           openSection={openSection}
           toggle={toggle}
@@ -287,7 +289,10 @@ export default function SearchSidebar({
             همه
           </FilterLink>
 
-          {sinkSubCategories.map((subCategory) => (
+          {(currentCategory === 'کف شور'
+            ? floorDrainSubCategories
+            : sinkSubCategories
+          ).map((subCategory) => (
             <FilterLink
               key={subCategory}
               href={getFilterUrl({ subCategory, params })}
