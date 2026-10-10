@@ -20,8 +20,21 @@ import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
 import { getCategoryLandingPath } from '@/lib/category-config'
 import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
+import { notFound } from 'next/navigation'
 
 const SITE_NAME = 'فروشگاه ویورا'
+
+async function getPublicProductOrNotFound(slug: string) {
+  try {
+    return await getProductBySlug(slug)
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Product not found') {
+      notFound()
+    }
+
+    throw error
+  }
+}
 
 function truncateSeoDescription(value: string, maxLength = 160) {
   if (value.length <= maxLength) return value
@@ -96,13 +109,8 @@ function getSchemaDescription(name: string, description?: string) {
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
-  const t = await getTranslations()
   const params = await props.params
-  const product = await getProductBySlug(params.slug).catch(() => null)
-
-  if (!product) {
-    return { title: t('Product.Product not found') }
-  }
+  const product = await getPublicProductOrNotFound(params.slug)
 
   const title = `خرید ${product.name}`
   const openGraphTitle = `${title} | ${SITE_NAME}`
@@ -143,7 +151,7 @@ export default async function ProductDetails(props: {
   const { slug } = params
 
   const session = await auth()
-  const product = await getProductBySlug(slug)
+  const product = await getPublicProductOrNotFound(slug)
 
   const canonical = getAbsoluteUrl(`/product/${product.slug}`)
   const description = getSchemaDescription(product.name, product.description)
