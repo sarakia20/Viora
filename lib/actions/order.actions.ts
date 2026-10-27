@@ -15,6 +15,7 @@ import User from '../db/models/user.model'
 import mongoose from 'mongoose'
 import { getSetting } from './setting.actions'
 import { requireAdmin, requireUser } from '../auth-guard'
+import { SITE_URL } from '../site-url'
 
 async function getOrderAccessFilter(orderId: string) {
   const session = await requireUser()
@@ -51,10 +52,39 @@ const createOrderFromCart = async (
   clientSideCart: Cart,
   userId: string
 ) => {
+  if (!clientSideCart.items?.length) throw new Error('Cart is empty')
+  const settings = await getSetting()
+  if (!settings.availablePaymentMethods.some((method) => method.name === clientSideCart.paymentMethod))
+    throw new Error('روش پرداخت انتخاب‌شده در فروشگاه فعال نیست')
+  const canonicalItems = await Promise.all(clientSideCart.items.map(async (item) => {
+    const product = await Product.findById(item.product)
+    if (!product || !product.isPublished) throw new Error('Product is unavailable')
+    const variant = item.color
+      ? product.variants?.find((candidate) => candidate.color === item.color)
+      : undefined
+    if (item.color && !variant) throw new Error('Selected product option is unavailable')
+    const countInStock = variant?.countInStock ?? product.countInStock
+    if (!Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < item.quantity)
+      throw new Error('Insufficient product stock')
+    return {
+      product: product._id.toString(),
+      clientId: item.clientId,
+      name: product.name,
+      slug: product.slug,
+      image: variant?.image || product.images[0],
+      category: product.category,
+      price: variant?.price ?? product.price,
+      countInStock,
+      quantity: item.quantity,
+      ...(item.size ? { size: item.size } : {}),
+      ...(item.color ? { color: item.color } : {}),
+    }
+  }))
   const cart = {
     ...clientSideCart,
+    items: canonicalItems,
     ...calcDeliveryDateAndPrice({
-      items: clientSideCart.items,
+      items: canonicalItems,
       shippingAddress: clientSideCart.shippingAddress,
       deliveryDateIndex: clientSideCart.deliveryDateIndex,
     }),
@@ -72,6 +102,110 @@ const createOrderFromCart = async (
     expectedDeliveryDate: cart.expectedDeliveryDate,
   })
   return await Order.create(order)
+}
+
+export async function createZarinPalPayment(orderId: string) {
+  let requestId: string | undefined
+  let stage = 'authorize_order'
+  let providerHttpStatus: number | undefined
+  let providerCode: unknown
+  let providerErrorCodes: string[] = []
+  try {
+    const session = await requireUser()
+    await connectToDatabase()
+    const order = await Order.findOne({ _id: orderId, user: session.user.id })
+    if (!order) throw new Error('سفارش پیدا نشد')
+    if (order.isPaid) throw new Error('این سفارش قبلاً پرداخت شده است')
+    if (order.paymentMethod !== 'ZarinPal') throw new Error('روش پرداخت این سفارش زرین‌پال نیست')
+    if (order.paymentAuthority) {
+      return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(order.paymentAuthority)}` }
+    }
+    const merchantId = process.env.ZARINPAL_MERCHANT_ID
+    if (!merchantId) throw new Error('تنظیم شناسه پذیرنده زرین‌پال روی سرور انجام نشده است')
+    const amount = Math.round(order.totalPrice * 10)
+    if (!Number.isSafeInteger(amount) || amount < 1000)
+      throw new Error('مبلغ سفارش برای پرداخت زرین‌پال معتبر نیست')
+
+    requestId = crypto.randomUUID()
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000)
+    const lockedOrder = await Order.findOneAndUpdate(
+      {
+        _id: order._id,
+        isPaid: false,
+        paymentAuthority: { $exists: false },
+        $or: [
+          { paymentRequestAt: { $exists: false } },
+          { paymentRequestAt: { $lt: twoMinutesAgo } },
+        ],
+      },
+      { $set: { paymentRequestId: requestId, paymentRequestAt: new Date() } },
+      { new: true }
+    )
+    if (!lockedOrder) {
+      const current = await Order.findById(order._id)
+      if (current?.paymentAuthority) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
+      throw new Error('درخواست پرداخت در حال پردازش است؛ چند لحظه دیگر دوباره تلاش کنید')
+    }
+
+    stage = 'create_payment_request'
+    const callbackBase = process.env.ZARINPAL_CALLBACK_BASE_URL || SITE_URL
+    const callbackUrl = new URL('/api/payments/zarinpal/callback', callbackBase)
+    callbackUrl.searchParams.set('orderId', order._id.toString())
+    const response = await fetch('https://api.zarinpal.com/pg/v4/payment/request.json', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        merchant_id: merchantId,
+        amount,
+        callback_url: callbackUrl.toString(),
+        description: `پرداخت سفارش ${order._id}`,
+        metadata: { order_id: order._id.toString() },
+      }),
+      cache: 'no-store',
+    })
+    providerHttpStatus = response.status
+    const result = await response.json()
+    providerCode = result?.data?.code
+    providerErrorCodes = Array.isArray(result?.errors)
+      ? result.errors.map((item: { code?: unknown }) => String(item?.code ?? 'unknown')).slice(0, 5)
+      : []
+    const authority = result?.data?.authority
+    if (!response.ok || providerCode !== 100 || typeof authority !== 'string') {
+      console.error('[zarinpal] payment request rejected', {
+        stage,
+        httpStatus: providerHttpStatus,
+        providerCode,
+        providerErrorCodes,
+      })
+      throw new Error('ساخت درخواست پرداخت در زرین‌پال ناموفق بود')
+    }
+    stage = 'save_payment_authority'
+    const updated = await Order.findOneAndUpdate(
+      { _id: order._id, isPaid: false, paymentRequestId: requestId },
+      { $set: { paymentAuthority: authority, paymentResult: { id: authority, status: 'PENDING', email_address: '' } }, $unset: { paymentRequestId: 1, paymentRequestAt: 1 } },
+      { new: true }
+    )
+    if (!updated) {
+      const current = await Order.findById(order._id)
+      if (current?.paymentAuthority) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
+      throw new Error('درخواست پرداخت سفارش هم‌زمان تغییر کرد؛ دوباره تلاش کنید')
+    }
+    return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(authority)}` }
+  } catch (error) {
+    console.error('[zarinpal] payment initiation failed', {
+      stage,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+      httpStatus: providerHttpStatus,
+      providerCode,
+      providerErrorCodes,
+    })
+    if (requestId) {
+      await Order.updateOne(
+        { _id: orderId, paymentRequestId: requestId },
+        { $unset: { paymentRequestId: 1, paymentRequestAt: 1 } }
+      ).catch(() => undefined)
+    }
+    return { success: false, message: 'شروع پرداخت ناموفق بود. لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.' }
+  }
 }
 
 export async function updateOrderToPaid(orderId: string) {

@@ -424,6 +424,7 @@ We also provide helpful resources such as order tracking, product guides, and FA
       ],
       defaultCurrency: 'IRT',
       availablePaymentMethods: [
+        { name: 'ZarinPal', commission: 0 },
         { name: 'PayPal', commission: 0 },
         { name: 'Stripe', commission: 0 },
         { name: 'Cash On Delivery', commission: 0 },

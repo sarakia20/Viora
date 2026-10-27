@@ -2,6 +2,10 @@ import { IOrderInput } from '@/types'
 import { Document, Model, model, models, Schema } from 'mongoose'
 
 export interface IOrder extends Document, IOrderInput {
+  paymentAuthority?: string
+  paymentRefId?: string
+  paymentRequestId?: string
+  paymentRequestAt?: Date
  
   createdAt: Date
   updatedAt: Date
@@ -45,6 +49,10 @@ const orderSchema = new Schema<IOrder>(
     expectedDeliveryDate: { type: Date, required: true },
     paymentMethod: { type: String, required: true },
     paymentResult: { id: String, status: String, email_address: String },
+    paymentAuthority: { type: String, index: true },
+    paymentRefId: { type: String, index: true },
+    paymentRequestId: { type: String },
+    paymentRequestAt: { type: Date },
     itemsPrice: { type: Number, required: true },
     shippingPrice: { type: Number, required: true },
     taxPrice: { type: Number, required: true },

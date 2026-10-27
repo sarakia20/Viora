@@ -21,6 +21,8 @@ import ProductPrice from '@/components/shared/product/product-price'
 import StripeForm from './stripe-form'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { createZarinPalPayment } from '@/lib/actions/order.actions'
+import { useState } from 'react'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
@@ -47,6 +49,7 @@ export default function OrderDetailsForm({
     isPaid,
   } = order
   const { toast } = useToast()
+  const [isStartingZarinPal, setIsStartingZarinPal] = useState(false)
 
   if (isPaid) {
     redirect(`/account/orders/${order._id}`)
@@ -76,6 +79,23 @@ export default function OrderDetailsForm({
       description: res.message,
       variant: res.success ? 'default' : 'destructive',
     })
+  }
+
+  const handleZarinPalPayment = async () => {
+    if (isStartingZarinPal) return
+    setIsStartingZarinPal(true)
+    try {
+      const result = await createZarinPalPayment(order._id.toString())
+      if (!result.success || !result.redirectUrl) {
+        toast({ description: result.message || 'شروع پرداخت ناموفق بود', variant: 'destructive' })
+        setIsStartingZarinPal(false)
+        return
+      }
+      window.location.assign(result.redirectUrl)
+    } catch {
+      toast({ description: 'ارتباط با سرور پرداخت برقرار نشد. لطفاً دوباره تلاش کنید.', variant: 'destructive' })
+      setIsStartingZarinPal(false)
+    }
   }
 
   const CheckoutSummary = () => (
@@ -142,6 +162,11 @@ export default function OrderDetailsForm({
                 onClick={() => router.push(`/account/orders/${order._id.toString()}`)}
               >
                 مشاهده سفارش
+              </Button>
+            )}
+            {!isPaid && paymentMethod === 'ZarinPal' && (
+              <Button type='button' className='w-full rounded-full' onClick={handleZarinPalPayment} disabled={isStartingZarinPal}>
+                {isStartingZarinPal ? 'در حال اتصال به درگاه…' : 'پرداخت امن با زرین‌پال'}
               </Button>
             )}
           </div>
