@@ -106,28 +106,34 @@ const createOrderFromCart = async (
 
 export async function createZarinPalPayment(orderId: string) {
   let requestId: string | undefined
-  let stage = 'authorize_order'
+  let stage = 'authenticate'
   let providerHttpStatus: number | undefined
   let providerCode: unknown
   let providerErrorCodes: string[] = []
   try {
     const session = await requireUser()
+    stage = 'connect_database'
     await connectToDatabase()
+    stage = 'load_order'
     const order = await Order.findOne({ _id: orderId, user: session.user.id })
     if (!order) throw new Error('سفارش پیدا نشد')
+    stage = 'validate_order'
     if (order.isPaid) throw new Error('این سفارش قبلاً پرداخت شده است')
     if (order.paymentMethod !== 'ZarinPal') throw new Error('روش پرداخت این سفارش زرین‌پال نیست')
     if (order.paymentAuthority) {
       return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(order.paymentAuthority)}` }
     }
+    stage = 'validate_configuration'
     const merchantId = process.env.ZARINPAL_MERCHANT_ID
     if (!merchantId) throw new Error('تنظیم شناسه پذیرنده زرین‌پال روی سرور انجام نشده است')
+    stage = 'validate_amount'
     const amount = Math.round(order.totalPrice * 10)
     if (!Number.isSafeInteger(amount) || amount < 1000)
       throw new Error('مبلغ سفارش برای پرداخت زرین‌پال معتبر نیست')
 
     requestId = crypto.randomUUID()
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000)
+    stage = 'acquire_payment_lock'
     const lockedOrder = await Order.findOneAndUpdate(
       {
         _id: order._id,
@@ -169,6 +175,13 @@ export async function createZarinPalPayment(orderId: string) {
       ? result.errors.map((item: { code?: unknown }) => String(item?.code ?? 'unknown')).slice(0, 5)
       : []
     const authority = result?.data?.authority
+    console.info('[zarinpal] payment request response', {
+      stage,
+      httpStatus: providerHttpStatus,
+      providerCode,
+      hasAuthority: typeof authority === 'string' && authority.length > 0,
+      providerErrorCodes,
+    })
     if (!response.ok || providerCode !== 100 || typeof authority !== 'string') {
       console.error('[zarinpal] payment request rejected', {
         stage,
@@ -189,6 +202,7 @@ export async function createZarinPalPayment(orderId: string) {
       if (current?.paymentAuthority) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
       throw new Error('درخواست پرداخت سفارش هم‌زمان تغییر کرد؛ دوباره تلاش کنید')
     }
+    stage = 'redirect_ready'
     return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(authority)}` }
   } catch (error) {
     console.error('[zarinpal] payment initiation failed', {
