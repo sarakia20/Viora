@@ -154,8 +154,22 @@ export async function createZarinPalPayment(orderId: string) {
     }
 
     stage = 'create_payment_request'
-    const callbackBase = process.env.ZARINPAL_CALLBACK_BASE_URL || SITE_URL
-    const callbackUrl = new URL('/api/payments/zarinpal/callback', callbackBase)
+    const callbackBase = new URL(process.env.ZARINPAL_CALLBACK_BASE_URL || SITE_URL)
+    const callbackBaseProtocolAllowed =
+      callbackBase.protocol === 'https:' ||
+      (process.env.NODE_ENV === 'development' && callbackBase.protocol === 'http:')
+    if (
+      !callbackBaseProtocolAllowed ||
+      !callbackBase.hostname ||
+      callbackBase.username ||
+      callbackBase.password ||
+      callbackBase.pathname !== '/' ||
+      callbackBase.search ||
+      callbackBase.hash
+    ) {
+      throw new Error('Invalid ZarinPal callback URL configuration')
+    }
+    const callbackUrl = new URL('/api/payments/zarinpal/callback', callbackBase.origin)
     callbackUrl.searchParams.set('orderId', order._id.toString())
     const response = await fetch('https://api.zarinpal.com/pg/v4/payment/request.json', {
       method: 'POST', headers: { 'content-type': 'application/json' },

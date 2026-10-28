@@ -22,7 +22,7 @@ import StripeForm from './stripe-form'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import { createZarinPalPayment } from '@/lib/actions/order.actions'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
@@ -49,7 +49,8 @@ export default function OrderDetailsForm({
     isPaid,
   } = order
   const { toast } = useToast()
-  const [isStartingZarinPal, setIsStartingZarinPal] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
+  const hasAutoStartedPayment = useRef(false)
 
   if (isPaid) {
     redirect(`/account/orders/${order._id}`)
@@ -81,22 +82,33 @@ export default function OrderDetailsForm({
     })
   }
 
-  const handleZarinPalPayment = async () => {
-    if (isStartingZarinPal) return
-    setIsStartingZarinPal(true)
+  const handlePayment = async () => {
+    if (isStarting) return
+    setIsStarting(true)
     try {
       const result = await createZarinPalPayment(order._id.toString())
       if (!result.success || !result.redirectUrl) {
         toast({ description: result.message || 'شروع پرداخت ناموفق بود', variant: 'destructive' })
-        setIsStartingZarinPal(false)
+        setIsStarting(false)
         return
       }
       window.location.assign(result.redirectUrl)
     } catch {
       toast({ description: 'ارتباط با سرور پرداخت برقرار نشد. لطفاً دوباره تلاش کنید.', variant: 'destructive' })
-      setIsStartingZarinPal(false)
+      setIsStarting(false)
     }
   }
+
+  useEffect(() => {
+    if (
+      paymentMethod === 'ZarinPal' &&
+      !isPaid &&
+      !hasAutoStartedPayment.current
+    ) {
+      hasAutoStartedPayment.current = true
+      void handlePayment()
+    }
+  }, [paymentMethod, isPaid])
 
   const CheckoutSummary = () => (
     <Card>
@@ -165,8 +177,8 @@ export default function OrderDetailsForm({
               </Button>
             )}
             {!isPaid && paymentMethod === 'ZarinPal' && (
-              <Button type='button' className='w-full rounded-full' onClick={handleZarinPalPayment} disabled={isStartingZarinPal}>
-                {isStartingZarinPal ? 'در حال اتصال به درگاه…' : 'پرداخت امن با زرین‌پال'}
+              <Button type='button' className='w-full rounded-full' onClick={handlePayment} disabled={isStarting}>
+                {isStarting ? 'در حال اتصال به درگاه…' : 'پرداخت امن با زرین‌پال'}
               </Button>
             )}
           </div>

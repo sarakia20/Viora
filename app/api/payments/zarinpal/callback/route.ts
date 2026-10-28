@@ -6,9 +6,37 @@ import { SITE_URL } from '@/lib/site-url'
 
 export const runtime = 'nodejs'
 
-function resultUrl(orderId: string, result: 'success' | 'failed') {
-  const base = process.env.ZARINPAL_CALLBACK_BASE_URL || SITE_URL
-  return new URL(`/fa/checkout/${encodeURIComponent(orderId)}/zarinpal-result?result=${result}`, base)
+function getCallbackOrigin() {
+  const configuredUrl = process.env.ZARINPAL_CALLBACK_BASE_URL || SITE_URL
+  let parsedUrl: URL
+
+  try {
+    parsedUrl = new URL(configuredUrl)
+  } catch {
+    throw new Error('Invalid ZarinPal callback URL configuration')
+  }
+
+  const isAllowedProtocol =
+    parsedUrl.protocol === 'https:' ||
+    (process.env.NODE_ENV === 'development' && parsedUrl.protocol === 'http:')
+
+  if (
+    !isAllowedProtocol ||
+    !parsedUrl.hostname ||
+    parsedUrl.username ||
+    parsedUrl.password ||
+    parsedUrl.pathname !== '/' ||
+    parsedUrl.search ||
+    parsedUrl.hash
+  ) {
+    throw new Error('Invalid ZarinPal callback URL configuration')
+  }
+
+  return parsedUrl.origin
+}
+
+function resultUrl(orderId: string, result: 'success' | 'failed', origin: string) {
+  return new URL(`/checkout/${encodeURIComponent(orderId)}/zarinpal-result?result=${result}`, origin)
 }
 
 export async function GET(request: NextRequest) {
@@ -16,7 +44,15 @@ export async function GET(request: NextRequest) {
   const authority = request.nextUrl.searchParams.get('Authority') || ''
   const status = request.nextUrl.searchParams.get('Status') || ''
   if (!/^[a-f\d]{24}$/i.test(orderId) || !authority) {
-    return NextResponse.redirect(new URL('/fa/checkout?payment=invalid', request.url))
+    return NextResponse.redirect(new URL('/checkout?payment=invalid', SITE_URL))
+  }
+
+  let callbackOrigin: string
+  try {
+    callbackOrigin = getCallbackOrigin()
+  } catch {
+    console.error('[zarinpal] invalid callback URL configuration', { stage: 'validate_callback_url' })
+    return NextResponse.redirect(new URL('/checkout?payment=failed', SITE_URL))
   }
 
   let stage = 'connect_database'
@@ -31,18 +67,18 @@ export async function GET(request: NextRequest) {
         paymentMethodMatched: order?.paymentMethod === 'ZarinPal',
         authorityMatched: order?.paymentAuthority === authority,
       })
-      return NextResponse.redirect(resultUrl(orderId, 'failed'))
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
-    if (order.isPaid) return NextResponse.redirect(resultUrl(orderId, 'success'))
+    if (order.isPaid) return NextResponse.redirect(resultUrl(orderId, 'success', callbackOrigin))
     if (status !== 'OK') {
       console.info('[zarinpal] customer did not complete payment', { stage: 'callback_status', status })
-      return NextResponse.redirect(resultUrl(orderId, 'failed'))
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
 
     const merchantId = process.env.ZARINPAL_MERCHANT_ID
     if (!merchantId) {
       console.error('[zarinpal] merchant configuration missing', { stage: 'verify_payment' })
-      return NextResponse.redirect(resultUrl(orderId, 'failed'))
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
     const amount = Math.round(order.totalPrice * 10)
     stage = 'verify_payment'
@@ -56,7 +92,8 @@ export async function GET(request: NextRequest) {
     const data = verification?.data
     const code = data?.code
     const refId = data?.ref_id
-    if (!Number.isSafeInteger(amount) || amount < 1000 || !response.ok || ![100, 101].includes(code) || !refId) {
+    const validRefId = Number.isSafeInteger(refId) && refId > 0
+    if (!Number.isSafeInteger(amount) || amount < 1000 || !response.ok || ![100, 101].includes(code) || !validRefId) {
       console.error('[zarinpal] payment verification rejected', {
         stage: 'verify_payment',
         httpStatus,
@@ -67,7 +104,7 @@ export async function GET(request: NextRequest) {
           ? verification.errors.map((item: { code?: unknown }) => String(item?.code ?? 'unknown')).slice(0, 5)
           : [],
       })
-      return NextResponse.redirect(resultUrl(orderId, 'failed'))
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
 
     const paidOrder = await Order.findOneAndUpdate(
@@ -83,8 +120,8 @@ export async function GET(request: NextRequest) {
     stage = 'save_verified_payment'
     if (!paidOrder) {
       const latest = await Order.findById(orderId).select('isPaid paymentRefId')
-      if (latest?.isPaid) return NextResponse.redirect(resultUrl(orderId, 'success'))
-      return NextResponse.redirect(resultUrl(orderId, 'failed'))
+      if (latest?.isPaid) return NextResponse.redirect(resultUrl(orderId, 'success', callbackOrigin))
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
     await paidOrder.populate('user', 'email')
     stage = 'send_receipt'
@@ -94,12 +131,12 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('ZarinPal receipt email failed', error)
     }
-    return NextResponse.redirect(resultUrl(orderId, 'success'))
+    return NextResponse.redirect(resultUrl(orderId, 'success', callbackOrigin))
   } catch (error) {
     console.error('[zarinpal] callback processing failed', {
       stage,
       errorName: error instanceof Error ? error.name : 'UnknownError',
     })
-    return NextResponse.redirect(resultUrl(orderId, 'failed'))
+    return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
   }
 }
