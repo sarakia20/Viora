@@ -23,6 +23,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { ReactNode } from 'react'
 import { isTipaxShipping, SHIPPING_PAY_ON_DELIVERY } from '@/lib/shipping'
+import { isZarinPalPaymentMethod } from '@/lib/payment-methods'
 
 // Initialize Stripe only when its payment method is rendered.
 let stripePromise: ReturnType<typeof loadStripe> | undefined
@@ -153,7 +154,7 @@ export default function OrderDetailsForm({
                 مشاهده سفارش
               </Button>
             )}
-            {!isPaid && paymentMethod === 'ZarinPal' && zarinpalPayment}
+            {!isPaid && isZarinPalPaymentMethod(paymentMethod) && zarinpalPayment}
           </div>
         </div>
       </CardContent>

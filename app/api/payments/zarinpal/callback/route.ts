@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/db'
 import Order from '@/lib/db/models/order.model'
 import { sendPurchaseReceipt } from '@/emails'
 import { SITE_URL } from '@/lib/site-url'
+import { isZarinPalPaymentMethod } from '@/lib/payment-methods'
 
 export const runtime = 'nodejs'
 
@@ -60,11 +61,11 @@ export async function GET(request: NextRequest) {
     await connectToDatabase()
     stage = 'match_order'
     const order = await Order.findById(orderId).populate<{ user: { email?: string } }>('user', 'email')
-    if (!order || order.paymentMethod !== 'ZarinPal' || order.paymentAuthority !== authority) {
+    if (!order || !isZarinPalPaymentMethod(order.paymentMethod) || order.paymentAuthority !== authority) {
       console.error('[zarinpal] callback did not match a pending order', {
         stage: 'match_callback',
         orderFound: Boolean(order),
-        paymentMethodMatched: order?.paymentMethod === 'ZarinPal',
+        paymentMethodMatched: isZarinPalPaymentMethod(order?.paymentMethod),
         authorityMatched: order?.paymentAuthority === authority,
       })
       return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
     }
 
     const paidOrder = await Order.findOneAndUpdate(
-      { _id: order._id, isPaid: false, paymentMethod: 'ZarinPal', paymentAuthority: authority, totalPrice: order.totalPrice },
+      { _id: order._id, isPaid: false, paymentMethod: order.paymentMethod, paymentAuthority: authority, totalPrice: order.totalPrice },
       { $set: {
         isPaid: true,
         paidAt: new Date(),

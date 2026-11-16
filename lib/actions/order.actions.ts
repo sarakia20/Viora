@@ -19,6 +19,7 @@ import { requireAdmin, requireUser } from '../auth-guard'
 import { SITE_URL } from '../site-url'
 import { calculateTipaxTotals, TIPAX_SHIPPING_METHOD } from '../shipping'
 import { createHash } from 'node:crypto'
+import { isZarinPalPaymentMethod } from '../payment-methods'
 
 async function getOrderAccessFilter(orderId: string) {
   const session = await requireUser()
@@ -180,7 +181,7 @@ export async function createZarinPalPayment(orderId: string) {
     if (!order) throw new Error('سفارش پیدا نشد')
     stage = 'validate_order'
     if (order.isPaid) throw new Error('این سفارش قبلاً پرداخت شده است')
-    if (order.paymentMethod !== 'ZarinPal') throw new Error('روش پرداخت این سفارش زرین‌پال نیست')
+    if (!isZarinPalPaymentMethod(order.paymentMethod)) throw new Error('روش پرداخت این سفارش زرین‌پال نیست')
     if (order.paymentAuthority) {
       if (!/^A[a-z\d]{35}$/i.test(order.paymentAuthority)) throw new Error('Invalid saved authority')
       return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(order.paymentAuthority)}` }
@@ -200,7 +201,7 @@ export async function createZarinPalPayment(orderId: string) {
       {
         _id: order._id,
         isPaid: false,
-        paymentMethod: 'ZarinPal',
+        paymentMethod: order.paymentMethod,
         totalPrice: order.totalPrice,
         paymentAuthority: { $exists: false },
         $or: [
@@ -272,7 +273,7 @@ export async function createZarinPalPayment(orderId: string) {
     }
     stage = 'save_payment_authority'
     const updated = await Order.findOneAndUpdate(
-      { _id: order._id, isPaid: false, paymentMethod: 'ZarinPal', totalPrice: order.totalPrice, paymentRequestId: requestId },
+      { _id: order._id, isPaid: false, paymentMethod: order.paymentMethod, totalPrice: order.totalPrice, paymentRequestId: requestId },
       { $set: { paymentAuthority: authority, paymentResult: { id: authority, status: 'PENDING', email_address: '' } }, $unset: { paymentRequestId: 1, paymentRequestAt: 1 } },
       { new: true }
     )
@@ -310,7 +311,7 @@ export async function updateOrderToPaid(orderId: string) {
     }>('user', 'name email')
     if (!order) throw new Error('Order not found')
     if (order.isPaid) throw new Error('Order is already paid')
-    if (order.paymentMethod === 'ZarinPal') throw new Error('پرداخت زرین‌پال فقط با تأیید درگاه ثبت می‌شود')
+    if (isZarinPalPaymentMethod(order.paymentMethod)) throw new Error('پرداخت زرین‌پال فقط با تأیید درگاه ثبت می‌شود')
     order.isPaid = true
     order.paidAt = new Date()
     await order.save()

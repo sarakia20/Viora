@@ -5,6 +5,7 @@ const fs = require('node:fs')
 const vm = require('node:vm')
 const ts = require('typescript')
 const { webcrypto } = require('node:crypto')
+const paymentMethods = require('./helpers/load-typescript.cjs')('lib/payment-methods.ts')
 
 const orderId = '0123456789abcdef01234567'
 const authority = 'A' + '1'.repeat(35)
@@ -16,7 +17,7 @@ function load(file, mocks, fetch) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText
   vm.runInNewContext(source, {
-    exports, require: (id) => mocks[id] || {}, fetch, URL, AbortSignal,
+    exports, require: (id) => mocks[id] || (['../payment-methods', '@/lib/payment-methods'].includes(id) ? paymentMethods : {}), fetch, URL, AbortSignal,
     crypto: webcrypto,
     process: { env: { ZARINPAL_MERCHANT_ID: 'test-only', ZARINPAL_CALLBACK_BASE_URL: 'https://viora-store.ir' } },
     console: { info() {}, error() {} },

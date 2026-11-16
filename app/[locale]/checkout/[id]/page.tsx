@@ -7,6 +7,7 @@ import PaymentForm from './payment-form'
 import Stripe from 'stripe'
 import { startZarinPalPayment } from '@/lib/actions/order.actions'
 import ZarinPalSubmit from './zarinpal-submit'
+import { isZarinPalPaymentMethod } from '@/lib/payment-methods'
 
 export const metadata = {
   title: 'پرداخت سفارش',
@@ -40,7 +41,7 @@ const CheckoutPaymentPage = async (props: {
   }
   return (
     <PaymentForm
-      zarinpalPayment={order.paymentMethod === 'ZarinPal' && !order.isPaid ? (
+      zarinpalPayment={isZarinPalPaymentMethod(order.paymentMethod) && !order.isPaid ? (
         <form action={startZarinPalPayment.bind(null, id)} className='space-y-3'>
           <ZarinPalSubmit />
           {paymentError && <p role='alert' className='text-sm text-red-700'>شروع پرداخت ناموفق بود. لطفاً دوباره تلاش کنید؛ اگر مشکل ادامه داشت با پشتیبانی تماس بگیرید.</p>}

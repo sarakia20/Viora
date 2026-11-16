@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrderById } from '@/lib/actions/order.actions'
+import { isZarinPalPaymentMethod } from '@/lib/payment-methods'
 
 export default async function ZarinPalResultPage({ params }: {
   params: Promise<{ locale: string; id: string }>
 }) {
   const { id } = await params
   const order = await getOrderById(id)
-  if (!order || order.paymentMethod !== 'ZarinPal') notFound()
+  if (!order || !isZarinPalPaymentMethod(order.paymentMethod)) notFound()
 
   const paid = Boolean(order.isPaid)
   return (
