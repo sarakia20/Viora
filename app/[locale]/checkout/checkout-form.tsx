@@ -22,7 +22,8 @@ import {
 } from '@/components/ui/select'
 import { createOrder } from '@/lib/actions/order.actions'
 import { calculateTipaxTotals, SHIPPING_PAY_ON_DELIVERY, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
-import { ShippingAddressSchema } from '@/lib/validator'
+import { MobilePhoneSchema, ShippingAddressSchema } from '@/lib/validator'
+import { normalizeMobileDigits } from '@/lib/phone'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -94,6 +95,7 @@ const CheckoutForm = () => {
     resolver: zodResolver(ShippingAddressSchema),
     defaultValues: shippingAddressDefaultValues,
   })
+  const isPhoneValid = MobilePhoneSchema.safeParse(shippingAddressForm.watch('phone')).success
   const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSavingAddress, setIsSavingAddress] = useState(false)
@@ -411,6 +413,17 @@ const CheckoutForm = () => {
                                   <Input
                                     placeholder='شماره موبایل'
                                     {...field}
+                                    type='tel'
+                                    inputMode='numeric'
+                                    maxLength={11}
+                                    onChange={(event) => {
+                                      field.onChange(normalizeMobileDigits(event.target.value))
+                                      void shippingAddressForm.trigger('phone')
+                                    }}
+                                    onBlur={() => {
+                                      field.onBlur()
+                                      void shippingAddressForm.trigger('phone')
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -422,7 +435,7 @@ const CheckoutForm = () => {
                       <CardFooter className='  p-4'>
                         <Button
                           type='submit'
-                          disabled={isSavingAddress}
+                          disabled={isSavingAddress || !isPhoneValid}
                           aria-busy={isSavingAddress}
                           className='rounded-full font-bold'
                         >
@@ -607,7 +620,7 @@ const CheckoutForm = () => {
 </div>
 </CardContent>
                   <CardFooter className='p-4  border-t'>
-  <Button type='button' onClick={handlePlaceOrder} disabled={isSubmitting || isSavingAddress} aria-busy={isSubmitting} className='w-full rounded-full px-8 font-bold sm:w-auto'>
+  <Button type='button' onClick={handlePlaceOrder} disabled={isSubmitting || isSavingAddress || !isPhoneValid} aria-busy={isSubmitting} className='w-full rounded-full px-8 font-bold sm:w-auto'>
     {isSubmitting ? 'در حال ثبت سفارش...' : createdOrderId ? 'رفتن به صفحه پرداخت' : 'ثبت نهایی سفارش'}
   </Button>
 </CardFooter>

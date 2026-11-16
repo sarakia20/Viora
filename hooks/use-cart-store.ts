@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 import { Cart, OrderItem, ShippingAddress } from '@/types'
 import { calcDeliveryDateAndPrice } from '@/lib/actions/order.actions'
 import { normalizeCartShipping, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
+import { ShippingAddressSchema } from '@/lib/validator'
 
 const initialState: Cart = {
   items: [],
@@ -133,18 +134,19 @@ const useCartStore = create(
         })
       },
       setShippingAddress: async (shippingAddress: ShippingAddress) => {
+        const validatedAddress = ShippingAddressSchema.parse(shippingAddress)
         const { items } = get().cart
-        const unchanged = Object.entries(shippingAddress).every(
+        const unchanged = Object.entries(validatedAddress).every(
           ([key, value]) => get().cart.shippingAddress?.[key as keyof ShippingAddress] === value
         )
         set({
           cart: {
             ...get().cart,
-            shippingAddress,
+            shippingAddress: validatedAddress,
             checkoutRequestId: unchanged ? get().cart.checkoutRequestId : undefined,
             ...(await calcDeliveryDateAndPrice({
               items,
-              shippingAddress,
+              shippingAddress: validatedAddress,
             })),
           },
         })

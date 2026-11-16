@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { formatNumberWithDecimal } from './utils'
 import { TIPAX_SHIPPING_METHOD } from './shipping'
+import { MOBILE_PHONE_ERROR, normalizeMobileDigits } from './phone'
 
 // Common
 const MongoId = z
@@ -99,13 +100,18 @@ export const OrderItemSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
 })
+export const MobilePhoneSchema = z
+  .string({ required_error: MOBILE_PHONE_ERROR, invalid_type_error: MOBILE_PHONE_ERROR })
+  .transform(normalizeMobileDigits)
+  .pipe(z.string().length(11, MOBILE_PHONE_ERROR).regex(/^09\d{9}$/, MOBILE_PHONE_ERROR))
+
 export const ShippingAddressSchema = z.object({
   fullName: z.string().min(1, 'نام و نام خانوادگی الزامی است'),
   street: z.string().min(1, 'آدرس الزامی است'),
   city: z.string().min(1, 'شهر الزامی است'),
   postalCode: z.string().min(1, 'کد پستی الزامی است'),
   province: z.string().min(1, 'استان الزامی است'),
-  phone: z.string().min(1, 'شماره موبایل الزامی است'),
+  phone: MobilePhoneSchema,
   country: z.string().min(1, 'کشور الزامی است'),
 })
 
