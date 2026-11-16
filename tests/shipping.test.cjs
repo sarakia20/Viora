@@ -20,7 +20,7 @@ function harness() {
       // Exercise the real Mongoose persistence schema without saving to a live DB.
       const document = new Order(data)
       await document.validate()
-      const order = { ...document.toObject(), _id: orderId, user: userId }
+      const order = { ...document.toObject(), _id: document._id.toString(), user: userId }
       stored.push(order)
       return order
     },
@@ -67,8 +67,9 @@ function harness() {
       return { ok: true, status: 200, json: async () => ({ data: url.includes('verify') ? { code: 100, ref_id: 123456 } : { code: 100, authority } }) }
     },
   }
+  const actions = load('lib/actions/order.actions.ts', mocks, globals)
   return {
-    actions: load('lib/actions/order.actions.ts', mocks, globals),
+    actions: { ...actions, createOrder: (cart, id = '12345678-1234-4234-8234-123456789012') => actions.createOrder(cart, id) },
     callback: load('app/api/payments/zarinpal/callback/route.ts', mocks, globals),
     stored, requests, receipts: () => receipts,
   }
@@ -140,10 +141,11 @@ test('invalid address and empty cart still fail validation; other payment method
 test('ZarinPal request and verify both use the saved online total without carrier costs', async () => {
   const h = harness()
   assert.equal((await h.actions.createOrder(cart())).success, true)
-  const payment = await h.actions.createZarinPalPayment(orderId)
+  const savedOrderId = h.stored[0]._id
+  const payment = await h.actions.createZarinPalPayment(savedOrderId)
   assert.equal(payment.redirectUrl, `https://www.zarinpal.com/pg/StartPay/${authority}`)
   assert.equal(h.stored[0].isPaid, false)
-  const result = await h.callback.GET({ nextUrl: new URL(`https://viora-store.ir/api/payments/zarinpal/callback?orderId=${orderId}&Authority=${authority}&Status=OK`) })
+  const result = await h.callback.GET({ nextUrl: new URL(`https://viora-store.ir/api/payments/zarinpal/callback?orderId=${savedOrderId}&Authority=${authority}&Status=OK`) })
   assert.match(result.url, /result=success/)
   assert.equal(h.requests.length, 2)
   assert.equal(h.requests[0].body.amount, 24000)

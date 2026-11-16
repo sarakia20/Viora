@@ -20,18 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
 import { createOrder } from '@/lib/actions/order.actions'
 import { calculateTipaxTotals, SHIPPING_PAY_ON_DELIVERY, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
 import { ShippingAddressSchema } from '@/lib/validator'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { ShippingAddress } from '@/types'
-import useIsMounted from '@/hooks/use-is-mounted'
 import Link from 'next/link'
 import useCartStore from '@/hooks/use-cart-store'
 import useSettingStore from '@/hooks/use-setting-store'
@@ -68,7 +66,6 @@ const shippingAddressDefaultValues = {
     
 
 const CheckoutForm = () => {
-  const { toast } = useToast()
   const router = useRouter()
   const {
     setting: {
@@ -89,57 +86,107 @@ const CheckoutForm = () => {
     updateItem,
     removeItem,
     clearCart,
+    getCheckoutRequestId,
   } = useCartStore()
-  const isMounted = useIsMounted()
   const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calculateTipaxTotals(items)
 
   const shippingAddressForm = useForm<ShippingAddress>({
     resolver: zodResolver(ShippingAddressSchema),
     defaultValues: shippingAddressDefaultValues,
   })
-  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = (values) => {
-    setShippingAddress(values)
-    setIsAddressSelected(true)
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSavingAddress, setIsSavingAddress] = useState(false)
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
+  const submissionLocked = useRef(false)
+  const completedOrder = useRef<string | null>(null)
+  const errorRef = useRef<HTMLParagraphElement>(null)
+  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = async (values) => {
+    setIsSavingAddress(true)
+    setSubmitError('')
+    try {
+      await setShippingAddress(values)
+      setIsAddressSelected(true)
+    } catch (error) {
+      console.error('[checkout] address confirmation failed', { stage: 'save_address', errorName: error instanceof Error ? error.name : 'UnknownError' })
+      setSubmitError('ذخیره اطلاعات آدرس انجام نشد. اتصال اینترنت را بررسی کنید و دوباره تأیید آدرس را بزنید.')
+    } finally {
+      setIsSavingAddress(false)
+    }
   }
-
- // useEffect(() => {
-   // if (!isMounted || !shippingAddress) return
-    //shippingAddressForm.setValue('fullName', shippingAddress.fullName)
-    //shippingAddressForm.setValue('street', shippingAddress.street)
-   // shippingAddressForm.setValue('city', shippingAddress.city)
-  //  shippingAddressForm.setValue('country', shippingAddress.country)
-  //  shippingAddressForm.setValue('postalCode', shippingAddress.postalCode)
-   // shippingAddressForm.setValue('province', shippingAddress.province)
-   // shippingAddressForm.setValue('phone', shippingAddress.phone)
-  //}, [items, isMounted, router, shippingAddress, shippingAddressForm])
 
   const [isAddressSelected, setIsAddressSelected] = useState<boolean>(false)
   const [isPaymentMethodSelected, setIsPaymentMethodSelected] =
     useState<boolean>(false)
 
+  useEffect(() => {
+    if (shippingAddress && !isAddressSelected && !shippingAddressForm.formState.isDirty)
+      shippingAddressForm.reset(shippingAddress)
+  }, [shippingAddress, isAddressSelected, shippingAddressForm])
+
+  useEffect(() => {
+    if (submitError) errorRef.current?.focus()
+  }, [submitError])
+
   const handlePlaceOrder = async () => {
-    const res = await createOrder({
-      items,
-      shippingAddress,
-      shippingMethod: TIPAX_SHIPPING_METHOD,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-    })
-    if (!res.success) {
-      toast({
-        description: res.message,
-        variant: 'destructive',
-      })
-    } else {
-      toast({
-        description: res.message,
-        variant: 'default',
-      })
+    if (submissionLocked.current) return
+    submissionLocked.current = true
+    setIsSubmitting(true)
+    setSubmitError('')
+    let stage = 'validate_checkout'
+    console.info('[checkout] submission started', { stage })
+    try {
+      if (completedOrder.current) {
+        stage = 'navigate_to_payment'
+        router.push(`/checkout/${completedOrder.current}`)
+        return
+      }
+      if (!(await shippingAddressForm.trigger())) {
+        setIsAddressSelected(false)
+        setSubmitError('اطلاعات آدرس کامل نیست. لطفاً فیلدهای مشخص‌شده را تکمیل و آدرس را تأیید کنید.')
+        return
+      }
+      if (!items.length) {
+        setSubmitError('سبد خرید خالی است. ابتدا کالا به سبد اضافه کنید.')
+        return
+      }
+      if (!availablePaymentMethods.some(method => method.name === paymentMethod)) {
+        setIsPaymentMethodSelected(false)
+        setSubmitError('لطفاً یک روش پرداخت فعال انتخاب و تأیید کنید.')
+        return
+      }
+      stage = 'create_order'
+      const res = await createOrder({
+        items,
+        shippingAddress: shippingAddressForm.getValues(),
+        shippingMethod: TIPAX_SHIPPING_METHOD,
+        paymentMethod,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        totalPrice,
+      }, getCheckoutRequestId())
+      if (!res.success || !res.data?.orderId || !/^[a-f\d]{24}$/i.test(res.data.orderId)) {
+        console.error('[checkout] order rejected', { stage })
+        setSubmitError(res.message || 'ثبت سفارش انجام نشد. لطفاً اطلاعات سفارش را بررسی و دوباره تلاش کنید.')
+        return
+      }
+      completedOrder.current = res.data.orderId
+      setCreatedOrderId(res.data.orderId)
+      stage = 'navigate_to_payment'
       clearCart()
-      router.push(`/checkout/${res.data?.orderId}`)
+      router.push(`/checkout/${res.data.orderId}`)
+    } catch (error) {
+      console.error('[checkout] submission failed', {
+        stage,
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+      })
+      setSubmitError(completedOrder.current
+        ? 'سفارش شما ثبت شده است، اما انتقال به صفحه پرداخت انجام نشد. از پیوند صفحه پرداخت استفاده کنید.'
+        : 'ارتباط برای ثبت سفارش برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید. اگر مشکل ادامه داشت، صفحه را تازه‌سازی کنید یا با پشتیبانی تماس بگیرید.')
+    } finally {
+      submissionLocked.current = false
+      setIsSubmitting(false)
     }
   }
   const handleSelectPaymentMethod = () => {
@@ -198,6 +245,8 @@ const CheckoutForm = () => {
 
   return (
     <main className='mx-auto w-full max-w-6xl highlight-link'>
+      {submitError && <p ref={errorRef} role='alert' tabIndex={-1} className='mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-right text-red-800'>{submitError}</p>}
+      {createdOrderId && <p role='status' className='mb-4 text-right'>سفارش ثبت شد. <Link href={`/checkout/${createdOrderId}`}>ورود به صفحه پرداخت</Link></p>}
       <div className='grid min-w-0 gap-4 md:grid-cols-4 md:gap-6'>
         <div className='md:col-span-3'>
           {/* shipping address */}
@@ -373,9 +422,11 @@ const CheckoutForm = () => {
                       <CardFooter className='  p-4'>
                         <Button
                           type='submit'
+                          disabled={isSavingAddress}
+                          aria-busy={isSavingAddress}
                           className='rounded-full font-bold'
                         >
-                          تایید آدرس
+                          {isSavingAddress ? 'در حال ذخیره آدرس...' : 'تایید آدرس'}
                         </Button>
                       </CardFooter>
                     </Card>
@@ -556,8 +607,8 @@ const CheckoutForm = () => {
 </div>
 </CardContent>
                   <CardFooter className='p-4  border-t'>
-  <Button onClick={handlePlaceOrder} className='w-full rounded-full px-8 font-bold sm:w-auto'>
-    ثبت نهایی سفارش
+  <Button type='button' onClick={handlePlaceOrder} disabled={isSubmitting || isSavingAddress} aria-busy={isSubmitting} className='w-full rounded-full px-8 font-bold sm:w-auto'>
+    {isSubmitting ? 'در حال ثبت سفارش...' : createdOrderId ? 'رفتن به صفحه پرداخت' : 'ثبت نهایی سفارش'}
   </Button>
 </CardFooter>
                 </Card>

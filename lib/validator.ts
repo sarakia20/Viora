@@ -152,6 +152,7 @@ export const OrderInputSchema = z.object({
 // Cart
 
 export const CartSchema = z.object({
+  checkoutRequestId: z.string().uuid().optional(),
   items: z
     .array(OrderItemSchema)
     .min(1, 'Order must contain at least one item'),

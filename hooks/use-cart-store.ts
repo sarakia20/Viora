@@ -25,6 +25,7 @@ interface CartState {
   clearCart: () => void
   setShippingAddress: (shippingAddress: ShippingAddress) => Promise<void>
   setPaymentMethod: (paymentMethod: string) => void
+  getCheckoutRequestId: () => string
 }
 
 const useCartStore = create(
@@ -65,6 +66,7 @@ const useCartStore = create(
           cart: {
             ...get().cart,
             items: updatedCartItems,
+            checkoutRequestId: undefined,
             ...(await calcDeliveryDateAndPrice({
               items: updatedCartItems,
               shippingAddress,
@@ -102,6 +104,7 @@ const useCartStore = create(
           cart: {
             ...get().cart,
             items: updatedCartItems,
+            checkoutRequestId: undefined,
             ...(await calcDeliveryDateAndPrice({
               items: updatedCartItems,
               shippingAddress,
@@ -121,6 +124,7 @@ const useCartStore = create(
           cart: {
             ...get().cart,
             items: updatedCartItems,
+            checkoutRequestId: undefined,
             ...(await calcDeliveryDateAndPrice({
               items: updatedCartItems,
               shippingAddress,
@@ -130,10 +134,14 @@ const useCartStore = create(
       },
       setShippingAddress: async (shippingAddress: ShippingAddress) => {
         const { items } = get().cart
+        const unchanged = Object.entries(shippingAddress).every(
+          ([key, value]) => get().cart.shippingAddress?.[key as keyof ShippingAddress] === value
+        )
         set({
           cart: {
             ...get().cart,
             shippingAddress,
+            checkoutRequestId: unchanged ? get().cart.checkoutRequestId : undefined,
             ...(await calcDeliveryDateAndPrice({
               items,
               shippingAddress,
@@ -146,14 +154,23 @@ const useCartStore = create(
           cart: {
             ...get().cart,
             paymentMethod,
+            checkoutRequestId: paymentMethod === get().cart.paymentMethod ? get().cart.checkoutRequestId : undefined,
           },
         })
+      },
+      getCheckoutRequestId: () => {
+        const current = get().cart.checkoutRequestId
+        if (current && /^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(current)) return current
+        const requestId = crypto.randomUUID()
+        set({ cart: { ...get().cart, checkoutRequestId: requestId } })
+        return requestId
       },
       clearCart: () => {
         set({
           cart: normalizeCartShipping({
             ...get().cart,
             items: [],
+            checkoutRequestId: undefined,
           }),
         })
       },

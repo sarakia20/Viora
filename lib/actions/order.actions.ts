@@ -18,6 +18,7 @@ import { getSetting } from './setting.actions'
 import { requireAdmin, requireUser } from '../auth-guard'
 import { SITE_URL } from '../site-url'
 import { calculateTipaxTotals, TIPAX_SHIPPING_METHOD } from '../shipping'
+import { createHash } from 'node:crypto'
 
 async function getOrderAccessFilter(orderId: string) {
   const session = await requireUser()
@@ -31,45 +32,84 @@ async function getOrderAccessFilter(orderId: string) {
 }
 
 // CREATE
-export const createOrder = async (clientSideCart: Cart) => {
+class CheckoutInputError extends Error {}
+
+export const createOrder = async (clientSideCart: Cart, requestId: string) => {
+  let stage = 'authenticate'
+  let orderId: string | undefined
+  let userId: string | undefined
+  console.info('[checkout] order request received', { stage })
   try {
-    await connectToDatabase()
     const session = await auth()
-    if (!session) throw new Error('User not authenticated')
+    if (!session?.user?.id) throw new CheckoutInputError('نشست شما پایان یافته است. دوباره وارد حساب شوید و سفارش را ثبت کنید.')
+    userId = session.user.id
+    stage = 'validate_request'
+    if (typeof requestId !== 'string' || !/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(requestId))
+      throw new CheckoutInputError('شناسه درخواست سفارش معتبر نیست. صفحه را تازه‌سازی کنید و دوباره تلاش کنید.')
+    if (clientSideCart.shippingMethod !== TIPAX_SHIPPING_METHOD || clientSideCart.deliveryDateIndex !== undefined)
+      throw new CheckoutInputError('روش ارسال معتبر نیست؛ ارسال سفارش فقط با تیپاکس انجام می‌شود')
+    // MongoDB's existing unique _id index makes retries atomic across instances.
+    orderId = createHash('sha256').update(`${userId}:${requestId}`).digest('hex').slice(0, 24)
+    stage = 'connect_database'
+    await connectToDatabase()
+    stage = 'find_existing_order'
+    const existing = await Order.findOne({ _id: orderId, user: userId })
+    if (existing) return {
+      success: true,
+      message: 'سفارش شما قبلاً ثبت شده است؛ در حال انتقال به صفحه پرداخت.',
+      data: { orderId: existing._id.toString() },
+    }
+    stage = 'validate_and_save_order'
     // Recalculate online charges from database products and the fixed shipping policy.
     const createdOrder = await createOrderFromCart(
       clientSideCart,
-      session.user.id!
+      userId,
+      orderId
     )
+    console.info('[checkout] order created', { stage: 'order_saved' })
     return {
       success: true,
       message: 'سفارش شما با موفقیت ثبت شد',
       data: { orderId: createdOrder._id.toString() },
     }
   } catch (error) {
-    return { success: false, message: formatError(error) }
+    if (orderId && userId && typeof error === 'object' && error && 'code' in error && error.code === 11000) {
+      const existing = await Order.findOne({ _id: orderId, user: userId }).catch(() => null)
+      if (existing) return { success: true, message: 'سفارش شما ثبت شده است.', data: { orderId: existing._id.toString() } }
+    }
+    console.error('[checkout] order creation failed', {
+      stage,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    })
+    const message = error instanceof CheckoutInputError
+      ? error.message
+      : error instanceof Error && ['ZodError', 'ValidationError'].includes(error.name)
+        ? 'اطلاعات آدرس یا سفارش کامل و معتبر نیست. لطفاً اطلاعات آدرس و کالاها را بررسی کنید.'
+        : 'ثبت سفارش با خطا روبه‌رو شد. لطفاً دوباره تلاش کنید؛ اگر مشکل ادامه داشت با پشتیبانی تماس بگیرید.'
+    return { success: false, message }
   }
 }
 const createOrderFromCart = async (
   clientSideCart: Cart,
-  userId: string
+  userId: string,
+  orderId: string
 ) => {
-  if (!clientSideCart.items?.length) throw new Error('Cart is empty')
+  if (!clientSideCart.items?.length) throw new CheckoutInputError('سبد خرید خالی است. ابتدا کالا به سبد اضافه کنید.')
   if (clientSideCart.shippingMethod !== TIPAX_SHIPPING_METHOD || clientSideCart.deliveryDateIndex !== undefined)
-    throw new Error('روش ارسال معتبر نیست؛ ارسال سفارش فقط با تیپاکس انجام می‌شود')
+    throw new CheckoutInputError('روش ارسال معتبر نیست؛ ارسال سفارش فقط با تیپاکس انجام می‌شود')
   const settings = await getSetting()
   if (!settings.availablePaymentMethods.some((method) => method.name === clientSideCart.paymentMethod))
-    throw new Error('روش پرداخت انتخاب‌شده در فروشگاه فعال نیست')
+    throw new CheckoutInputError('روش پرداخت انتخاب‌شده در فروشگاه فعال نیست. لطفاً روش پرداخت را دوباره انتخاب کنید.')
   const canonicalItems = await Promise.all(clientSideCart.items.map(async (item) => {
     const product = await Product.findById(item.product)
-    if (!product || !product.isPublished) throw new Error('Product is unavailable')
+    if (!product || !product.isPublished) throw new CheckoutInputError('یکی از کالاهای سبد خرید دیگر قابل سفارش نیست. سبد خرید را بررسی کنید.')
     const variant = item.color
       ? product.variants?.find((candidate) => candidate.color === item.color)
       : undefined
-    if (item.color && !variant) throw new Error('Selected product option is unavailable')
+    if (item.color && !variant) throw new CheckoutInputError('رنگ انتخاب‌شدهٔ یکی از کالاها موجود نیست. سبد خرید را بررسی کنید.')
     const countInStock = variant?.countInStock ?? product.countInStock
     if (!Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < item.quantity)
-      throw new Error('Insufficient product stock')
+      throw new CheckoutInputError('موجودی یکی از کالاها برای تعداد انتخاب‌شده کافی نیست. تعداد کالاها را بررسی کنید.')
     return {
       product: product._id.toString(),
       clientId: item.clientId,
@@ -105,7 +145,7 @@ const createOrderFromCart = async (
     totalPrice: cart.totalPrice,
     expectedDeliveryDate: cart.expectedDeliveryDate,
   })
-  return await Order.create(order)
+  return await Order.create({ ...order, _id: orderId })
 }
 
 // Next redirects throw internally; keep them outside the initiation catch.
