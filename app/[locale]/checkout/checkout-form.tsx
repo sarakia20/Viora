@@ -306,23 +306,24 @@ const CheckoutForm = () => {
                             control={shippingAddressForm.control}
                             name='province'
                             render={({ field }) => (
-                              <FormItem className='w-full'>
+                              <FormItem className='w-full text-right' dir='rtl'>
                                 <FormLabel>استان</FormLabel>
                                 <FormControl>
                                   <Select
+  dir='rtl'
   value={field.value}
   onValueChange={field.onChange}
 >
-  <SelectTrigger  className="text-right justify-end" dir="rtl" >
+  <SelectTrigger className='text-right justify-between' dir='rtl'>
     <SelectValue placeholder='استان' />
   </SelectTrigger>
 
-  <SelectContent  className="text-right" dir="rtl">
+  <SelectContent className='text-right' dir='rtl' align='start'>
     {iranProvinces.map((province) => (
       <SelectItem
         key={province}
         value={province}
-        className='text-right'
+        className='text-right justify-start pr-8 pl-2'
       >
         {province}
       </SelectItem>
