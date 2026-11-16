@@ -103,12 +103,21 @@ const createOrderFromCart = async (
   const canonicalItems = await Promise.all(clientSideCart.items.map(async (item) => {
     const product = await Product.findById(item.product)
     if (!product || !product.isPublished) throw new CheckoutInputError('یکی از کالاهای سبد خرید دیگر قابل سفارش نیست. سبد خرید را بررسی کنید.')
-    const variant = item.color
+    // Legacy products use colors with the base price/stock; newer products use variants.
+    // Never fall back to base pricing when a product has variants.
+    const hasVariants = Boolean(product.variants?.length)
+    const variant = hasVariants && item.color
       ? product.variants?.find((candidate) => candidate.color === item.color)
       : undefined
-    if (item.color && !variant) throw new CheckoutInputError('رنگ انتخاب‌شدهٔ یکی از کالاها موجود نیست. سبد خرید را بررسی کنید.')
+    if (
+      (hasVariants && !variant) ||
+      (!hasVariants && (item.color ? !product.colors?.includes(item.color) : Boolean(product.colors?.length))) ||
+      (item.size ? !product.sizes?.includes(item.size) : Boolean(product.sizes?.length))
+    ) throw new CheckoutInputError(`گزینه انتخاب‌شده برای «${product.name}» دیگر معتبر نیست. این کالا را از سبد حذف کنید و گزینه موجود را از صفحه محصول دوباره اضافه کنید.`)
+    if (variant && (typeof variant.price !== 'number' || typeof variant.countInStock !== 'number'))
+      throw new CheckoutInputError(`اطلاعات قیمت یا موجودی گزینه «${item.color}» برای «${product.name}» کامل نیست. لطفاً با پشتیبانی تماس بگیرید.`)
     const countInStock = variant?.countInStock ?? product.countInStock
-    if (!Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < item.quantity)
+    if (!Number.isFinite(countInStock) || !Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < item.quantity)
       throw new CheckoutInputError('موجودی یکی از کالاها برای تعداد انتخاب‌شده کافی نیست. تعداد کالاها را بررسی کنید.')
     return {
       product: product._id.toString(),
