@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { formatNumberWithDecimal } from './utils'
+import { TIPAX_SHIPPING_METHOD } from './shipping'
 
 // Common
 const MongoId = z
@@ -121,6 +122,8 @@ export const OrderInputSchema = z.object({
     .array(OrderItemSchema)
     .min(1, 'سبد خرید نباید خالی باشد'),
   shippingAddress: ShippingAddressSchema,
+  // Optional for orders created before the Tipax policy; no default on old orders.
+  shippingMethod: z.string().optional(),
   paymentMethod: z.string().min(1, 'روش پرداخت الزامی است'),
   paymentResult: z
     .object({
@@ -139,7 +142,8 @@ export const OrderInputSchema = z.object({
     .refine(
       (value) => value > new Date(),
       'تاریخ تحویل باید در آینده باشد'
-    ),
+    )
+    .optional(),
   isDelivered: z.boolean().default(false),
   deliveredAt: z.date().optional(),
   isPaid: z.boolean().default(false),
@@ -157,6 +161,7 @@ export const CartSchema = z.object({
   totalPrice: z.number(),
   paymentMethod: z.optional(z.string()),
   shippingAddress: z.optional(ShippingAddressSchema),
+  shippingMethod: z.literal(TIPAX_SHIPPING_METHOD).optional(),
   deliveryDateIndex: z.optional(z.number()),
   expectedDeliveryDate: z.optional(z.date()),
 })

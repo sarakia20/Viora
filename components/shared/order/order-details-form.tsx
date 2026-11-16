@@ -19,6 +19,7 @@ import { buttonVariants } from '@/components/ui/button'
 import ProductPrice from '../product/product-price'
 import ActionButton from '../action-button'
 import { deliverOrder, updateOrderToPaid } from '@/lib/actions/order.actions'
+import { isTipaxShipping, SHIPPING_PAY_ON_DELIVERY } from '@/lib/shipping'
 
 export default function OrderDetailsForm({
   order,
@@ -47,6 +48,7 @@ export default function OrderDetailsForm({
         <Card>
           <CardContent className='p-4 gap-4'>
             <h2 className='text-xl pb-4'>اطلاعات ارسال</h2>
+            {isTipaxShipping(order) && <p>روش ارسال: {order.shippingMethod} — {SHIPPING_PAY_ON_DELIVERY}</p>}
             <p>
               {shippingAddress.fullName} {shippingAddress.phone}
             </p>
@@ -64,10 +66,10 @@ export default function OrderDetailsForm({
               <div>
                 {' '}
                 <Badge variant='destructive'>تحویل نشده</Badge>
-                <div>
+                {expectedDeliveryDate && <div>
                   زمان تقریبی تحویل:{' '}
-                  {formatDateTime(expectedDeliveryDate!).dateTime}
-                </div>
+                  {formatDateTime(expectedDeliveryDate).dateTime}
+                </div>}
               </div>
             )}
           </CardContent>
@@ -128,6 +130,7 @@ export default function OrderDetailsForm({
         <Card>
           <CardContent className='p-4  space-y-4 gap-4'>
             <h2 className='text-xl pb-4'>خلاصه سفارش</h2>
+            {isTipaxShipping(order) && <div className='flex justify-between'><div>روش ارسال</div><div>{order.shippingMethod}</div></div>}
             <div className='flex justify-between'>
               <div>جمع کالاها</div>
               <div>
@@ -139,7 +142,7 @@ export default function OrderDetailsForm({
               <div>هزینه ارسال</div>
               <div>
                 {' '}
-                {shippingPrice === 0 ? (
+                {isTipaxShipping(order) ? SHIPPING_PAY_ON_DELIVERY : shippingPrice === 0 ? (
                   'ارسال رایگان'
                 ) : (
                   <ProductPrice price={shippingPrice} plain />

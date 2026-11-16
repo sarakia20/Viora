@@ -1,5 +1,6 @@
 import { IOrderInput } from '@/types'
 import { Document, Model, model, models, Schema } from 'mongoose'
+import { TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
 
 export interface IOrder extends Document, IOrderInput {
   paymentAuthority?: string
@@ -46,7 +47,11 @@ const orderSchema = new Schema<IOrder>(
       province: { type: String, required: true },
       phone: { type: String, required: true },
     },
-    expectedDeliveryDate: { type: Date, required: true },
+    shippingMethod: { type: String, enum: [TIPAX_SHIPPING_METHOD] },
+    expectedDeliveryDate: {
+      type: Date,
+      required: function (this: IOrder) { return this.shippingMethod !== TIPAX_SHIPPING_METHOD },
+    },
     paymentMethod: { type: String, required: true },
     paymentResult: { id: String, status: String, email_address: String },
     paymentAuthority: { type: String, index: true },
@@ -54,7 +59,16 @@ const orderSchema = new Schema<IOrder>(
     paymentRequestId: { type: String },
     paymentRequestAt: { type: Date },
     itemsPrice: { type: Number, required: true },
-    shippingPrice: { type: Number, required: true },
+    shippingPrice: {
+      type: Number,
+      required: true,
+      validate: {
+        validator: function (this: IOrder, value: number) {
+          return this.shippingMethod !== TIPAX_SHIPPING_METHOD || value === 0
+        },
+        message: 'هزینه ارسال آنلاین تیپاکس باید صفر باشد',
+      },
+    },
     taxPrice: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
     isPaid: { type: Boolean, required: true, default: false },

@@ -1,7 +1,7 @@
 'use server'
 
 import { Cart, IOrderList, OrderItem, ShippingAddress } from '@/types'
-import { formatError, round2 } from '../utils'
+import { formatError } from '../utils'
 import { connectToDatabase } from '../db'
 import { auth } from '@/auth'
 import { OrderInputSchema } from '../validator'
@@ -17,6 +17,7 @@ import mongoose from 'mongoose'
 import { getSetting } from './setting.actions'
 import { requireAdmin, requireUser } from '../auth-guard'
 import { SITE_URL } from '../site-url'
+import { calculateTipaxTotals, TIPAX_SHIPPING_METHOD } from '../shipping'
 
 async function getOrderAccessFilter(orderId: string) {
   const session = await requireUser()
@@ -35,7 +36,7 @@ export const createOrder = async (clientSideCart: Cart) => {
     await connectToDatabase()
     const session = await auth()
     if (!session) throw new Error('User not authenticated')
-    // recalculate price and delivery date on the server
+    // Recalculate online charges from database products and the fixed shipping policy.
     const createdOrder = await createOrderFromCart(
       clientSideCart,
       session.user.id!
@@ -54,6 +55,8 @@ const createOrderFromCart = async (
   userId: string
 ) => {
   if (!clientSideCart.items?.length) throw new Error('Cart is empty')
+  if (clientSideCart.shippingMethod !== TIPAX_SHIPPING_METHOD || clientSideCart.deliveryDateIndex !== undefined)
+    throw new Error('روش ارسال معتبر نیست؛ ارسال سفارش فقط با تیپاکس انجام می‌شود')
   const settings = await getSetting()
   if (!settings.availablePaymentMethods.some((method) => method.name === clientSideCart.paymentMethod))
     throw new Error('روش پرداخت انتخاب‌شده در فروشگاه فعال نیست')
@@ -84,17 +87,17 @@ const createOrderFromCart = async (
   const cart = {
     ...clientSideCart,
     items: canonicalItems,
-    ...calcDeliveryDateAndPrice({
+    ...(await calcDeliveryDateAndPrice({
       items: canonicalItems,
       shippingAddress: clientSideCart.shippingAddress,
-      deliveryDateIndex: clientSideCart.deliveryDateIndex,
-    }),
+    })),
   }
 
   const order = OrderInputSchema.parse({
     user: userId,
     items: cart.items,
     shippingAddress: cart.shippingAddress,
+    shippingMethod: cart.shippingMethod,
     paymentMethod: cart.paymentMethod,
     itemsPrice: cart.itemsPrice,
     shippingPrice: cart.shippingPrice,
@@ -485,46 +488,12 @@ export async function approvePayPalOrder(
 
 export const calcDeliveryDateAndPrice = async ({
   items,
-  shippingAddress,
-  deliveryDateIndex,
 }: {
   deliveryDateIndex?: number
   items: OrderItem[]
   shippingAddress?: ShippingAddress
 }) => {
-  const { availableDeliveryDates } = await getSetting()
-  const itemsPrice = round2(
-    items.reduce((acc, item) => acc + item.price * item.quantity, 0)
-  )
-
-  const deliveryDate =
-    availableDeliveryDates[
-      deliveryDateIndex === undefined
-        ? availableDeliveryDates.length - 1
-        : deliveryDateIndex
-    ]
-  const shippingPrice =
-    !shippingAddress || !deliveryDate
-      ? undefined
-      : shippingAddress.city === 'تهران'
-        ? 0
-        : deliveryDate.shippingPrice
-
-  const taxPrice = 0
-  const totalPrice = round2(
-    itemsPrice + (shippingPrice ? round2(shippingPrice) : 0)
-  )
-  return {
-    availableDeliveryDates,
-    deliveryDateIndex:
-      deliveryDateIndex === undefined
-        ? availableDeliveryDates.length - 1
-        : deliveryDateIndex,
-    itemsPrice,
-    shippingPrice,
-    taxPrice,
-    totalPrice,
-  }
+  return calculateTipaxTotals(items)
 }
 
 // GET ORDERS BY USER

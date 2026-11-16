@@ -22,11 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { createOrder } from '@/lib/actions/order.actions'
-import {
-  calculateFutureDate,
-  formatDateTime,
-  
-} from '@/lib/utils'
+import { calculateTipaxTotals, SHIPPING_PAY_ON_DELIVERY, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
 import { ShippingAddressSchema } from '@/lib/validator'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Image from 'next/image'
@@ -79,19 +75,13 @@ const CheckoutForm = () => {
       site,
       availablePaymentMethods,
       defaultPaymentMethod,
-      availableDeliveryDates,
     },
   } = useSettingStore()
 
   const {
     cart: {
       items,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
       shippingAddress,
-      deliveryDateIndex,
       paymentMethod = defaultPaymentMethod,
     },
     setShippingAddress,
@@ -99,9 +89,9 @@ const CheckoutForm = () => {
     updateItem,
     removeItem,
     clearCart,
-    setDeliveryDateIndex,
   } = useCartStore()
   const isMounted = useIsMounted()
+  const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calculateTipaxTotals(items)
 
   const shippingAddressForm = useForm<ShippingAddress>({
     resolver: zodResolver(ShippingAddressSchema),
@@ -126,17 +116,12 @@ const CheckoutForm = () => {
   const [isAddressSelected, setIsAddressSelected] = useState<boolean>(false)
   const [isPaymentMethodSelected, setIsPaymentMethodSelected] =
     useState<boolean>(false)
-  const [isDeliveryDateSelected, setIsDeliveryDateSelected] =
-    useState<boolean>(false)
 
   const handlePlaceOrder = async () => {
     const res = await createOrder({
       items,
       shippingAddress,
-      expectedDeliveryDate: calculateFutureDate(
-        availableDeliveryDates[deliveryDateIndex!].daysToDeliver
-      ),
-      deliveryDateIndex,
+      shippingMethod: TIPAX_SHIPPING_METHOD,
       paymentMethod,
       itemsPrice,
       shippingPrice,
@@ -185,15 +170,14 @@ const CheckoutForm = () => {
   <div className='border-t border-slate-200' />
 
   <div className='flex justify-between'>
+    <span>روش ارسال:</span>
+    <span>{TIPAX_SHIPPING_METHOD}</span>
+  </div>
+
+  <div className='flex justify-between'>
     <span>هزینه ارسال:</span>
     <span>
-      {shippingPrice === undefined ? (
-        '--'
-      ) : shippingPrice === 0 ? (
-        'ارسال رایگان'
-      ) : (
-        <ProductPrice price={shippingPrice} plain />
-      )}
+      {SHIPPING_PAY_ON_DELIVERY}
     </span>
   </div>
 
@@ -237,7 +221,6 @@ const CheckoutForm = () => {
                     onClick={() => {
                       setIsAddressSelected(false)
                       setIsPaymentMethodSelected(true)
-                      setIsDeliveryDateSelected(true)
                     }}
                   >
                     ویرایش
@@ -417,7 +400,6 @@ const CheckoutForm = () => {
                     variant='outline'
                     onClick={() => {
                       setIsPaymentMethodSelected(false)
-                      if (paymentMethod) setIsDeliveryDateSelected(true)
                     }}
                   >
                     ویرایش
@@ -469,47 +451,9 @@ const CheckoutForm = () => {
               </div>
             )}
           </div>
-          {/* items and delivery date */}
+          {/* Items and the fixed shipping method */}
           <div>
-            {isDeliveryDateSelected && deliveryDateIndex != undefined ? (
-              <div className='grid  grid-cols-1 md:grid-cols-12  my-3 pb-3'>
-                <div className='flex text-lg font-bold  col-span-5'>
-                  <span className='w-8'>3 </span>
-                  <span>محصولات و ارسال</span>
-                </div>
-                <div className='col-span-5'>
-                  <p>
-                    تاریخ تحویل:{' '}
-                    {
-                      formatDateTime(
-                        calculateFutureDate(
-                          availableDeliveryDates[deliveryDateIndex]
-                            .daysToDeliver
-                        )
-                      ).dateOnly
-                    }
-                  </p>
-                  <ul>
-                    {items.map((item, _index) => (
-                      <li key={_index}>
-                        {item.name} x {item.quantity} = {item.price}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className='col-span-2'>
-                  <Button
-                    variant={'outline'}
-                    onClick={() => {
-                      setIsPaymentMethodSelected(true)
-                      setIsDeliveryDateSelected(false)
-                    }}
-                  >
-                    ویرایش 
-                  </Button>
-                </div>
-              </div>
-            ) : isPaymentMethodSelected && isAddressSelected ? (
+            {isPaymentMethodSelected && isAddressSelected ? (
               <>
                 <div className='flex text-slate-900 text-lg font-bold my-2'>
                   <span className='w-8'>3 </span>
@@ -598,50 +542,14 @@ const CheckoutForm = () => {
       روش ارسال
     </h3>
 
-    <RadioGroup
-      value={availableDeliveryDates[deliveryDateIndex!].name}
-      onValueChange={(value) =>
-        setDeliveryDateIndex(
-          availableDeliveryDates.findIndex(
-            (address) => address.name === value
-          )!
-        )
-      }
-    >
-      {availableDeliveryDates.map((dd) => (
-        <div
-          key={dd.name}
-          className='flex items-center rounded-lg border border-slate-200 p-3 mb-3'
-        >
-          <RadioGroupItem
-            value={dd.name}
-            id={`address-${dd.name}`}
-          />
-
-          <Label
-            className='pr-3 flex-1 cursor-pointer'
-            htmlFor={`address-${dd.name}`}
-          >
-            <div className='font-semibold text-slate-900'>
-              {dd.name}
-            </div>
-
-            <div className='text-sm text-slate-500'>
-              {(dd.freeShippingMinPrice > 0 &&
-              itemsPrice >= dd.freeShippingMinPrice
-                ? 0
-                : dd.shippingPrice) === 0 ? (
-                'رایگان'
-              ) : (
-                <ProductPrice
-                  price={dd.shippingPrice}
-                  plain
-                />
-              )}
-            </div>
-          </Label>
-        </div>
-      ))}
+    <RadioGroup value={TIPAX_SHIPPING_METHOD} dir='rtl' aria-label='??? ?????'>
+      <div className='flex items-center rounded-lg border border-slate-200 p-3'>
+        <RadioGroupItem value={TIPAX_SHIPPING_METHOD} id='shipping-tipax' disabled />
+        <Label className='pr-3 flex-1' htmlFor='shipping-tipax'>
+          <div className='font-semibold text-slate-900'>{TIPAX_SHIPPING_METHOD}</div>
+          <div className='text-sm text-slate-500'>{SHIPPING_PAY_ON_DELIVERY}</div>
+        </Label>
+      </div>
     </RadioGroup>
   </div>
 

@@ -3,12 +3,14 @@ import { persist } from 'zustand/middleware'
 
 import { Cart, OrderItem, ShippingAddress } from '@/types'
 import { calcDeliveryDateAndPrice } from '@/lib/actions/order.actions'
+import { normalizeCartShipping, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
 
 const initialState: Cart = {
   items: [],
   itemsPrice: 0,
-  taxPrice: undefined,
-  shippingPrice: undefined,
+  taxPrice: 0,
+  shippingPrice: 0,
+  shippingMethod: TIPAX_SHIPPING_METHOD,
   totalPrice: 0,
   paymentMethod: undefined,
   shippingAddress: undefined,
@@ -23,7 +25,6 @@ interface CartState {
   clearCart: () => void
   setShippingAddress: (shippingAddress: ShippingAddress) => Promise<void>
   setPaymentMethod: (paymentMethod: string) => void
-  setDeliveryDateIndex: (index: number) => Promise<void>
 }
 
 const useCartStore = create(
@@ -148,26 +149,12 @@ const useCartStore = create(
           },
         })
       },
-      setDeliveryDateIndex: async (index: number) => {
-        const { items, shippingAddress } = get().cart
-
-        set({
-          cart: {
-            ...get().cart,
-            ...(await calcDeliveryDateAndPrice({
-              items,
-              shippingAddress,
-              deliveryDateIndex: index,
-            })),
-          },
-        })
-      },
       clearCart: () => {
         set({
-          cart: {
+          cart: normalizeCartShipping({
             ...get().cart,
             items: [],
-          },
+          }),
         })
       },
       init: () => set({ cart: initialState }),
@@ -175,6 +162,10 @@ const useCartStore = create(
 
     {
       name: 'cart-store',
+      merge: (persisted, current) => ({
+        ...current,
+        cart: normalizeCartShipping({ ...current.cart, ...(persisted as Partial<CartState>)?.cart }),
+      }),
     }
   )
 )

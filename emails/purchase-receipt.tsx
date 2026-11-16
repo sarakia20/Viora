@@ -17,6 +17,7 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import { IOrder } from '@/lib/db/models/order.model'
 import { getSetting } from '@/lib/actions/setting.actions'
+import { isTipaxShipping, SHIPPING_PAY_ON_DELIVERY } from '@/lib/shipping'
 
 type OrderInformationProps = {
   order: IOrder
@@ -131,6 +132,7 @@ export default async function PurchaseReceiptEmail({
                   </Column>
                 </Row>
               ))}
+              {isTipaxShipping(order) && <Text>روش ارسال: {order.shippingMethod}</Text>}
               {[
                 { name: 'Items', price: order.itemsPrice },
                 { name: 'Shipping', price: order.shippingPrice },
@@ -139,7 +141,7 @@ export default async function PurchaseReceiptEmail({
                 <Row key={name} className='py-1'>
                   <Column align='right'>{name}:</Column>
                   <Column align='right' width={70} className='align-top'>
-                    <Text className='m-0'>{formatCurrency(price)}</Text>
+                    <Text className='m-0'>{name === 'Shipping' && isTipaxShipping(order) ? SHIPPING_PAY_ON_DELIVERY : formatCurrency(price)}</Text>
                   </Column>
                 </Row>
               ))}

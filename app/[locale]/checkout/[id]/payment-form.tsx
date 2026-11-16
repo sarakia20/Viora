@@ -22,6 +22,7 @@ import StripeForm from './stripe-form'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { ReactNode } from 'react'
+import { isTipaxShipping, SHIPPING_PAY_ON_DELIVERY } from '@/lib/shipping'
 
 // Initialize Stripe only when its payment method is rendered.
 let stripePromise: ReturnType<typeof loadStripe> | undefined
@@ -91,6 +92,7 @@ export default function OrderDetailsForm({
         <div>
           <div className='text-lg font-bold'>خلاصه سفارش</div>
           <div className='space-y-2'>
+            {isTipaxShipping(order) && <div className='flex justify-between'><span>روش ارسال:</span><span>{order.shippingMethod}</span></div>}
             <div className='flex justify-between'>
               <span>جمع کالاها:</span>
               <span>
@@ -101,7 +103,7 @@ export default function OrderDetailsForm({
             <div className='flex justify-between'>
               <span>هزینه ارسال:</span>
               <span>
-                {shippingPrice === undefined ? (
+                {isTipaxShipping(order) ? SHIPPING_PAY_ON_DELIVERY : shippingPrice === undefined ? (
                   '--'
                 ) : shippingPrice === 0 ? (
                   'ارسال رایگان'
@@ -195,10 +197,11 @@ export default function OrderDetailsForm({
               <span>محصولات و ارسال</span>
             </div>
             <div className='col-span-2'>
-              <p>
+              {isTipaxShipping(order) && <p>روش ارسال: {order.shippingMethod} — {SHIPPING_PAY_ON_DELIVERY}</p>}
+              {expectedDeliveryDate && <p>
                 زمان تحویل:
                 {formatDateTime(expectedDeliveryDate).dateOnly}
-              </p>
+              </p>}
               <ul>
                 {items.map((item) => (
                   <li key={item.slug}>
