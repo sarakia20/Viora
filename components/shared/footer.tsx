@@ -94,6 +94,26 @@ export default function Footer() {
             تمامی حقوق این فروشگاه محفوظ است. استفاده از مطالب سایت فقط با ذکر
             منبع مجاز است.
           </div>
+
+          <a
+            href='https://trustseal.enamad.ir/?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
+            target='_blank'
+            rel='noopener'
+            referrerPolicy='origin'
+            className='mx-auto mt-4 block w-20'
+          >
+            <img
+              src='https://trustseal.enamad.ir/logo.aspx?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
+              alt='نماد اعتماد الکترونیکی فروشگاه ویورا'
+              referrerPolicy='origin'
+              width={80}
+              height={96}
+              loading='lazy'
+              className='h-24 w-20 object-contain'
+              style={{ cursor: 'pointer' }}
+              {...{ code: 'Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit' }}
+            />
+          </a>
         </div>
       </footer>
     </>
