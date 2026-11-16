@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const order = await Order.findById(orderId).populate('user', 'email')
 
-    if (order == null) {
+    if (order == null || order.paymentMethod !== 'Stripe') {
       return new NextResponse('Bad Request', { status: 400 })
     }
 

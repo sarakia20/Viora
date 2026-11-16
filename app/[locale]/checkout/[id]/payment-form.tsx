@@ -20,18 +20,23 @@ import { Button } from '@/components/ui/button'
 import ProductPrice from '@/components/shared/product/product-price'
 import StripeForm from './stripe-form'
 import { Elements } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
-import { createZarinPalPayment } from '@/lib/actions/order.actions'
-import { useEffect, useRef, useState } from 'react'
+import { loadStripe } from '@stripe/stripe-js/pure'
+import { ReactNode } from 'react'
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
-)
+// Initialize Stripe only when its payment method is rendered.
+let stripePromise: ReturnType<typeof loadStripe> | undefined
+function getStripePromise() {
+  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  if (!key) return null
+  return stripePromise ??= loadStripe(key)
+}
 export default function OrderDetailsForm({
   order,
   paypalClientId,
   clientSecret,
+  zarinpalPayment,
 }: {
+  zarinpalPayment?: ReactNode
   order: IOrder
   paypalClientId: string
   isAdmin: boolean
@@ -49,8 +54,6 @@ export default function OrderDetailsForm({
     isPaid,
   } = order
   const { toast } = useToast()
-  const [isStarting, setIsStarting] = useState(false)
-  const hasAutoStartedPayment = useRef(false)
 
   if (isPaid) {
     redirect(`/account/orders/${order._id}`)
@@ -81,34 +84,6 @@ export default function OrderDetailsForm({
       variant: res.success ? 'default' : 'destructive',
     })
   }
-
-  const handlePayment = async () => {
-    if (isStarting) return
-    setIsStarting(true)
-    try {
-      const result = await createZarinPalPayment(order._id.toString())
-      if (!result.success || !result.redirectUrl) {
-        toast({ description: result.message || 'شروع پرداخت ناموفق بود', variant: 'destructive' })
-        setIsStarting(false)
-        return
-      }
-      window.location.assign(result.redirectUrl)
-    } catch {
-      toast({ description: 'ارتباط با سرور پرداخت برقرار نشد. لطفاً دوباره تلاش کنید.', variant: 'destructive' })
-      setIsStarting(false)
-    }
-  }
-
-  useEffect(() => {
-    if (
-      paymentMethod === 'ZarinPal' &&
-      !isPaid &&
-      !hasAutoStartedPayment.current
-    ) {
-      hasAutoStartedPayment.current = true
-      void handlePayment()
-    }
-  }, [paymentMethod, isPaid])
 
   const CheckoutSummary = () => (
     <Card>
@@ -159,7 +134,7 @@ export default function OrderDetailsForm({
                 options={{
                   clientSecret,
                 }}
-                stripe={stripePromise}
+                stripe={getStripePromise()}
               >
                 <StripeForm
                   priceInCents={Math.round(order.totalPrice * 100)}
@@ -176,11 +151,7 @@ export default function OrderDetailsForm({
                 مشاهده سفارش
               </Button>
             )}
-            {!isPaid && paymentMethod === 'ZarinPal' && (
-              <Button type='button' className='w-full rounded-full' onClick={handlePayment} disabled={isStarting}>
-                {isStarting ? 'در حال اتصال به درگاه…' : 'پرداخت امن با زرین‌پال'}
-              </Button>
-            )}
+            {!isPaid && paymentMethod === 'ZarinPal' && zarinpalPayment}
           </div>
         </div>
       </CardContent>

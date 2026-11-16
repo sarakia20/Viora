@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const orderId = request.nextUrl.searchParams.get('orderId') || ''
   const authority = request.nextUrl.searchParams.get('Authority') || ''
   const status = request.nextUrl.searchParams.get('Status') || ''
-  if (!/^[a-f\d]{24}$/i.test(orderId) || !authority) {
+  if (!/^[a-f\d]{24}$/i.test(orderId) || !/^A[a-z\d]{35}$/i.test(authority)) {
     return NextResponse.redirect(new URL('/checkout?payment=invalid', SITE_URL))
   }
 
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     }
     if (order.isPaid) return NextResponse.redirect(resultUrl(orderId, 'success', callbackOrigin))
     if (status !== 'OK') {
-      console.info('[zarinpal] customer did not complete payment', { stage: 'callback_status', status })
+      console.info('[zarinpal] customer did not complete payment', { stage: 'callback_status', completed: false })
       return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
 
@@ -81,11 +81,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     }
     const amount = Math.round(order.totalPrice * 10)
+    if (!Number.isSafeInteger(amount) || amount < 1000)
+      return NextResponse.redirect(resultUrl(orderId, 'failed', callbackOrigin))
     stage = 'verify_payment'
     const response = await fetch('https://api.zarinpal.com/pg/v4/payment/verify.json', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ merchant_id: merchantId, amount, authority }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(30_000),
     })
     const httpStatus = response.status
     const verification = await response.json()
@@ -129,7 +132,7 @@ export async function GET(request: NextRequest) {
       if (paidOrder.user && typeof paidOrder.user === 'object' && 'email' in paidOrder.user && paidOrder.user.email)
         await sendPurchaseReceipt({ order: paidOrder as never })
     } catch (error) {
-      console.error('ZarinPal receipt email failed', error)
+      console.error('[zarinpal] receipt email failed', { stage: 'send_receipt', errorName: error instanceof Error ? error.name : 'UnknownError' })
     }
     return NextResponse.redirect(resultUrl(orderId, 'success', callbackOrigin))
   } catch (error) {

@@ -7,6 +7,7 @@ import { auth } from '@/auth'
 import { OrderInputSchema } from '../validator'
 import Order, { IOrder } from '../db/models/order.model'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { sendAskReviewOrderItems, sendPurchaseReceipt } from '@/emails'
 import { paypal } from '../paypal'
 import { DateRange } from 'react-day-picker'
@@ -104,6 +105,13 @@ const createOrderFromCart = async (
   return await Order.create(order)
 }
 
+// Next redirects throw internally; keep them outside the initiation catch.
+export async function startZarinPalPayment(orderId: string) {
+  const result = await createZarinPalPayment(orderId)
+  if (result.success && result.redirectUrl) redirect(result.redirectUrl)
+  redirect(`/checkout/${encodeURIComponent(orderId)}?paymentError=1`)
+}
+
 export async function createZarinPalPayment(orderId: string) {
   let requestId: string | undefined
   let stage = 'authenticate'
@@ -112,6 +120,7 @@ export async function createZarinPalPayment(orderId: string) {
   let providerErrorCodes: string[] = []
   try {
     const session = await requireUser()
+    if (!/^[a-f\d]{24}$/i.test(orderId)) throw new Error('Invalid order ID')
     stage = 'connect_database'
     await connectToDatabase()
     stage = 'load_order'
@@ -121,6 +130,7 @@ export async function createZarinPalPayment(orderId: string) {
     if (order.isPaid) throw new Error('این سفارش قبلاً پرداخت شده است')
     if (order.paymentMethod !== 'ZarinPal') throw new Error('روش پرداخت این سفارش زرین‌پال نیست')
     if (order.paymentAuthority) {
+      if (!/^A[a-z\d]{35}$/i.test(order.paymentAuthority)) throw new Error('Invalid saved authority')
       return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(order.paymentAuthority)}` }
     }
     stage = 'validate_configuration'
@@ -138,6 +148,8 @@ export async function createZarinPalPayment(orderId: string) {
       {
         _id: order._id,
         isPaid: false,
+        paymentMethod: 'ZarinPal',
+        totalPrice: order.totalPrice,
         paymentAuthority: { $exists: false },
         $or: [
           { paymentRequestAt: { $exists: false } },
@@ -149,7 +161,7 @@ export async function createZarinPalPayment(orderId: string) {
     )
     if (!lockedOrder) {
       const current = await Order.findById(order._id)
-      if (current?.paymentAuthority) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
+      if (!current?.isPaid && current?.paymentAuthority && /^A[a-z\d]{35}$/i.test(current.paymentAuthority)) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
       throw new Error('درخواست پرداخت در حال پردازش است؛ چند لحظه دیگر دوباره تلاش کنید')
     }
 
@@ -181,6 +193,7 @@ export async function createZarinPalPayment(orderId: string) {
         metadata: { order_id: order._id.toString() },
       }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(30_000),
     })
     providerHttpStatus = response.status
     const result = await response.json()
@@ -196,7 +209,7 @@ export async function createZarinPalPayment(orderId: string) {
       hasAuthority: typeof authority === 'string' && authority.length > 0,
       providerErrorCodes,
     })
-    if (!response.ok || providerCode !== 100 || typeof authority !== 'string') {
+    if (!response.ok || providerCode !== 100 || typeof authority !== 'string' || !/^A[a-z\d]{35}$/i.test(authority)) {
       console.error('[zarinpal] payment request rejected', {
         stage,
         httpStatus: providerHttpStatus,
@@ -207,13 +220,13 @@ export async function createZarinPalPayment(orderId: string) {
     }
     stage = 'save_payment_authority'
     const updated = await Order.findOneAndUpdate(
-      { _id: order._id, isPaid: false, paymentRequestId: requestId },
+      { _id: order._id, isPaid: false, paymentMethod: 'ZarinPal', totalPrice: order.totalPrice, paymentRequestId: requestId },
       { $set: { paymentAuthority: authority, paymentResult: { id: authority, status: 'PENDING', email_address: '' } }, $unset: { paymentRequestId: 1, paymentRequestAt: 1 } },
       { new: true }
     )
     if (!updated) {
       const current = await Order.findById(order._id)
-      if (current?.paymentAuthority) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
+      if (!current?.isPaid && current?.paymentAuthority && /^A[a-z\d]{35}$/i.test(current.paymentAuthority)) return { success: true, redirectUrl: `https://www.zarinpal.com/pg/StartPay/${encodeURIComponent(current.paymentAuthority)}` }
       throw new Error('درخواست پرداخت سفارش هم‌زمان تغییر کرد؛ دوباره تلاش کنید')
     }
     stage = 'redirect_ready'
@@ -245,6 +258,7 @@ export async function updateOrderToPaid(orderId: string) {
     }>('user', 'name email')
     if (!order) throw new Error('Order not found')
     if (order.isPaid) throw new Error('Order is already paid')
+    if (order.paymentMethod === 'ZarinPal') throw new Error('پرداخت زرین‌پال فقط با تأیید درگاه ثبت می‌شود')
     order.isPaid = true
     order.paidAt = new Date()
     await order.save()
@@ -396,6 +410,7 @@ export async function createPayPalOrder(orderId: string) {
   try {
     const order = await Order.findOne(await getOrderAccessFilter(orderId))
     if (order) {
+      if (order.paymentMethod !== 'PayPal') throw new Error('Invalid payment method')
       const paypalOrder = await paypal.createOrder(order.totalPrice)
       order.paymentResult = {
         id: paypalOrder.id,
@@ -428,6 +443,7 @@ export async function approvePayPalOrder(
     ).populate('user', 'email')
     if (!order) throw new Error('Order not found')
 
+    if (order.paymentMethod !== 'PayPal') throw new Error('Invalid payment method')
     const captureData = await paypal.capturePayment(data.orderID)
     if (
       !captureData ||
