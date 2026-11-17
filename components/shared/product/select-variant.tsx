@@ -1,18 +1,7 @@
+import ColorSwatch from './color-swatch'
 import { Button } from '@/components/ui/button'
 import { IProduct } from '@/lib/db/models/product.model'
 import Link from 'next/link'
-
-const colorMap: Record<string, string> = {
-  مشکی: '#111827',
-  سفید: '#ffffff',
-  طوسی: '#9ca3af',
-  تیتانیوم: '#6b7280',
-  طلایی: '#d4af37',
-  طلامات: '#c9a227',
-  بامبو: '#c8a66a',
-  خورشید: '#f59e0b',
-  'مشکی طلایی': '#111827',
-}
 
 export default function SelectVariant({
   product,
@@ -30,7 +19,7 @@ export default function SelectVariant({
     <>
       {product.colors.length > 0 && (
         <div className='space-y-2'>
-          <div className='font-medium'>رنگ:</div>
+          <div className='text-sm text-slate-500'>رنگ: <span className='font-semibold text-slate-900'>{selectedColor}</span></div>
 
           <div className='flex flex-wrap gap-2'>
             {product.colors.map((x: string) => (
@@ -39,12 +28,15 @@ export default function SelectVariant({
                 variant='outline'
                 className={
                   selectedColor === x
-                    ? 'border-2 border-slate-900 bg-slate-50 rounded-xl px-4'
-                    : 'border-2 border-slate-200 rounded-xl px-4'
+                    ? 'h-11 min-w-11 border-2 border-slate-800 bg-slate-50 rounded-full p-1 ring-2 ring-slate-200 ring-offset-2'
+                    : 'h-11 min-w-11 border-2 border-slate-200 rounded-full p-1'
                 }
                 key={x}
               >
                 <Link
+                  title={x}
+                  aria-label={x}
+                  aria-current={selectedColor === x ? 'true' : undefined}
                   replace
                   scroll={false}
                   href={`?${new URLSearchParams({
@@ -52,11 +44,7 @@ export default function SelectVariant({
                     size: selectedSize,
                   })}`}
                 >
-                  <span
-                    className='h-4 w-4 rounded-full border border-slate-300'
-                    style={{ backgroundColor: colorMap[x] || '#e5e7eb' }}
-                  />
-                  <span>{x}</span>
+                  <ColorSwatch name={x} />
                 </Link>
               </Button>
             ))}

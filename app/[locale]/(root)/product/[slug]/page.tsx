@@ -1,4 +1,5 @@
 import { auth } from '@/auth'
+import ProductInformation from '@/components/shared/product/product-information'
 import AddToCart from '@/components/shared/product/add-to-cart'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -286,18 +287,18 @@ export default async function ProductDetails(props: {
             initialSize={size || product.sizes[0] || ''}
           />
         ) : (
-        <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
-          <div className='min-w-0 md:col-span-2'>
+        <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
+          <div className='min-w-0'>
             <ProductGallery images={product.images} productName={product.name} />
           </div>
 
-          <div className='flex min-w-0 w-full flex-col gap-2 md:col-span-2 md:p-5'>
+          <div className='flex min-w-0 w-full flex-col gap-6 lg:py-4'>
             <div className='flex flex-col gap-3'>
-              <p className='p-medium-16 rounded-full bg-grey-500/10 text-grey-500'>
+              <p className='w-fit rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600'>
                 برند: {product.brand}
               </p>
 
-              <h1 className='font-bold text-lg lg:text-xl'>{product.name}</h1>
+              <h1 className='text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>
 
               <RatingSummary
                 avgRating={product.avgRating}
@@ -307,19 +308,6 @@ export default async function ProductDetails(props: {
               />
 
               <Separator />
-
-              <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-                <div className='flex gap-3'>
-                  {product.countInStock > 0 && (
-  <ProductPrice
-    price={product.price}
-    listPrice={product.listPrice}
-    isDeal={product.tags.includes('todays-deal')}
-    forListing={false}
-  />
-)}
-                </div>
-              </div>
             </div>
 
             <div>
@@ -329,33 +317,13 @@ export default async function ProductDetails(props: {
                 color={color || product.colors[0]}
               />
             </div>
-
-            <Separator className='my-2' />
-
-            <div className='flex flex-col gap-2'>
-              <p className='p-bold-20 text-grey-600'>توضیحات:</p>
-              <div className='p-medium-16 lg:p-regular-18 space-y-1 leading-8'>
-                {product.description
-                  .split(/\r?\n/)
-                  .map((line) => line.trim())
-                  .filter(Boolean)
-                  .map((line, index) => (
-                    <p key={index} className='flex items-start gap-2'>
-                      <span className='text-green-600' aria-hidden='true'>
-                        ✓
-                      </span>
-                      <span>{line}</span>
-                    </p>
-                  ))}
-              </div>
-            </div>
           </div>
 
-          <div className='md:sticky md:top-40 md:self-start'>
-            <Card>
-              <CardContent className='p-4 flex flex-col gap-4'>
+          <div className='lg:sticky lg:top-40 lg:self-start'>
+            <Card className='rounded-2xl border-slate-200 bg-slate-50/70 shadow-none'>
+              <CardContent className='flex flex-col gap-5 p-5 sm:p-6'>
                 {product.countInStock > 0 && (
-  <ProductPrice price={product.price} />
+  <ProductPrice detail price={product.price} listPrice={product.listPrice} />
 )}
 
                 {product.countInStock > 0 && product.countInStock <= 3 && (
@@ -401,6 +369,8 @@ export default async function ProductDetails(props: {
         </div>
         )}
       </section>
+
+      <ProductInformation product={product} />
 
       <section className='mt-10 sm:mt-16'>
         <ProductSlider

@@ -21,6 +21,7 @@ export default function ProductPrice({
   listPrice = 0,
   className,
   plain = false,
+  detail = false,
 }: {
   price: number
   listPrice?: number
@@ -28,6 +29,7 @@ export default function ProductPrice({
   isDeal?: boolean
   forListing?: boolean
   plain?: boolean
+  detail?: boolean
 }) {
   const locale = useLocale()
   const isFa = locale.startsWith('fa')
@@ -67,7 +69,7 @@ const convertedListPrice = round2(listPrice)
         className
       )}
     >
-      <div className='w-full flex items-center justify-end gap-1.5'>
+      <div className={cn('w-full flex items-center justify-end gap-1.5', detail && 'flex-wrap')}>
         {hasDiscount && (
           <span className='shrink-0 rounded-full bg-red-600 px-1.5 py-[2px] text-[10px] font-bold leading-none text-white'>
             {discountText}٪
@@ -75,10 +77,10 @@ const convertedListPrice = round2(listPrice)
         )}
 
         <div className='flex items-baseline gap-1 whitespace-nowrap'>
-          <span className='text-[16px] font-bold leading-none text-foreground tabular-nums'>
+          <span className={cn('font-bold text-foreground tabular-nums', detail ? 'text-3xl leading-tight' : 'text-[16px] leading-none')}>
             {mainPrice}
           </span>
-          <span className='text-[10px] font-medium text-muted-foreground'>
+          <span className={cn('font-medium text-muted-foreground', detail ? 'text-sm' : 'text-[10px]')}>
             {isFa ? 'تومان' : currency.code}
           </span>
         </div>

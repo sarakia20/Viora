@@ -10,6 +10,7 @@ import AddToCart from './add-to-cart'
 import ProductGallery from './product-gallery'
 import ProductPrice from './product-price'
 import RatingSummary from './rating-summary'
+import ColorSwatch from './color-swatch'
 
 export default function ProductVariantDetails({
   product,
@@ -33,29 +34,26 @@ export default function ProductVariantDetails({
   if (!selectedVariant) return null
 
   const image = selectedVariant.image || product.images[0]
-  const galleryImages = [
-    image,
-    ...product.images.filter((productImage) => productImage !== image),
-  ]
+  const galleryImages = selectedVariant.image ? [selectedVariant.image] : []
   const isInStock = selectedVariant.countInStock > 0
 
   return (
-    <div className='grid grid-cols-1 gap-5 md:grid-cols-5 md:gap-0'>
-      <div className='min-w-0 md:col-span-2'>
+    <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
+      <div className='min-w-0'>
         <ProductGallery
           key={image}
           images={galleryImages}
-          productName={product.name}
+          productName={`${product.name} - ${selectedVariant.color}`}
         />
       </div>
 
-      <div className='flex min-w-0 w-full flex-col gap-2 md:col-span-2 md:p-5'>
+      <div className='flex min-w-0 w-full flex-col gap-6 lg:py-4'>
         <div className='flex flex-col gap-3'>
-          <p className='p-medium-16 rounded-full bg-grey-500/10 text-grey-500'>
+          <p className='w-fit rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600'>
             برند: {product.brand}
           </p>
 
-          <h1 className='font-bold text-lg lg:text-xl'>{product.name}</h1>
+          <h1 className='text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>
 
           <RatingSummary
             avgRating={product.avgRating}
@@ -65,23 +63,10 @@ export default function ProductVariantDetails({
           />
 
           <Separator />
-
-          {isInStock && (
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-              <div className='flex gap-3'>
-                <ProductPrice
-                  price={selectedVariant.price}
-                  listPrice={selectedVariant.listPrice}
-                  isDeal={product.tags.includes('todays-deal')}
-                  forListing={false}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div className='space-y-2'>
-          <div className='font-medium'>{variantLabel}:</div>
+          <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
           <div className='flex flex-wrap gap-2'>
             {variants.map((variant, index) => (
               <button
@@ -89,13 +74,15 @@ export default function ProductVariantDetails({
                 type='button'
                 onClick={() => setSelectedVariantIndex(index)}
                 aria-pressed={selectedVariantIndex === index}
+                aria-label={variant.color}
+                title={variant.color}
                 className={
                   selectedVariantIndex === index
-                    ? 'rounded-xl border-2 border-slate-900 bg-slate-50 px-4 py-2 text-sm font-medium ring-1 ring-slate-900/10'
-                    : 'rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:border-slate-400'
+                    ? 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-50 p-1 ring-2 ring-slate-200 ring-offset-2 focus-visible:outline-slate-800'
+                    : 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-200 bg-white p-1 hover:border-slate-500 focus-visible:outline-slate-800'
                 }
               >
-                {variant.color}
+                {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} image={variant.image} />}
               </button>
             ))}
           </div>
@@ -124,36 +111,19 @@ export default function ProductVariantDetails({
           </div>
         )}
 
-        <Separator className='my-2' />
-
-        <div className='flex flex-col gap-2'>
-          <p className='p-bold-20 text-grey-600'>توضیحات:</p>
-          <div className='p-medium-16 lg:p-regular-18 space-y-1 leading-8'>
-            {product.description
-              .split(/\r?\n/)
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line, index) => (
-                <p key={index} className='flex items-start gap-2'>
-                  <span className='text-green-600' aria-hidden='true'>
-                    ✓
-                  </span>
-                  <span>{line}</span>
-                </p>
-              ))}
-          </div>
-        </div>
       </div>
 
-      <div className='md:sticky md:top-40 md:self-start'>
-        <Card>
-          <CardContent className='p-4 flex flex-col gap-4'>
-            {isInStock && (
+      <div className='lg:sticky lg:top-40 lg:self-start'>
+        <Card className='rounded-2xl border-slate-200 bg-slate-50/70 shadow-none'>
+          <CardContent className='flex flex-col gap-5 p-5 sm:p-6'>
+            <div className='text-sm text-slate-500'>قیمت فروش</div>
+            <div aria-live='polite' aria-atomic='true'>
               <ProductPrice
+                detail
                 price={selectedVariant.price}
                 listPrice={selectedVariant.listPrice}
               />
-            )}
+            </div>
 
             {selectedVariant.countInStock > 0 &&
               selectedVariant.countInStock <= 3 && (

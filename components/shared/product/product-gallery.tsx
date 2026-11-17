@@ -12,12 +12,16 @@ export default function ProductGallery({
   productName: string
 }) {
   const [selectedImage, setSelectedImage] = useState(0)
+  if (!images.length) return <div className='flex h-80 items-center justify-center rounded-2xl bg-slate-50 text-sm text-slate-500'>تصویری ثبت نشده است.</div>
   return (
-    <div className='flex min-w-0 flex-col-reverse gap-3 sm:flex-row sm:gap-2'>
-      <div className='flex gap-2 overflow-x-auto pb-1 sm:mt-8 sm:flex-col sm:overflow-visible sm:pb-0'>
+    <div className='flex min-w-0 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-3 sm:p-5'>
+      {images.length > 1 && <div className='order-2 flex justify-center gap-3 overflow-x-auto p-1'>
         {images.map((image, index) => (
           <button
             key={index}
+            type='button'
+            aria-label={`نمایش تصویر ${index + 1}`}
+            aria-pressed={selectedImage === index}
             onClick={() => {
               setSelectedImage(index)
             }}
@@ -26,7 +30,7 @@ export default function ProductGallery({
             }}
             className={`shrink-0 bg-white rounded-lg overflow-hidden ${
               selectedImage === index
-                ? 'ring-2 ring-blue-500'
+                ? 'ring-2 ring-slate-700'
                 : 'ring-1 ring-gray-300'
             }`}
           >
@@ -38,7 +42,7 @@ export default function ProductGallery({
             />
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className='w-full'>
         <Zoom>
@@ -47,13 +51,14 @@ export default function ProductGallery({
               src={images[selectedImage]}
               alt={productName}
               fill
-              sizes='90vw'
+              sizes='(min-width: 1024px) 38vw, 90vw'
               className='object-contain'
               priority
             />
           </div>
         </Zoom>
       </div>
+      <p className='order-3 text-center text-xs text-slate-500'>برای بزرگ‌نمایی، تصویر را لمس کنید.</p>
     </div>
   )
 }
