@@ -1,4 +1,3 @@
-import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import { Card, CardContent } from '@/components/ui/card'
 import { Home, PackageCheckIcon, User } from 'lucide-react'
 import { Metadata } from 'next'
@@ -68,8 +67,6 @@ export default function AccountPage() {
           </Link>
         </Card>
       </div>
-
-      <BrowsingHistoryList className='mt-16' />
     </div>
   )
 }

@@ -13,9 +13,7 @@ import SelectVariant from '@/components/shared/product/select-variant'
 import ProductPrice from '@/components/shared/product/product-price'
 import ProductGallery from '@/components/shared/product/product-gallery'
 import ProductVariantDetails from '@/components/shared/product/product-variant-details'
-import AddToBrowsingHistory from '@/components/shared/product/add-to-browsing-history'
 import { Separator } from '@/components/ui/separator'
-import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
@@ -278,7 +276,6 @@ export default async function ProductDetails(props: {
           __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c'),
         }}
       />
-      <AddToBrowsingHistory id={product._id.toString()} category={product.category} />
 
       <section>
         {product.variants && product.variants.length > 0 ? (
@@ -384,10 +381,6 @@ export default async function ProductDetails(props: {
           products={relatedProducts.data}
           title='پرفروش‌ترین‌ها'
         />
-      </section>
-
-      <section className='mt-12'>
-        <BrowsingHistoryList />
       </section>
 
       <section className='mt-10 pb-8 sm:mt-16 sm:pb-12' id='reviews'>

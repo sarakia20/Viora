@@ -1,5 +1,4 @@
 'use client'
-import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import ProductPrice from '@/components/shared/product/product-price'
 import { Button } from '@/components/ui/button'
@@ -196,7 +195,6 @@ export default function CartPage() {
           </>
         )}
       </div>
-      <BrowsingHistoryList className='mt-10' />
     </div>
   )
 }

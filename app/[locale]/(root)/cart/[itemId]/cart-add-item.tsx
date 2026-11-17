@@ -1,6 +1,5 @@
 'use client'
 
-import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 import ProductPrice from '@/components/shared/product/product-price'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -150,10 +149,6 @@ export default function CartAddItem({ itemId }: { itemId: string }) {
             </div>
           </CardContent>
         </Card>
-
-        <div className='mt-8'>
-          <BrowsingHistoryList />
-        </div>
       </div>
     </div>
   )
