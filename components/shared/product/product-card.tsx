@@ -10,6 +10,7 @@ import { generateId, round2 } from '@/lib/utils'
 import ProductPrice from './product-price'
 import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
+import { getProductPath } from '@/lib/product-seo'
 
 const ProductCard = ({
   product,
@@ -27,7 +28,7 @@ const ProductCard = ({
     : '(max-width: 639px) 82vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw'
 
   const ProductImage = () => (
-    <Link href={`/product/${product.slug}`}>
+    <Link href={getProductPath(product.slug)}>
       <div className='relative h-40 sm:h-52'>
         {product.images.length > 1 ? (
           <ImageHover
@@ -59,7 +60,7 @@ const ProductCard = ({
     <div className='flex-1 space-y-1'>
       
       <Link
-  href={`/product/${product.slug}`}
+  href={getProductPath(product.slug)}
   className=' overflow-hidden text-ellipsis text-sm leading-6'
   style={{
     display: '-webkit-box',

@@ -1,7 +1,11 @@
 import type { IProduct } from '@/lib/db/models/product.model'
 import styles from './product-information.module.css'
+import Link from 'next/link'
+import { getCategoryLandingPath } from '@/lib/category-config'
 
 export default function ProductInformation({ product }: { product: IProduct }) {
+  const categoryHref = getCategoryLandingPath(product.category) ??
+    `/search?${new URLSearchParams({ category: product.category })}`
   const specifications = [
     ['برند', product.brand],
     ['دسته‌بندی', product.category],
@@ -30,7 +34,7 @@ export default function ProductInformation({ product }: { product: IProduct }) {
         <section className={styles.specifications} aria-labelledby='specifications-heading'>
           <h2 id='specifications-heading' className='mb-5 text-lg font-bold text-slate-900'>مشخصات {product.name}</h2>
           <dl className='divide-y divide-slate-100 text-sm'>
-            {specifications.map(([label, value]) => <div key={label} className='grid gap-2 py-4 sm:grid-cols-[180px_1fr] sm:gap-6'><dt className='text-slate-500'>{label}</dt><dd className='break-words font-medium leading-7 text-slate-800'>{value}</dd></div>)}
+            {specifications.map(([label, value]) => <div key={label} className='grid gap-2 py-4 sm:grid-cols-[180px_1fr] sm:gap-6'><dt className='text-slate-500'>{label}</dt><dd className='break-words font-medium leading-7 text-slate-800'>{label === 'دسته‌بندی' ? <Link href={categoryHref}>{value}</Link> : value}</dd></div>)}
           </dl>
           <p className='mt-5 text-sm leading-7 text-slate-500'>اطلاعات بالا بر اساس داده‌های ثبت‌شده محصول است. سایر جزئیات موجود را در بخش توضیحات مطالعه کنید.</p>
         </section>

@@ -34,7 +34,7 @@ export default function ProductVariantDetails({
   if (!selectedVariant) return null
 
   const image = selectedVariant.image || product.images[0]
-  const galleryImages = selectedVariant.image ? [selectedVariant.image] : []
+  const galleryImages = selectedVariant.image ? [selectedVariant.image] : product.images
   const isInStock = selectedVariant.countInStock > 0
 
   return (

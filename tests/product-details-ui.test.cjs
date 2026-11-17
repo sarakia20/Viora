@@ -43,6 +43,7 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
   }).default
   const render = () => { cursor = 0; return nodes(Details({ product, initialSize: 'S' })) }
   let tree = render()
+  assert.equal(tree.filter(n => n.type === 'h1').length, 1)
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/white.webp'])
   tree.find(n => n.type === 'button' && n.props['aria-label'] === 'مشکی').props.onClick()
   tree = render()
@@ -64,7 +65,7 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/bamboo.webp'])
   product.variants[2].image = ''
   tree = render()
-  assert.deepEqual(tree.find(n => n.type === Gallery).props.images, [])
+  assert.deepEqual(tree.find(n => n.type === Gallery).props.images, product.images)
   product.variants[2].image = '/bamboo.webp'
 })
 

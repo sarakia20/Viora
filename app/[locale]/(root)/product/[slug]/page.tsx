@@ -1,4 +1,4 @@
-import { auth } from '@/auth'
+import { cache } from 'react'
 import ProductInformation from '@/components/shared/product/product-information'
 import AddToCart from '@/components/shared/product/add-to-cart'
 import { Card, CardContent } from '@/components/ui/card'
@@ -7,7 +7,6 @@ import {
   getRelatedProductsByCategory,
 } from '@/lib/actions/product.actions'
 
-import ReviewList from './review-list'
 import { generateId, round2 } from '@/lib/utils'
 import SelectVariant from '@/components/shared/product/select-variant'
 import ProductPrice from '@/components/shared/product/product-price'
@@ -20,12 +19,15 @@ import { getTranslations } from 'next-intl/server'
 import { getCategoryLandingPath } from '@/lib/category-config'
 import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
 import { notFound } from 'next/navigation'
+import { getProductDescription, getProductImageUrls, getProductJsonLd, getProductPath } from '@/lib/product-seo'
 
 const SITE_NAME = 'فروشگاه ویورا'
 
-async function getPublicProductOrNotFound(slug: string) {
+const getPublicProductOrNotFound = cache(async (slug: string) => {
   try {
-    return await getProductBySlug(slug)
+    const product = await getProductBySlug(slug)
+    if (!product.isPublished) notFound()
+    return product
   } catch (error) {
     if (error instanceof Error && error.message === 'Product not found') {
       notFound()
@@ -33,7 +35,7 @@ async function getPublicProductOrNotFound(slug: string) {
 
     throw error
   }
-}
+})
 
 function truncateSeoDescription(value: string, maxLength = 160) {
   if (value.length <= maxLength) return value
@@ -45,66 +47,6 @@ function truncateSeoDescription(value: string, maxLength = 160) {
   return `${result.replace(/[،؛:,.!?؟]+$/u, '')}…`
 }
 
-function getSeoDescription(product: {
-  name: string
-  category: string
-  brand: string
-  description?: string
-}) {
-  const lines = product.description
-    ?.split(/\r?\n/)
-    .map((line) => line.trim().replace(/\s+/g, ' '))
-    .filter(Boolean)
-
-  if (lines && lines.join(' ').length >= 30) {
-    const prose: string[] = []
-    const specifications: string[] = []
-
-    for (const line of lines) {
-      const label = line.match(/^([^:：]{2,24})\s*[:：]\s*(.+)$/u)
-
-      if (label) {
-        const [, key, value] = label
-        const isRedundantBrand =
-          key.trim() === 'برند' &&
-          product.name.includes(value.trim())
-
-        if (!isRedundantBrand) specifications.push(`${key.trim()} ${value.trim()}`)
-      } else {
-        prose.push(line)
-      }
-    }
-
-    const proseText = prose.join(' ').replace(/[.؟!]$/u, '')
-    const specificationText = specifications.join('، ')
-    const value = [
-      proseText && `${proseText}.`,
-      specificationText && `مشخصات: ${specificationText}.`,
-    ]
-      .filter(Boolean)
-      .join(' ')
-
-    if (value) return truncateSeoDescription(value)
-  }
-
-  const details = [
-    !product.name.includes(product.brand) && `برند ${product.brand}`,
-    !product.name.includes(product.category) && `دسته ${product.category}`,
-  ].filter(Boolean)
-  const context = details.length > 0 ? ` (${details.join('، ')})` : ''
-
-  return truncateSeoDescription(
-    `مشخصات، قیمت و وضعیت موجودی ${product.name}${context} را در ویورا بررسی کنید.`
-  )
-}
-
-function getSchemaDescription(name: string, description?: string) {
-  const fallback = `خرید ${name} از فروشگاه ویورا با مشاهده مشخصات، قیمت و وضعیت موجودی محصول.`
-  const value = description?.trim().replace(/\s+/g, ' ') || fallback
-
-  return value.length > 160 ? `${value.slice(0, 157).trimEnd()}…` : value
-}
-
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
@@ -113,10 +55,10 @@ export async function generateMetadata(props: {
 
   const title = `خرید ${product.name}`
   const openGraphTitle = `${title} | ${SITE_NAME}`
-  const description = getSeoDescription(product)
-  const canonical = getAbsoluteUrl(`/product/${product.slug}`)
-  const image = product.images.find((item) => item?.trim())
-  const images = image ? [getAbsoluteUrl(image)] : undefined
+  const description = truncateSeoDescription(getProductDescription(product))
+  const canonical = getAbsoluteUrl(getProductPath(product.slug))
+  const imageUrls = getProductImageUrls(product)
+  const images = imageUrls.length ? imageUrls : undefined
 
   return {
     title,
@@ -149,65 +91,10 @@ export default async function ProductDetails(props: {
   const params = await props.params
   const { slug } = params
 
-  const session = await auth()
   const product = await getPublicProductOrNotFound(slug)
 
-  const canonical = getAbsoluteUrl(`/product/${product.slug}`)
-  const description = getSchemaDescription(product.name, product.description)
-  const images = product.images
-    .filter((image) => image?.trim())
-    .map(getAbsoluteUrl)
-  const initialVariant = product.variants?.[0]
-  const variantImage = initialVariant?.image?.trim()
-    ? getAbsoluteUrl(initialVariant.image)
-    : undefined
-  const schemaImages = variantImage
-    ? [variantImage, ...images.filter((image) => image !== variantImage)]
-    : images
-  const offers = product.variants?.length
-    ? product.variants.map((variant) => ({
-        '@type': 'Offer',
-        name: variant.color,
-        url: canonical,
-        priceCurrency: 'IRR',
-        price: variant.price * 10,
-        availability:
-          variant.countInStock > 0
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-      }))
-    : {
-        '@type': 'Offer',
-        url: canonical,
-        priceCurrency: 'IRR',
-        price: product.price * 10,
-        availability:
-          product.countInStock > 0
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-      }
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    url: canonical,
-    name: product.name,
-    description,
-    image: schemaImages,
-    brand: {
-      '@type': 'Brand',
-      name: product.brand,
-    },
-    offers,
-    ...(product.numReviews > 0 && product.avgRating > 0
-      ? {
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: product.avgRating,
-            reviewCount: product.numReviews,
-          },
-        }
-      : {}),
-  }
+  const canonical = getAbsoluteUrl(getProductPath(product.slug))
+  const productJsonLd = getProductJsonLd(product)
   const categoryParams = new URLSearchParams({ category: product.category })
   const categoryLandingPath = getCategoryLandingPath(product.category)
   const subCategory = product.subCategory?.trim()
@@ -264,12 +151,12 @@ export default async function ProductDetails(props: {
 
   return (
     <div>
-      <script
+      {productJsonLd && <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c'),
         }}
-      />
+      />}
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
@@ -331,7 +218,7 @@ export default async function ProductDetails(props: {
                   </div>
                 )}
 
-                {product.countInStock !== 0 ? (
+                {product.countInStock > 0 ? (
                   <div className='text-green-700 text-xl'>
                     {t('Product.In Stock')}
                   </div>

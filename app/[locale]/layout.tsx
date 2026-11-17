@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation'
 import { getSetting } from '@/lib/actions/setting.actions'
 import { cookies } from 'next/headers'
 import { SITE_ORIGIN } from '@/lib/site-url'
+import { getStoreJsonLd } from '@/lib/store-schema'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -60,6 +61,7 @@ export default async function AppLayout({
   }
 
   const messages = await getMessages()
+  const storeJsonLd = await getStoreJsonLd()
 
   return (
     <html
@@ -73,6 +75,9 @@ export default async function AppLayout({
       <body
         className={`min-h-screen ${geistSans.variable} ${geistMono.variable} ${vazir.variable} antialiased`}
       >
+        <script type='application/ld+json' dangerouslySetInnerHTML={{
+          __html: JSON.stringify(storeJsonLd).replace(/</g, '\\u003c'),
+        }} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ClientProviders setting={{ ...setting, currency }}>
             {children}
