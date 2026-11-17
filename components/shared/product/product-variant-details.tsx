@@ -10,7 +10,7 @@ import AddToCart from './add-to-cart'
 import ProductGallery from './product-gallery'
 import ProductPrice from './product-price'
 import RatingSummary from './rating-summary'
-import ColorSwatch, { colorOptionClassName, getSwatchColors } from './color-swatch'
+import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './color-swatch'
 
 export default function ProductVariantDetails({
   product,
@@ -67,10 +67,10 @@ export default function ProductVariantDetails({
 
         <div className='space-y-2'>
           <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
-          <div className='flex flex-wrap gap-2'>
+          <div className={variantLabel === 'درجه کیفیت' ? 'flex flex-wrap gap-2' : colorOptionsClassName}>
             {variants.map((variant, index) => (
-              <div key={`${variant.color}-${index}`} className="flex flex-col items-center gap-1.5">
               <button
+                key={`${variant.color}-${index}`}
                 type='button'
                 onClick={() => setSelectedVariantIndex(index)}
                 aria-pressed={selectedVariantIndex === index}
@@ -84,10 +84,6 @@ export default function ProductVariantDetails({
               >
                 {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} />}
               </button>
-              {variantLabel !== 'درجه کیفیت' && !getSwatchColors(variant.color) && (
-                <span className="max-w-20 break-words text-center text-xs leading-5 text-slate-600">{variant.color}</span>
-              )}
-              </div>
             ))}
           </div>
         </div>

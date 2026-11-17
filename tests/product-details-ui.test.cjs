@@ -94,8 +94,8 @@ test('color swatches never use photos and unrecognized finishes remain neutral',
   for (const name of ['بامبو', 'ماربل', 'خورشید']) {
     const swatch = Swatch({ name, image: '/actual.webp' })
     assert.equal(swatch.type, 'span')
-    assert.equal(swatch.props.style, undefined)
-    assert.equal(swatch.props.children, '?')
+    assert.deepEqual(swatch.props.style, { backgroundColor: '#e2e8f0' })
+    assert.equal(swatch.props.children, undefined)
   }
   assert.equal(Swatch({ name: 'مشکی' }).props.style.backgroundColor, '#171717')
 })
@@ -137,14 +137,92 @@ test('compound swatches split only fully recognized color names into actual name
   }
 })
 
-test('unknown color labels stay visible in both selectors and use the same control sizing', () => {
-  const { colorOptionClassName } = load('components/shared/product/color-swatch.tsx')
+const caspianColors = [
+  ['سفید', ['#fff']],
+  ['طلایی', ['#d4af37']],
+  ['تیتانیوم', ['#4b5563']],
+  ['اقیانوسی', ['#007a8a']],
+  ['مرجانی', ['#ff7f50']],
+  ['مشکی - کلید طلایی', ['#171717', '#d4af37']],
+  ['مشکی - کلید کروم', ['#171717', '#cbd5e1']],
+]
+
+for (const [name, palette] of caspianColors) {
+  test('Caspian Plus color renders an empty circle: ' + name, () => {
+    const { default: Swatch, getSwatchColors } = load('components/shared/product/color-swatch.tsx')
+    assert.deepEqual(getSwatchColors(name), palette)
+    const circle = Swatch({ name })
+    assert.equal(circle.props.children, undefined)
+    if (palette.length === 1) assert.equal(circle.props.style.backgroundColor, palette[0])
+    else assert.equal(circle.props.style.background,
+      'linear-gradient(135deg, ' + palette[0] + ' 0% 50%, ' + palette[1] + ' 50% 100%)')
+    const html = renderToStaticMarkup(React.createElement(Swatch, { name }))
+    assert.match(html, /h-6 w-6/)
+    assert.match(html, /rounded-full/)
+    assert.match(html, /border-black/)
+    assert.ok(!html.includes('?'))
+    assert.ok(!html.includes('<img'))
+    assert.ok(!html.includes(name))
+  })
+}
+
+test('both selectors use a single scrolling row with no labels below color circles', () => {
+  const swatches = load('components/shared/product/color-swatch.tsx')
+  const state = []
+  let cursor = 0
+  const Gallery = () => null
+  const Price = () => null
+  const Cart = () => null
+  const Details = load('components/shared/product/product-variant-details.tsx', {
+    react: { ...React, useState(initial) {
+      const index = cursor++
+      if (!(index in state)) state[index] = initial
+      return [state[index], value => { state[index] = value }]
+    } },
+    'next-intl': { useTranslations: () => () => 'stock' },
+    '@/lib/utils': { generateId: () => 'id', round2: value => value },
+    '@/components/ui/card': { Card: 'div', CardContent: 'div' },
+    '@/components/ui/separator': { Separator: 'hr' },
+    './add-to-cart': Cart, './product-gallery': Gallery,
+    './product-price': Price, './rating-summary': () => null,
+    './color-swatch': swatches,
+  }).default
+  const sample = { ...product, category: 'test', colors: caspianColors.map(([name]) => name), sizes: [],
+    variants: caspianColors.map(([name], i) => ({ color: name, image: i === 6 ? '' : '/image-' + i + '.webp',
+      price: 1000 + i, countInStock: 2, listPrice: 2000 })) }
+  const render = () => { cursor = 0; return nodes(Details({ product: sample, initialSize: '' })) }
+  let tree = render()
   const SelectVariant = load('components/shared/product/select-variant.tsx').default
-  const tree = nodes(SelectVariant({ product, color: 'unknown', size: 'S' }))
-  const button = tree.find(n => n.props?.asChild && n.props.className === colorOptionClassName(false))
-  assert.ok(button)
-  const unknownProduct = { ...product, colors: ['unknown'] }
-  const unknownTree = nodes(SelectVariant({ product: unknownProduct, color: 'unknown', size: 'S' }))
-  assert.ok(unknownTree.some(n => n.type === 'span' && n.props.children === 'unknown' && n.props.className.includes('text-center')))
-  assert.ok(unknownTree.some(n => n.props?.className === colorOptionClassName(true)))
+  for (let i = 0; i < caspianColors.length; i++) {
+    const name = caspianColors[i][0]
+    tree.find(n => n.type === 'button' && n.props['aria-label'] === name).props.onClick()
+    tree = render()
+    const selected = tree.find(n => n.type === 'button' && n.props['aria-pressed'])
+    assert.equal(selected.props['aria-label'], name)
+    assert.equal(selected.props.title, name)
+    assert.match(selected.props.className, /ring-2/)
+    assert.equal(tree.find(n => n.type === 'span' && n.props['aria-live'] === 'polite').props.children, name)
+    assert.deepEqual(tree.find(n => n.type === Gallery).props.images, i === 6 ? sample.images : ['/image-' + i + '.webp'])
+    assert.equal(tree.find(n => n.type === Price).props.price, 1000 + i)
+    assert.equal(tree.find(n => n.type === Cart).props.item.color, name)
+  }
+  const legacy = nodes(SelectVariant({ product: { ...sample, colors: [...sample.colors, 'unknown'] }, color: sample.colors[0], size: '' }))
+  for (const all of [tree, legacy]) {
+    const row = all.find(n => n.props?.className === swatches.colorOptionsClassName)
+    assert.ok(row)
+    assert.match(row.props.className, /flex-nowrap/)
+    assert.match(row.props.className, /overflow-x-auto/)
+    assert.match(row.props.className, /scroll-smooth/)
+    assert.match(row.props.className, /gap-2/)
+    assert.ok(!row.props.className.includes('flex-wrap '))
+    const children = nodes(row)
+    assert.ok(!children.some(n => n.type === 'span'), 'no visible text labels inside the row')
+    assert.ok(!children.some(n => n.type === 'img'))
+    const html = renderToStaticMarkup(row)
+    assert.ok(!html.includes('>unknown<'))
+    assert.ok(!html.includes('>?<'))
+    for (const item of children.filter(n => n.type === 'button' || n.props?.asChild)) {
+      assert.match(item.props.className, /h-11 w-11 shrink-0/)
+    }
+  }
 })

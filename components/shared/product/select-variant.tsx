@@ -1,4 +1,4 @@
-import ColorSwatch, { colorOptionClassName, getSwatchColors } from './color-swatch'
+import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './color-swatch'
 import { Button } from '@/components/ui/button'
 import { IProduct } from '@/lib/db/models/product.model'
 import Link from 'next/link'
@@ -21,10 +21,10 @@ export default function SelectVariant({
         <div className='space-y-2'>
           <div className='text-sm text-slate-500'>رنگ: <span className='font-semibold text-slate-900'>{selectedColor}</span></div>
 
-          <div className='flex flex-wrap gap-2'>
+          <div className={colorOptionsClassName}>
             {product.colors.map((x: string) => (
-              <div key={x} className="flex flex-col items-center gap-1.5">
               <Button
+                key={x}
                 asChild
                 variant='outline'
                 className={colorOptionClassName(selectedColor === x)}
@@ -43,8 +43,6 @@ export default function SelectVariant({
                   <ColorSwatch name={x} />
                 </Link>
               </Button>
-              {!getSwatchColors(x) && <span className="max-w-20 break-words text-center text-xs leading-5 text-slate-600">{x}</span>}
-              </div>
             ))}
           </div>
         </div>
