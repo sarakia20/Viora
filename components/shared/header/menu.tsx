@@ -26,6 +26,7 @@ const Menu = async ({ forAdmin = false }: { forAdmin?: boolean }) => {
       </nav>
 
       {/* Mobile */}
+      {forAdmin ? (
       <nav className='md:hidden'>
         <Sheet>
           <SheetTrigger
@@ -76,6 +77,12 @@ const Menu = async ({ forAdmin = false }: { forAdmin?: boolean }) => {
           </SheetContent>
         </Sheet>
       </nav>
+      ) : (
+        <nav className='flex items-center md:hidden'>
+          <UserButton mobile />
+          <CartButton />
+        </nav>
+      )}
     </div>
   )
 }

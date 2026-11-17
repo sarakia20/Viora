@@ -10,15 +10,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SignOut } from '@/lib/actions/user.actions'
-import { ChevronDownIcon } from 'lucide-react'
+import { ChevronDownIcon, UserRound } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 
-export default async function UserButton() {
+export default async function UserButton({ mobile = false }: { mobile?: boolean }) {
   const t = await getTranslations()
   const session = await auth()
 
   if (!session) {
+    if (mobile) return <Link href='/sign-in' aria-label={t('Header.Your account')} className='flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100'><UserRound className='h-6 w-6 stroke-[1.8]' /></Link>
     return (
       <Link
   href='/sign-in'
@@ -33,9 +34,11 @@ export default async function UserButton() {
     <div className='flex gap-2 items-center'>
       <DropdownMenu>
         <DropdownMenuTrigger className='header-button' asChild>
-          <button className='flex items-center gap-1 text-sm font-semibold'>
+          <button aria-label={mobile ? t('Header.Your account') : undefined} className={mobile ? 'flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100' : 'flex items-center gap-1 text-sm font-semibold'}>
+            {mobile ? <UserRound className='h-6 w-6 stroke-[1.8]' /> : <>
             حساب کاربری
             <ChevronDownIcon className='h-4 w-4' />
+          </>}
           </button>
         </DropdownMenuTrigger>
 

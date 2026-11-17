@@ -18,7 +18,9 @@ export default async function Header() {
       <div className='mx-auto max-w-[1440px] px-3 sm:px-4 lg:px-6'>
 
         {/* Main header */}
-        <div className='flex min-h-16 items-center justify-between gap-2'>
+        <div className='flex min-h-14 items-center justify-between gap-2 md:min-h-16'>
+          <div className='flex min-w-0 items-center gap-1'>
+            <Sidebar mobileOnly mobileLinks={data.headerMenus.slice(0, 4).map((menu) => ({ href: menu.href, label: t('Header.' + menu.name) }))} />
 
           <Link
             href='/'
@@ -36,6 +38,7 @@ export default async function Header() {
               {site.name}
             </span>
           </Link>
+          </div>
 
 
           <div className='hidden flex-1 px-4 md:block'>
@@ -49,7 +52,7 @@ export default async function Header() {
 
 
         {/* Mobile search */}
-        <div className='pb-3 md:hidden'>
+        <div className='pb-2 md:hidden'>
           <Search />
         </div>
 
@@ -57,7 +60,7 @@ export default async function Header() {
 
 
       {/* Navigation */}
-      <div className='border-t border-slate-100 bg-slate-50'>
+      <div className='hidden border-t border-slate-100 bg-slate-50 md:block'>
 
         <div className='mx-auto flex h-11 max-w-[1440px] items-center gap-2 overflow-visible px-3 sm:px-4 lg:px-6'>
 

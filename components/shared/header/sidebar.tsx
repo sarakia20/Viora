@@ -90,7 +90,7 @@ const getSubCategoryHref = (category: string, subCategory: string) =>
   getCategoryLandingPath(subCategory) ??
   `/search?category=${encodeURIComponent(category)}&subCategory=${encodeURIComponent(subCategory)}`
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobileOnly?: boolean; mobileLinks?: { href: string; label: string }[] } = {}) {
   const [desktopOpen, setDesktopOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -139,11 +139,11 @@ export default function Sidebar() {
       <button
         type='button'
         onClick={() => setMobileOpen(true)}
-        className='flex shrink-0 items-center gap-1 rounded-md px-2 py-2 text-sm font-semibold text-slate-800 md:hidden'
+        className='flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-800 md:hidden'
+        aria-expanded={mobileOpen}
         aria-label='باز کردن دسته‌بندی‌ها'
       >
         <MenuIcon className='h-5 w-5' />
-        <span>همه</span>
       </button>
 
       {mobileOpen && (
@@ -172,6 +172,11 @@ export default function Sidebar() {
             </div>
 
             <div className='flex-1 overflow-y-auto px-3 py-3'>
+              {mobileLinks.map((link) => (
+                <Link key={link.href} href={link.href} onClick={closeAllMenus} className='block border-b border-slate-100 py-3 text-sm font-semibold text-slate-700'>
+                  {link.label}
+                </Link>
+              ))}
               {megaItems.map((item) => {
                 const isExpanded =
                   expandedMobileCategory === item.title
@@ -312,7 +317,7 @@ export default function Sidebar() {
 
       {/* ================= DESKTOP ================= */}
 
-      <div
+      {!mobileOnly && <div
         className='relative hidden md:block'
         onMouseEnter={() => setDesktopOpen(true)}
         onMouseLeave={() => {
@@ -450,7 +455,7 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </>
   )
 }
