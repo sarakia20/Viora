@@ -16,6 +16,9 @@ import type { Metadata } from 'next'
 import { getAbsoluteUrl } from '@/lib/site-url'
 
 export const metadata: Metadata = {
+  title: { absolute: 'فروشگاه ویورا | خرید شیرآلات، سینک، هود و تجهیزات ساختمانی' },
+  description:
+    'خرید انواع شیرآلات، سینک ظرفشویی، هود، گاز، فلاش تانک و تجهیزات سرویس بهداشتی از فروشگاه ویورا. مشاهده مدل‌ها، مشخصات، قیمت و موجودی محصولات.',
   alternates: {
     canonical: getAbsoluteUrl('/'),
   },
@@ -88,6 +91,9 @@ export default async function HomePage() {
     <>
       <HomeCarousel items={carousels} />
       <div className='space-y-3 bg-border p-3 sm:p-4 md:space-y-4'>
+        <h1 className='px-1 py-3 text-lg font-bold leading-8 text-foreground sm:text-xl'>
+          فروشگاه ویورا؛ خرید تجهیزات آشپزخانه، ساختمانی و سرویس بهداشتی
+        </h1>
         <HomeCard cards={cards} />
         <Card className='w-full overflow-hidden rounded-xl'>
           <CardContent className='items-center gap-3 p-3 sm:p-4'>

@@ -1,9 +1,8 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import React from 'react'
-
-import { formUrlQuery } from '@/lib/utils'
 
 import { Button } from '../ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -16,44 +15,64 @@ type PaginationProps = {
 }
 
 const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
-  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  const onClick = (btnType: string) => {
-    const pageValue = btnType === 'next' ? Number(page) + 1 : Number(page) - 1
-
-    const newUrl = formUrlQuery({
-      params: searchParams.toString(),
-      key: urlParamName || 'page',
-      value: pageValue.toString(),
-    })
-
-    router.push(newUrl, { scroll: true })
+  const lastPage = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1
+  const parsedPage = Number(page)
+  const currentPage = Number.isInteger(parsedPage) && parsedPage > 0
+    ? Math.min(parsedPage, lastPage)
+    : 1
+  const getPageHref = (target: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set(urlParamName || 'page', String(target))
+    return `${pathname}?${params.toString()}`
   }
+  // Keep the mobile controls compact even for a large product catalogue.
+  const pages = Array.from(new Set([
+    1, currentPage - 1, currentPage, currentPage + 1, lastPage,
+  ])).filter((value) => value >= 1 && value <= lastPage).sort((a, b) => a - b)
 
   const t = useTranslations()
   return (
-    <div className='flex flex-wrap items-center justify-center gap-2'>
-      <Button
+    <nav aria-label='صفحه‌بندی' className='flex flex-wrap items-center justify-center gap-2'>
+      {currentPage > 1 ? <Button
         size='lg'
         variant='outline'
-        onClick={() => onClick('prev')}
-        disabled={Number(page) <= 1}
+        asChild
         className='w-24'
       >
+        <Link href={getPageHref(currentPage - 1)} prefetch={false} rel='prev'>
+          <ChevronLeft /> {t('Search.Previous')}
+        </Link>
+      </Button> : <Button size='lg' variant='outline' disabled className='w-24'>
         <ChevronLeft /> {t('Search.Previous')}
-      </Button>
-      {t('Search.Page')} {page} {t('Search.of')} {totalPages}
-      <Button
+      </Button>}
+      <span>{t('Search.Page')} {currentPage} {t('Search.of')} {totalPages}</span>
+      <div className='order-last flex w-full flex-wrap justify-center gap-2 sm:order-none sm:w-auto'>
+        {pages.map((value, index) => (
+          <React.Fragment key={value}>
+            {index > 0 && value - pages[index - 1] > 1 && <span aria-hidden='true' className='self-center'>…</span>}
+            <Button asChild size='icon' variant={value === currentPage ? 'default' : 'outline'}>
+              <Link href={getPageHref(value)} prefetch={false} aria-label={`${t('Search.Page')} ${value}`} aria-current={value === currentPage ? 'page' : undefined}>
+                {value}
+              </Link>
+            </Button>
+          </React.Fragment>
+        ))}
+      </div>
+      {currentPage < lastPage ? <Button
         size='lg'
         variant='outline'
-        onClick={() => onClick('next')}
-        disabled={Number(page) >= totalPages}
+        asChild
         className='w-24'
       >
+        <Link href={getPageHref(currentPage + 1)} prefetch={false} rel='next'>
+          {t('Search.Next')} <ChevronRight />
+        </Link>
+      </Button> : <Button size='lg' variant='outline' disabled className='w-24'>
         {t('Search.Next')} <ChevronRight />
-      </Button>
-    </div>
+      </Button>}
+    </nav>
   )
 }
 

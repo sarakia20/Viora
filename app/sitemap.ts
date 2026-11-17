@@ -1,11 +1,25 @@
 import type { MetadataRoute } from 'next'
+import { unstable_cache } from 'next/cache'
 
 import { connectToDatabase } from '@/lib/db'
 import Product from '@/lib/db/models/product.model'
 import { categoryConfig } from '@/lib/category-config'
 import { getAbsoluteUrl } from '@/lib/site-url'
 
-export const revalidate = 3600
+// Read at runtime: database access may be unavailable during the image build.
+export const dynamic = 'force-dynamic'
+
+// Cache successful queries, not a fallback sitemap with missing products.
+const getPublishedProducts = unstable_cache(
+  async () => {
+    await connectToDatabase()
+    return Product.find({ isPublished: true })
+      .select({ _id: 0, slug: 1, updatedAt: 1 })
+      .lean<Array<{ slug: string; updatedAt?: Date }>>()
+  },
+  ['sitemap-published-products-v1'],
+  { revalidate: 3600 }
+)
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -22,18 +36,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let productRoutes: MetadataRoute.Sitemap = []
 
   try {
-    await connectToDatabase()
-
-    const products = await Product.find({ isPublished: true })
-      .select('slug updatedAt')
-      .lean<Array<{ slug: string; updatedAt?: Date }>>()
+    const products = await getPublishedProducts()
 
     productRoutes = products.map((product) => ({
-      url: getAbsoluteUrl(`/product/${product.slug}`),
+      url: getAbsoluteUrl(`/product/${encodeURIComponent(product.slug)}`),
       ...(product.updatedAt ? { lastModified: product.updatedAt } : {}),
     }))
   } catch (error) {
-    console.error('Failed to load products for sitemap:', error)
+    // Do not log connection details or return a successful partial sitemap.
+    throw new Error('Failed to load published products for sitemap', { cause: error })
   }
 
   return [...staticRoutes, ...categoryRoutes, ...productRoutes]
