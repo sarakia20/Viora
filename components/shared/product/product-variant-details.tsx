@@ -10,7 +10,7 @@ import AddToCart from './add-to-cart'
 import ProductGallery from './product-gallery'
 import ProductPrice from './product-price'
 import RatingSummary from './rating-summary'
-import ColorSwatch from './color-swatch'
+import ColorSwatch, { colorOptionClassName, getSwatchColors } from './color-swatch'
 
 export default function ProductVariantDetails({
   product,
@@ -69,21 +69,25 @@ export default function ProductVariantDetails({
           <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
           <div className='flex flex-wrap gap-2'>
             {variants.map((variant, index) => (
+              <div key={`${variant.color}-${index}`} className="flex flex-col items-center gap-1.5">
               <button
-                key={`${variant.color}-${index}`}
                 type='button'
                 onClick={() => setSelectedVariantIndex(index)}
                 aria-pressed={selectedVariantIndex === index}
                 aria-label={variant.color}
                 title={variant.color}
-                className={
+                className={variantLabel !== 'درجه کیفیت' ? colorOptionClassName(selectedVariantIndex === index) :
                   selectedVariantIndex === index
                     ? 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-50 p-1 ring-2 ring-slate-200 ring-offset-2 focus-visible:outline-slate-800'
                     : 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-200 bg-white p-1 hover:border-slate-500 focus-visible:outline-slate-800'
                 }
               >
-                {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} image={variant.image} />}
+                {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} />}
               </button>
+              {variantLabel !== 'درجه کیفیت' && !getSwatchColors(variant.color) && (
+                <span className="max-w-20 break-words text-center text-xs leading-5 text-slate-600">{variant.color}</span>
+              )}
+              </div>
             ))}
           </div>
         </div>

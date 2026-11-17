@@ -5,19 +5,53 @@ const colors: Record<string, string> = {
   'طلایی مات': '#c9a227', 'قرمز': '#b91c1c', 'آبی': '#2563eb',
   'سبز': '#15803d', 'کرم': '#e7d8b7', 'نقره ای': '#c0c0c0',
   'white': '#fff', 'black': '#171717', 'red': '#b91c1c',
+  'طلامات': '#c9a227', 'طلایی براق': '#d4af37', 'طلا': '#d4af37',
+  'سفید مات': '#fff', 'مشکی مات': '#171717', 'کروم مات': '#cbd5e1',
+  'نقره': '#c0c0c0', 'نقره‌ای': '#c0c0c0',
+  'gold': '#d4af37', 'chrome': '#cbd5e1', 'silver': '#c0c0c0',
+  'gray': '#9ca3af', 'grey': '#9ca3af', 'blue': '#2563eb', 'green': '#15803d',
 }
 
-export default function ColorSwatch({ name, image }: { name: string; image?: string }) {
-  const normalized = name.replace(/‌/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
-  const color = colors[normalized]
-  // Pattern names and unknown finishes use the actual product photo, never an invented texture.
-  return color ? (
-    <span aria-hidden='true' className='block h-6 w-6 rounded-full border border-black/15' style={{ backgroundColor: color }} />
-  ) : image ? (
-    // A small crop of the actual variant identifies decorative finishes.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={image} alt='' className='h-7 w-7 rounded-full border border-slate-200 object-cover' />
-  ) : (
-    <span className='px-1 text-xs font-medium'>{name}</span>
+function normalizeColorName(name: string) {
+  return name.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/‌/g, ' ')
+    .replace(/[+/،,-]/g, ' ').replace(/\s+و\s+/g, ' ')
+    .replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+const normalizedColors: Record<string, string> = Object.fromEntries(
+  Object.entries(colors).map(([name, color]) => [normalizeColorName(name), color])
+)
+const colorNames = Object.keys(normalizedColors)
+  .sort((a, b) => b.length - a.length)
+
+export function getSwatchColors(name: string): string[] | undefined {
+  let remaining = normalizeColorName(name)
+  if (!remaining) return undefined
+  const result: string[] = []
+  while (remaining) {
+    const match = colorNames.find((color) => remaining === color || remaining.startsWith(`${color} `))
+    if (!match) return undefined // Do not infer a color from a partially recognized finish.
+    result.push(normalizedColors[match])
+    remaining = remaining.slice(match.length).trim()
+  }
+  return result
+}
+
+export function colorOptionClassName(selected: boolean) {
+  return 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 p-1 focus-visible:outline-slate-800 ' +
+    (selected ? 'border-slate-800 bg-slate-50 ring-2 ring-slate-200 ring-offset-2' :
+      'border-slate-200 bg-white hover:border-slate-500')
+}
+
+export default function ColorSwatch({ name }: { name: string }) {
+  const palette = getSwatchColors(name)
+  const style = palette?.length === 1 ? { backgroundColor: palette[0] } : palette ? {
+    background: `linear-gradient(135deg, ${palette.map((color, index) =>
+      `${color} ${index * 100 / palette.length}% ${(index + 1) * 100 / palette.length}%`).join(', ')})`,
+  } : undefined
+  return (
+    <span aria-hidden='true' className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-black/15 bg-slate-100 text-xs text-slate-500' style={style}>
+      {!palette ? '?' : null}
+    </span>
   )
 }
