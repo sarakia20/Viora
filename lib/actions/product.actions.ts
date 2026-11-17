@@ -30,7 +30,7 @@ function filterProducts({
   rating,
 }: {
   query?: string
-  category?: string
+  category?: string | readonly string[]
   subCategory?: string
   brand?: string
   tag?: string
@@ -48,7 +48,8 @@ function filterProducts({
       return false
     }
 
-    if (category && category !== 'all' && product.category !== category) {
+    if (category && category !== 'all' &&
+      !(typeof category === 'string' ? [category] : category).includes(product.category)) {
       return false
     }
 
@@ -458,7 +459,7 @@ export async function getAllProducts({
   sort,
 }: {
   query: string
-  category: string
+  category: string | readonly string[]
   subCategory?: string
   brand?: string
   tag: string
@@ -511,7 +512,9 @@ export async function getAllProducts({
       : {}
 
   const categoryFilter =
-    category && category !== 'all' ? { category } : {}
+    category && category !== 'all'
+      ? { category: typeof category === 'string' ? category : { $in: [...category] } }
+      : {}
   const subCategoryFilter =
     subCategory && subCategory !== 'all' ? { subCategory } : {}
   const brandFilter = brand && brand !== 'all' ? { brand } : {}
@@ -549,7 +552,7 @@ export async function getAllProducts({
 
   const isPublished = { isPublished: true }
 
-  const products = await Product.find({
+  const conditions = {
   ...isPublished,
   ...queryFilter,
   ...tagFilter,
@@ -558,8 +561,11 @@ export async function getAllProducts({
   ...brandFilter,
   ...priceFilter,
   ...ratingFilter,
-})
-  .sort(order)
+  }
+  const countProducts = await Product.countDocuments(conditions)
+  // Avoid a large skip query for an out-of-range category page.
+  const products = page > Math.ceil(countProducts / limit) ? [] : await Product.find(conditions)
+  .sort({ ...order, _id: order._id ?? -1 })
   .skip(limit * (Number(page) - 1))
   .limit(limit)
   .lean()
@@ -572,17 +578,6 @@ const uniqueProducts = Array.from(
     ])
   ).values()
 )
-
-  const countProducts = await Product.countDocuments({
-    ...isPublished,
-    ...queryFilter,
-    ...tagFilter,
-    ...categoryFilter,
-    ...subCategoryFilter,
-    ...brandFilter,
-    ...priceFilter,
-    ...ratingFilter,
-  })
 
   return {
    products: JSON.parse(JSON.stringify(uniqueProducts)) as IProduct[],

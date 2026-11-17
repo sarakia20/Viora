@@ -12,7 +12,7 @@ import {
   getBrandsByCategory,
 } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
-import { categoryConfig } from '@/lib/category-config'
+import { getCategoryLandingPath } from '@/lib/category-config'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
@@ -245,14 +245,12 @@ export async function generateMetadata(props: {
   const hasExtraFilters = Object.keys(searchParams).some(
     (key) => !allowedParams.has(key)
   )
-  const landingCategory = Object.values(categoryConfig).find(
-    (item) => item.productCategory === category
-  )
+  const landingPath = category ? getCategoryLandingPath(category) : undefined
   const isCategoryOnlyLandingSearch = Boolean(
-    landingCategory && hasCategory && !hasSubCategory && !hasExtraFilters
+    landingPath && hasCategory && !hasSubCategory && !hasExtraFilters
   )
   const canonical = isCategoryOnlyLandingSearch
-    ? new URL(`/category/${landingCategory!.slug}`, SITE_URL).toString()
+    ? new URL(landingPath!, SITE_URL).toString()
     : searchCanonical
   const indexable = hasCategory && !hasExtraFilters && !isCategoryOnlyLandingSearch
 

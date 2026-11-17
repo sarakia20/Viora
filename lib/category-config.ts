@@ -6,6 +6,8 @@ export type CategoryLink = {
 export type CategoryConfig = {
   slug: string
   productCategory: string
+  productCategories?: readonly string[]
+  requireProducts?: boolean
   h1: string
   title: string
   description: string
@@ -16,6 +18,50 @@ export type CategoryConfig = {
 }
 
 export const categoryConfig = {
+  'flush-tanks': {
+    slug: 'flush-tanks',
+    productCategory: 'فلاش تانک',
+    requireProducts: true,
+    h1: 'خرید فلاش تانک',
+    title: 'خرید فلاش تانک | مدل‌ها و قیمت محصولات | ویورا',
+    description: 'فلاش تانک و قطعات مرتبط را در ویورا بررسی کنید. مقایسه مدل‌ها، نوع نصب، مشخصات، قیمت و وضعیت موجودی محصولات.',
+    intro: 'برای انتخاب فلاش تانک، نوع نصب و سازگاری با سرویس بهداشتی را بررسی کنید. در این صفحه مدل‌های فلاش تانک و قطعات مرتبط ثبت‌شده در فروشگاه ویورا را با قیمت و وضعیت موجودی می‌بینید.',
+    guideTitle: 'راهنمای انتخاب فلاش تانک',
+    guideParagraphs: [
+      'پیش از خرید، روکار یا توکار بودن مخزن، محل ورودی آب و فضای نصب را مشخص کنید. در مدل توکار، دسترسی برای سرویس و سازگاری کلید با مخزن اهمیت دارد.',
+      'مشخصات هر محصول و اقلام همراه آن را بخوانید؛ صفحه کلید یا قطعه جانبی با مخزن کامل تفاوت دارد. ابعاد، شیوه نصب و سازگاری قطعات را پیش از سفارش کنترل کنید.',
+    ],
+  },
+  hoods: {
+    slug: 'hoods',
+    productCategory: 'هود',
+    requireProducts: true,
+    h1: 'خرید هود آشپزخانه',
+    title: 'خرید هود آشپزخانه | مشخصات و قیمت مدل‌ها | ویورا',
+    description: 'مدل‌های هود آشپزخانه را در ویورا با بررسی نوع نصب، ابعاد، مشخصات، قیمت و وضعیت موجودی مقایسه کنید.',
+    intro: 'انتخاب هود آشپزخانه به ابعاد اجاق، فضای کابینت و مسیر خروج هوا بستگی دارد. مدل‌های هود را در ویورا از نظر نوع نصب، مشخصات و قیمت بررسی کنید.',
+    guideTitle: 'راهنمای خرید هود آشپزخانه',
+    guideParagraphs: [
+      'پیش از انتخاب هود، عرض محل نصب و مسیر کانال خروجی را اندازه بگیرید. نوع توکار یا دیواری باید با طراحی کابینت و فضای بالای اجاق هماهنگ باشد.',
+      'هنگام مقایسه مدل‌ها، مشخصات فیلتر، کنترل‌ها، روشنایی و صدای اعلام‌شده سازنده را بررسی کنید. فاصله ایمن نصب را از راهنمای همان محصول بخوانید.',
+    ],
+  },
+  cooktops: {
+    slug: 'cooktops',
+    productCategory: 'اجاق گاز',
+    // Both values were verified against live product breadcrumbs; do not rename records.
+    productCategories: ['گاز', 'اجاق گاز'],
+    requireProducts: true,
+    h1: 'خرید گاز و اجاق گاز آشپزخانه',
+    title: 'خرید گاز و اجاق گاز | مدل‌ها، مشخصات و قیمت | ویورا',
+    description: 'مدل‌های گاز و اجاق گاز آشپزخانه را در ویورا مشاهده کنید. بررسی جنس صفحه، ابعاد، مشخصات، قیمت و وضعیت موجودی محصولات.',
+    intro: 'برای خرید اجاق گاز، ابعاد فضای نصب، جنس صفحه و چیدمان شعله‌ها را مقایسه کنید. این صفحه محصولات ثبت‌شده در دو گروه «گاز» و «اجاق گاز» ویورا را کنار هم نمایش می‌دهد.',
+    guideTitle: 'راهنمای انتخاب گاز و اجاق گاز',
+    guideParagraphs: [
+      'ابعاد بیرونی اجاق و اندازه برش صفحه کابینت یکسان نیستند. پیش از سفارش، هر دو اندازه را در مشخصات محصول بررسی کنید و فضای لازم برای نصب را در نظر بگیرید.',
+      'در مقایسه صفحه استیل و شیشه‌ای، علاوه بر ظاهر به روش نظافت، آرایش شعله‌ها و اندازه ظروف معمول خود توجه کنید. نوع انرژی و امکانات ایمنی را بر اساس اطلاعات همان مدل بررسی کنید.',
+    ],
+  },
   sink: {
     slug: 'sink',
     productCategory: 'سینک',
@@ -102,12 +148,14 @@ export const categoryConfig = {
 export type CategorySlug = keyof typeof categoryConfig
 
 export function getCategoryConfig(slug: string): CategoryConfig | undefined {
-  return categoryConfig[slug as CategorySlug]
+  return Object.hasOwn(categoryConfig, slug)
+    ? categoryConfig[slug as CategorySlug]
+    : undefined
 }
 
 export function getCategoryLandingPath(productCategory: string) {
-  const category = Object.values(categoryConfig).find(
-    (item) => item.productCategory === productCategory
+  const category = (Object.values(categoryConfig) as CategoryConfig[]).find(
+    (item) => (item.productCategories ?? [item.productCategory]).includes(productCategory)
   )
 
   return category ? `/category/${category.slug}` : undefined

@@ -87,6 +87,7 @@ const getCategoryHref = (category: string) =>
   `/search?category=${encodeURIComponent(category)}`
 
 const getSubCategoryHref = (category: string, subCategory: string) =>
+  getCategoryLandingPath(subCategory) ??
   `/search?category=${encodeURIComponent(category)}&subCategory=${encodeURIComponent(subCategory)}`
 
 export default function Sidebar() {
