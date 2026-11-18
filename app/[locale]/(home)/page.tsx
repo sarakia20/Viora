@@ -89,10 +89,10 @@ export default async function HomePage() {
   return (
     <>
       <HomeCarousel items={carousels} />
-      <div className='space-y-3 bg-border p-3 sm:p-4 md:space-y-4'>
-        <h1 className='px-1 py-3 text-lg font-bold leading-8 text-foreground sm:text-xl'>
+      <h1 className='sr-only'>
           فروشگاه ویورا؛ خرید تجهیزات آشپزخانه، ساختمانی و سرویس بهداشتی
-        </h1>
+      </h1>
+      <div className='space-y-3 bg-border p-3 sm:p-4 md:space-y-4'>
         <HomeCard cards={cards} />
         <Card className='w-full overflow-hidden rounded-xl'>
           <CardContent className='items-center gap-3 p-3 sm:p-4'>
