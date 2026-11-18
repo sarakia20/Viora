@@ -77,7 +77,7 @@ const convertedListPrice = round2(listPrice)
         )}
 
         <div className='flex items-baseline gap-1 whitespace-nowrap'>
-          <span className={cn('font-bold text-foreground tabular-nums', detail ? 'text-3xl leading-tight' : 'text-[16px] leading-none')}>
+          <span className={cn('font-bold text-foreground tabular-nums', detail ? 'text-base leading-tight sm:text-3xl' : 'text-[16px] leading-none')}>
             {mainPrice}
           </span>
           <span className={cn('font-medium text-muted-foreground', detail ? 'text-sm' : 'text-[10px]')}>
@@ -88,7 +88,7 @@ const convertedListPrice = round2(listPrice)
 
  {hasDiscount && (
   <div className='mt-1 w-full flex justify-end pl-[42px]'>
-    <span className='text-[11px] leading-none text-gray-400 line-through tabular-nums'>
+    <span className={cn('text-sm leading-none text-gray-400 line-through tabular-nums', detail && 'sm:text-base')}>
       {oldPrice}
     </span>
   </div>
