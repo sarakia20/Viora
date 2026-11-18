@@ -59,7 +59,13 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
             <Link href={item.url} className='block'>
               <div className='relative aspect-[2/1] w-full overflow-hidden bg-[#f4f2ef] sm:aspect-[8/3]'>
                 <Image
-                  src={item.image}
+                  src={
+                    item.image === '/images/banner-faucet.jpg'
+                      ? '/images/banner-faucet.webp'
+                      : item.image === '/images/banner-kitchen.jpg'
+                        ? '/images/banner-kitchen.webp'
+                        : item.image
+                  }
                   alt={item.title}
                   fill
                   priority={index === 0}
