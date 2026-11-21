@@ -16,7 +16,7 @@ import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './colo
 const gradeDigits = '۱۲۳123١٢٣'
 
 function getGradeLabel(value: string) {
-  const digit = /^درجه\s*([۱۲۳123١٢٣])$/.exec(value.trim())?.[1]
+  const digit = /^درجه(?:[\s‌]+کیفیت)?[\s‌]*([۱۲۳123١٢٣])$/.exec(value?.trim() ?? '')?.[1]
   if (!digit) return ''
 
   const index = gradeDigits.indexOf(digit) % 3
@@ -37,16 +37,12 @@ export default function ProductVariantDetails({
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(initialSize)
   const selectedVariant = variants[selectedVariantIndex] ?? variants[0]
-  const gradeLabels = product.category === 'توالت ایرانی'
-    ? variants.map((variant) => getGradeLabel(variant.color))
-    : []
-  const hasQualityGrades =
-    gradeLabels.length === 3 && gradeLabels.every(Boolean) && new Set(gradeLabels).size === 3
-  const variantLabel =
-    product.category === 'توالت فرنگی' ? 'درجه کیفیت' : 'رنگ'
 
   if (!selectedVariant) return null
 
+  const gradeLabels = variants.map((variant) => getGradeLabel(variant.color))
+  const hasQualityGrades = gradeLabels.every(Boolean)
+  const selectedGrade = gradeLabels[selectedVariantIndex] ?? gradeLabels[0]
   const image = selectedVariant.image || product.images[0]
   const galleryImage =
     product.slug === 'yaris60' && selectedVariant.image === '/images/yaris60.png'
@@ -85,14 +81,16 @@ export default function ProductVariantDetails({
 
         {hasQualityGrades ? (
           <fieldset className='min-w-0'>
-            <legend className='mb-2 text-sm font-semibold text-slate-900'>درجه کیفیت محصول</legend>
+            <legend className='mb-2 text-sm font-semibold text-slate-900'>
+              درجه کیفیت محصول: <span aria-live='polite'>{selectedGrade}</span>
+            </legend>
             <div className='flex flex-wrap gap-2'>
               {gradeLabels.map((label, index) => {
                 const isSelected = selectedVariantIndex === index
 
                 return (
                   <button
-                    key={label}
+                    key={`${label}-${index}`}
                     type='button'
                     onClick={() => setSelectedVariantIndex(index)}
                     aria-pressed={isSelected}
@@ -107,8 +105,8 @@ export default function ProductVariantDetails({
           </fieldset>
         ) : (
           <div className='space-y-2'>
-            <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
-            <div className={variantLabel === 'درجه کیفیت' ? 'flex flex-wrap gap-2' : colorOptionsClassName}>
+            <div className='text-sm text-slate-500'>رنگ: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
+            <div className={colorOptionsClassName}>
               {variants.map((variant, index) => (
                 <button
                   key={`${variant.color}-${index}`}
@@ -117,13 +115,9 @@ export default function ProductVariantDetails({
                   aria-pressed={selectedVariantIndex === index}
                   aria-label={variant.color}
                   title={variant.color}
-                  className={variantLabel !== 'درجه کیفیت' ? colorOptionClassName(selectedVariantIndex === index) :
-                    selectedVariantIndex === index
-                      ? 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-50 p-1 ring-2 ring-slate-200 ring-offset-2 focus-visible:outline-slate-800'
-                      : 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-200 bg-white p-1 hover:border-slate-500 focus-visible:outline-slate-800'
-                  }
+                  className={colorOptionClassName(selectedVariantIndex === index)}
                 >
-                  {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} />}
+                  <ColorSwatch name={variant.color} />
                 </button>
               ))}
             </div>
