@@ -2,9 +2,11 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const React = require('react')
+const { renderToStaticMarkup } = require('react-dom/server')
 const load = require('./helpers/load-typescript.cjs')
 
 const pageFile = 'app/[locale]/(root)/category/[slug]/page.tsx'
+const previewFile = 'app/[locale]/(root)/category/[slug]/category-guide-preview.tsx'
 const config = load('lib/category-config.ts')
 const props = (slug, searchParams = {}) => ({
   params: Promise.resolve({ slug }), searchParams: Promise.resolve(searchParams),
@@ -82,6 +84,96 @@ test('homepage group landings list all stored member categories with no subcateg
   }
   assert.equal(config.getCategoryLandingPath('سینک'), '/category/sink')
   assert.equal(config.getCategoryLandingPath('فر'), undefined)
+})
+
+test('every category renders one complete guide with its original title, paragraphs and links', async () => {
+  for (const category of Object.values(config.categoryConfig)) {
+    const page = pageModule()
+    const tree = nodes(await page.default(props(category.slug)))
+    const guides = tree.filter(node => node.props?.['aria-labelledby'] === 'category-guide-title')
+    assert.equal(guides.length, 1, category.slug)
+    assert.equal(guides[0].props.dir, 'rtl')
+    const guide = nodes(guides[0])
+    assert.equal(guide.find(node => node.type === 'h2').props.children.at(-1), category.guideTitle)
+    assert.deepEqual(guide.filter(node => node.type === 'p').map(node => node.props.children), category.guideParagraphs)
+    assert.deepEqual(guide.filter(node => node.props?.href).map(node => ({
+      href: node.props.href, label: node.props.children,
+    })), category.guideLinks ?? [])
+    const html = renderToStaticMarkup(guides[0])
+    for (const paragraph of category.guideParagraphs) {
+      assert.equal(html.split(`<p>${paragraph}</p>`).length, 2)
+    }
+    const secondPage = nodes(await page.default(props(category.slug, { page: '2' })))
+    assert.ok(!secondPage.some(node => node.props?.id === 'category-guide-title'))
+  }
+})
+
+test('guide preview toggles without replacing content and adapts to text wrapping', () => {
+  const content = {
+    offsetHeight: 224,
+    getBoundingClientRect: () => ({ top: 0 }),
+    children: [{ getBoundingClientRect: () => ({ top: 0, bottom: 224 }) }],
+  }
+  const paragraphs = React.createElement('p', null, 'متن راهنمای خرید')
+  const state = []
+  let cursor, effect, resize, disconnected
+  const Preview = load(previewFile, {
+    react: { ...React, useId: () => 'guide-preview', useRef: () => ({ current: content }),
+      useEffect(callback) { effect = callback },
+      useState(initial) {
+        const index = cursor++
+        if (!(index in state)) state[index] = initial
+        return [state[index], (value) => {
+          state[index] = typeof value === 'function' ? value(state[index]) : value
+        }]
+      },
+    },
+  }, {
+    getComputedStyle: () => ({ lineHeight: '28px' }),
+    ResizeObserver: class {
+      constructor(callback) { resize = callback }
+      observe(target) { assert.equal(target, content) }
+      disconnect() { disconnected = true }
+    },
+  }).default
+  const render = () => {
+    cursor = 0
+    const tree = nodes(Preview({ children: paragraphs }))
+    return {
+      panel: tree.find(node => node.props?.id === 'guide-preview'),
+      button: tree.find(node => node.type === 'button'),
+    }
+  }
+  assert.equal(render().panel.props.style, undefined)
+  const cleanup = effect()
+  let { panel, button } = render()
+  assert.equal(panel.props.style.maxHeight, 112)
+  assert.equal(button.props['aria-controls'], panel.props.id)
+  assert.equal(button.props['aria-expanded'], false)
+  assert.equal(button.props.children[0], 'مشاهده بیشتر')
+  button.props.onClick()
+
+  ;({ panel, button } = render())
+  assert.equal(panel.props.style.maxHeight, 224)
+  assert.equal(button.props['aria-expanded'], true)
+  assert.equal(button.props.children[0], 'مشاهده کمتر')
+  assert.ok(nodes(panel).includes(paragraphs))
+  button.props.onClick()
+  assert.equal(render().panel.props.style.maxHeight, 112)
+
+  content.children = [
+    { getBoundingClientRect: () => ({ top: 0, bottom: 84 }) },
+    { getBoundingClientRect: () => ({ top: 96, bottom: 224 }) },
+  ]
+  resize()
+  assert.equal(render().panel.props.style.maxHeight, 84)
+
+  content.offsetHeight = 84
+  content.children.pop()
+  resize()
+  assert.equal(render().button, undefined)
+  cleanup()
+  assert.equal(disconnected, true)
 })
 
 test('invalid and out-of-range pages fail in both metadata and body', async () => {
@@ -201,7 +293,6 @@ test('old search URLs remain usable and point to new landings without changing s
 })
 
 test('pagination still renders real links for a valid second page', () => {
-  const { renderToStaticMarkup } = require('react-dom/server')
   const Pagination = load('components/shared/pagination.tsx', {
     'next/navigation': { usePathname: () => '/category/cooktops',
       useSearchParams: () => new URLSearchParams('page=2&utm_source=test') },

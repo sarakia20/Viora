@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { cache } from 'react'
@@ -9,6 +10,8 @@ import { getCategoryConfig } from '@/lib/category-config'
 import { getAllProducts } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
 import { SITE_URL } from '@/lib/site-url'
+
+import CategoryGuidePreview from './category-guide-preview'
 
 const SITE_NAME = 'ویورا'
 
@@ -178,24 +181,25 @@ export default async function CategoryPage(props: {
       {page === 1 && (
         <section
           aria-labelledby='category-guide-title'
-          className='mx-auto max-w-4xl space-y-5 pb-4 text-right leading-8'
+          className='w-full min-w-0 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 text-right sm:p-6 lg:p-8'
           dir='rtl'
         >
-          <h2 id='category-guide-title' className='text-xl font-bold sm:text-2xl'>
+          <h2 id='category-guide-title' className='flex items-start gap-2.5 text-xl font-bold text-slate-900 sm:text-2xl'>
+            <BookOpen aria-hidden='true' className='mt-1 size-5 shrink-0 text-slate-600' />
             {category.guideTitle}
           </h2>
-          <div className='space-y-4 text-sm text-muted-foreground sm:text-base'>
+          <CategoryGuidePreview>
             {category.guideParagraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
-          </div>
+          </CategoryGuidePreview>
           {category.guideLinks && (
             <nav aria-label='دسته‌های مرتبط' className='flex flex-wrap gap-x-5 gap-y-2'>
               {category.guideLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className='font-medium text-primary underline-offset-4 hover:underline'
+                  className='font-medium text-slate-800 underline-offset-4 hover:underline'
                 >
                   {link.label}
                 </Link>
