@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Check } from 'lucide-react'
 import { IProduct } from '@/lib/db/models/product.model'
 import { generateId, round2 } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +12,16 @@ import ProductGallery from './product-gallery'
 import ProductPrice from './product-price'
 import RatingSummary from './rating-summary'
 import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './color-swatch'
+
+const gradeDigits = '۱۲۳123١٢٣'
+
+function getGradeLabel(value: string) {
+  const digit = /^درجه\s*([۱۲۳123١٢٣])$/.exec(value.trim())?.[1]
+  if (!digit) return ''
+
+  const index = gradeDigits.indexOf(digit) % 3
+  return `درجه ${gradeDigits[index]}`
+}
 
 export default function ProductVariantDetails({
   product,
@@ -24,24 +35,29 @@ export default function ProductVariantDetails({
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(initialSize)
   const selectedVariant = variants[selectedVariantIndex] ?? variants[0]
+  const gradeLabels = product.category === 'توالت ایرانی'
+    ? variants.map((variant) => getGradeLabel(variant.color))
+    : []
+  const hasQualityGrades =
+    gradeLabels.length === 3 && gradeLabels.every(Boolean) && new Set(gradeLabels).size === 3
   const variantLabel =
-    variants.length > 0 &&
-    (product.category === 'توالت ایرانی' ||
-      product.category === 'توالت فرنگی')
-      ? 'درجه کیفیت'
-      : 'رنگ'
+    product.category === 'توالت فرنگی' ? 'درجه کیفیت' : 'رنگ'
 
   if (!selectedVariant) return null
 
   const image = selectedVariant.image || product.images[0]
-  const galleryImages = selectedVariant.image ? [selectedVariant.image] : product.images
+  const galleryImage =
+    product.slug === 'yaris60' && selectedVariant.image === '/images/yaris60.png'
+      ? '/images/yaris60.webp'
+      : selectedVariant.image
+  const galleryImages = galleryImage ? [galleryImage] : product.images
   const isInStock = selectedVariant.countInStock > 0
 
   return (
     <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
       <div className='min-w-0'>
         <ProductGallery
-          key={image}
+          key={galleryImage || image}
           images={galleryImages}
           productName={`${product.name} - ${selectedVariant.color}`}
         />
@@ -65,28 +81,52 @@ export default function ProductVariantDetails({
           <Separator />
         </div>
 
-        <div className='space-y-2'>
-          <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
-          <div className={variantLabel === 'درجه کیفیت' ? 'flex flex-wrap gap-2' : colorOptionsClassName}>
-            {variants.map((variant, index) => (
-              <button
-                key={`${variant.color}-${index}`}
-                type='button'
-                onClick={() => setSelectedVariantIndex(index)}
-                aria-pressed={selectedVariantIndex === index}
-                aria-label={variant.color}
-                title={variant.color}
-                className={variantLabel !== 'درجه کیفیت' ? colorOptionClassName(selectedVariantIndex === index) :
-                  selectedVariantIndex === index
-                    ? 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-50 p-1 ring-2 ring-slate-200 ring-offset-2 focus-visible:outline-slate-800'
-                    : 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-200 bg-white p-1 hover:border-slate-500 focus-visible:outline-slate-800'
-                }
-              >
-                {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} />}
-              </button>
-            ))}
+        {hasQualityGrades ? (
+          <fieldset className='min-w-0'>
+            <legend className='mb-2 text-sm font-semibold text-slate-900'>درجه کیفیت محصول</legend>
+            <div className='flex flex-wrap gap-2'>
+              {gradeLabels.map((label, index) => {
+                const isSelected = selectedVariantIndex === index
+
+                return (
+                  <button
+                    key={label}
+                    type='button'
+                    onClick={() => setSelectedVariantIndex(index)}
+                    aria-pressed={isSelected}
+                    className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-sm font-medium text-slate-900 focus-visible:outline-slate-900 ${isSelected ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-white hover:border-slate-500'}`}
+                  >
+                    {label}
+                    <Check className={isSelected ? 'size-4' : 'invisible size-4'} aria-hidden='true' />
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+        ) : (
+          <div className='space-y-2'>
+            <div className='text-sm text-slate-500'>{variantLabel}: <span className='font-semibold text-slate-900' aria-live='polite'>{selectedVariant.color}</span></div>
+            <div className={variantLabel === 'درجه کیفیت' ? 'flex flex-wrap gap-2' : colorOptionsClassName}>
+              {variants.map((variant, index) => (
+                <button
+                  key={`${variant.color}-${index}`}
+                  type='button'
+                  onClick={() => setSelectedVariantIndex(index)}
+                  aria-pressed={selectedVariantIndex === index}
+                  aria-label={variant.color}
+                  title={variant.color}
+                  className={variantLabel !== 'درجه کیفیت' ? colorOptionClassName(selectedVariantIndex === index) :
+                    selectedVariantIndex === index
+                      ? 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-50 p-1 ring-2 ring-slate-200 ring-offset-2 focus-visible:outline-slate-800'
+                      : 'flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-slate-200 bg-white p-1 hover:border-slate-500 focus-visible:outline-slate-800'
+                  }
+                >
+                  {variantLabel === 'درجه کیفیت' ? <span className='px-2 text-xs'>{variant.color}</span> : <ColorSwatch name={variant.color} />}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {product.sizes.length > 0 && (
           <div className='mt-2 space-y-2'>
