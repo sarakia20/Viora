@@ -35,7 +35,7 @@ export default function Footer() {
       </div>
 
       <footer className='border-t border-slate-200 bg-white text-slate-600'>
-        <div className='mx-auto max-w-7xl px-4 py-8'>
+        <div className='mx-auto max-w-7xl px-4 pb-4 pt-8'>
           <div className='mb-8 space-y-3 text-center text-sm text-slate-600'>
             <p>شماره تماس: 09102145452</p>
             <p>
@@ -70,23 +70,44 @@ export default function Footer() {
               همراه ما باشید
             </h3>
 
-            <div className='flex items-center justify-center gap-5 text-slate-400'>
-              <Link
-                href='https://t.me/Viora_RM'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='hover:text-slate-700'
-              >
-                <Send className='h-7 w-7' />
-              </Link>
+            <div className='flex flex-wrap items-center justify-center gap-x-6 gap-y-4'>
+              <div className='flex items-center justify-center gap-5 border-e border-slate-200 py-2 pe-6 text-slate-400'>
+                <Link
+                  href='https://t.me/Viora_RM'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:text-slate-700'
+                >
+                  <Send className='h-7 w-7' />
+                </Link>
 
-              <Link
-                href='https://www.instagram.com/viora.rm'
+                <Link
+                  href='https://www.instagram.com/viora.rm'
+                  target='_blank'
+                  className='hover:text-slate-700'
+                >
+                  <Instagram className='h-7 w-7' />
+                </Link>
+              </div>
+              <a
+                href='https://trustseal.enamad.ir/?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
                 target='_blank'
-                className='hover:text-slate-700'
+                rel='noopener'
+                referrerPolicy='origin'
+                aria-label='نماد اعتماد الکترونیکی فروشگاه ویورا'
+                className='grid h-[70px] w-[70px] shrink-0 place-items-center overflow-hidden rounded-md border border-slate-200'
               >
-                <Instagram className='h-7 w-7' />
-              </Link>
+                <img
+                  src='https://trustseal.enamad.ir/logo.aspx?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
+                  alt='اینماد'
+                  referrerPolicy='origin'
+                  width={70}
+                  height={70}
+                  loading='lazy'
+                  className='h-full w-full object-contain text-xs leading-[68px]'
+                  {...{ code: 'Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit' }}
+                />
+              </a>
             </div>
           </div>
 
@@ -94,26 +115,6 @@ export default function Footer() {
             تمامی حقوق این فروشگاه محفوظ است. استفاده از مطالب سایت فقط با ذکر
             منبع مجاز است.
           </div>
-
-          <a
-            href='https://trustseal.enamad.ir/?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
-            target='_blank'
-            rel='noopener'
-            referrerPolicy='origin'
-            className='mx-auto mt-4 block w-20'
-          >
-            <img
-              src='https://trustseal.enamad.ir/logo.aspx?id=8118263&Code=Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit'
-              alt='نماد اعتماد الکترونیکی فروشگاه ویورا'
-              referrerPolicy='origin'
-              width={80}
-              height={96}
-              loading='lazy'
-              className='h-24 w-20 object-contain'
-              style={{ cursor: 'pointer' }}
-              {...{ code: 'Ogp2owDvh5jV0xbpTQKVeUaZzAVMctit' }}
-            />
-          </a>
         </div>
       </footer>
     </>
