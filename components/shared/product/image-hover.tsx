@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import Image from 'next/image'
+import { resolveProductImage } from '@/lib/store-images'
 import { useRef, useState } from 'react'
 
 const ImageHover = ({
@@ -51,7 +52,7 @@ const ImageHover = ({
       onMouseLeave={handleMouseLeave}
     >
       <Image
-        src={src}
+        src={resolveProductImage(src)}
         alt={alt}
         fill
         sizes={sizes}
@@ -61,7 +62,7 @@ const ImageHover = ({
       />
       {shouldLoadHover && (
         <Image
-          src={hoverSrc}
+          src={resolveProductImage(hoverSrc)}
           alt={alt}
           fill
           sizes={sizes}

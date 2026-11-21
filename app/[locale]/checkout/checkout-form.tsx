@@ -26,6 +26,7 @@ import { MobilePhoneSchema, ShippingAddressSchema } from '@/lib/validator'
 import { normalizeMobileDigits } from '@/lib/phone'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Image from 'next/image'
+import { resolveProductImage } from '@/lib/store-images'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -546,7 +547,7 @@ const CheckoutForm = () => {
       >
         <div className='relative w-16 h-16'>
           <Image
-            src={item.image}
+            src={resolveProductImage(item.image)}
             alt={item.name}
             fill
             sizes='20vw'

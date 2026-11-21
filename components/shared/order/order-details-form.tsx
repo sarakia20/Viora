@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { resolveProductImage } from '@/lib/store-images'
 import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
@@ -105,7 +106,7 @@ export default function OrderDetailsForm({
                         className='flex items-center'
                       >
                         <Image
-                          src={item.image}
+                          src={resolveProductImage(item.image)}
                           alt={item.name}
                           width={50}
                           height={50}

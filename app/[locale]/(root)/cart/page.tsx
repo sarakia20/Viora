@@ -14,6 +14,7 @@ import useCartStore from '@/hooks/use-cart-store'
 import useSettingStore from '@/hooks/use-setting-store'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
+import { resolveProductImage } from '@/lib/store-images'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -67,7 +68,7 @@ export default function CartPage() {
                       <Link href={`/product/${item.slug}`}>
                         <div className='relative mx-auto h-40 w-40 sm:mx-0'>
                           <Image
-                            src={item.image}
+                            src={resolveProductImage(item.image)}
                             alt={item.name}
                             fill
                             sizes='20vw'

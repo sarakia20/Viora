@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { CheckCircle2Icon, ShieldCheck, Truck } from 'lucide-react'
 import Image from 'next/image'
+import { resolveProductImage } from '@/lib/store-images'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import useCartStore from '@/hooks/use-cart-store'
@@ -47,7 +48,7 @@ export default function CartAddItem({ itemId }: { itemId: string }) {
                   className='flex h-40 w-full shrink-0 items-center justify-center rounded-xl border bg-white p-3 sm:w-40'
                 >
                   <Image
-                    src={item.image}
+                    src={resolveProductImage(item.image)}
                     alt={item.name}
                     width={150}
                     height={150}

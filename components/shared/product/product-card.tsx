@@ -11,6 +11,7 @@ import ProductPrice from './product-price'
 import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
 import { getProductPath } from '@/lib/product-seo'
+import { resolveProductImage } from '@/lib/store-images'
 
 const ProductCard = ({
   product,
@@ -40,7 +41,7 @@ const ProductCard = ({
         ) : (
           <div className='relative h-40 sm:h-52'>
             <Image
-              src={product.images[0]}
+              src={resolveProductImage(product.images[0])}
               alt={product.name}
               fill
               sizes={imageSizes}

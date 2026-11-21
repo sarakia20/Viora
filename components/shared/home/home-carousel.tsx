@@ -68,6 +68,7 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
                   }
                   alt={item.title}
                   fill
+                  unoptimized={item.image === '/images/banner-faucet.jpg' || item.image === '/images/banner-faucet.webp'}
                   priority={index === 0}
                   fetchPriority={index === 0 ? 'high' : 'auto'}
                   sizes='100vw'

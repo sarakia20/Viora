@@ -1,5 +1,6 @@
 import type { IProduct } from '@/lib/db/models/product.model'
 import { getAbsoluteUrl } from '@/lib/site-url'
+import { resolveProductImage } from '@/lib/store-images'
 
 export function getProductPath(slug: string) {
   return `/product/${encodeURIComponent(slug)}`
@@ -21,7 +22,7 @@ export function getProductImageUrls(product: Pick<IProduct, 'images' | 'variants
   ].flatMap((image) => {
     if (!image?.trim()) return []
     try {
-      const url = new URL(getAbsoluteUrl(image.trim()))
+      const url = new URL(getAbsoluteUrl(resolveProductImage(image.trim())))
       return ['https:', 'http:'].includes(url.protocol) ? [url.toString()] : []
     } catch { return [] }
   }))]
