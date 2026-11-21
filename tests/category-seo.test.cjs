@@ -68,6 +68,22 @@ test('new and existing landings have metadata, one H1 and canonical breadcrumb',
   }
 })
 
+test('homepage group landings list all stored member categories with no subcategory filter', async () => {
+  for (const [group, slug, categories] of [
+    ['تجهیزات آشپزخانه', 'kitchen-equipment', ['تجهیزات آشپزخانه', 'هود', 'سینک', 'گاز', 'اجاق گاز', 'فر', 'ماکروویو']],
+    ['چینی آلات بهداشتی', 'sanitary-ware', ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی', 'فلاش تانک']],
+    ['کاشی و سرامیک', 'tiles-and-ceramics', ['کاشی و سرامیک', 'کاشی', 'سرامیک', 'کاشی دیوار', 'سرامیک کف']],
+  ]) {
+    const page = pageModule()
+    assert.equal(config.getCategoryGroupLandingPath(group), `/category/${slug}`)
+    await page.default(props(slug))
+    assert.deepEqual(page.calls[0].category, categories)
+    assert.equal(page.calls[0].subCategory, 'all')
+  }
+  assert.equal(config.getCategoryLandingPath('سینک'), '/category/sink')
+  assert.equal(config.getCategoryLandingPath('فر'), undefined)
+})
+
 test('invalid and out-of-range pages fail in both metadata and body', async () => {
   const invalid = ['', '0', '-1', '1.5', 'abc', '1e2', ' 2', ['2', '3'], '9007199254740992']
   for (const value of invalid) {
@@ -222,4 +238,63 @@ test('desktop and mobile menus target verified landings while preserving ceramic
       assert.ok(tree.filter(node => node.props?.href === path).length >= 2, path)
     }
   }
+})
+
+test('homepage category names navigate independently from exclusive disclosure buttons', () => {
+  const state = []
+  let cursor
+  const Link = () => null
+  const HomeCard = load('components/shared/home/home-card.tsx', {
+    react: { ...React, useId: () => 'categories', useState(initial) {
+      const index = cursor++
+      if (!(index in state)) state[index] = initial
+      return [state[index], (value) => { state[index] = value }]
+    } },
+    'next/link': Link,
+  }).HomeCard
+  const render = () => {
+    cursor = 0
+    return nodes(HomeCard())
+  }
+  const button = (tree, name) => tree.find((node) =>
+    node.type === 'button' && node.props['aria-label'] === `زیرمجموعه‌های ${name}`)
+  const link = (tree, path) => tree.find((node) => node.type === Link && node.props.href === path)
+  const panel = (tree, control) => tree.find((node) => node.props?.id === control.props['aria-controls'])
+  let tree = render()
+  for (const path of ['/category/kitchen-equipment', '/category/sanitary-ware', '/category/faucets',
+    '/category/tiles-and-ceramics', '/category/accessories', '/search?category=' + encodeURIComponent('کف شور')]) {
+    assert.ok(link(tree, path), path)
+  }
+  button(tree, 'تجهیزات آشپزخانه').props.onClick()
+  tree = render()
+  for (const [name, destination] of [['سینک', '/category/sink'], ['اجاق گاز', '/category/cooktops']]) {
+    const control = button(tree, name)
+    assert.ok(control)
+    const title = link(tree, destination)
+    assert.ok(title)
+    assert.equal(title.props.onClick, undefined)
+    assert.ok(!nodes(control).some((node) => node.type === Link))
+    assert.ok(!nodes(title).some((node) => node.type === 'button'))
+  }
+  assert.ok(link(tree, '/search?category=' + encodeURIComponent('هود')))
+  assert.equal(button(tree, 'هود'), undefined)
+  button(tree, 'سینک').props.onClick()
+  tree = render()
+  assert.equal(panel(tree, button(tree, 'سینک')).props.hidden, false)
+  assert.equal(panel(tree, button(tree, 'اجاق گاز')).props.hidden, true)
+  button(tree, 'اجاق گاز').props.onClick()
+  tree = render()
+  assert.equal(panel(tree, button(tree, 'سینک')).props.hidden, true)
+  assert.equal(panel(tree, button(tree, 'اجاق گاز')).props.hidden, false)
+  assert.ok(nodes(button(tree, 'اجاق گاز')).some((node) => node.props?.className?.includes('rotate-180')))
+  button(tree, 'چینی‌آلات بهداشتی').props.onClick()
+  tree = render()
+  assert.equal(panel(tree, button(tree, 'تجهیزات آشپزخانه')).props.inert, true)
+  assert.equal(panel(tree, button(tree, 'چینی‌آلات بهداشتی')).props.inert, false)
+  assert.equal(panel(tree, button(tree, 'اجاق گاز')).props.hidden, true)
+  assert.ok(link(tree, '/category/toilet'))
+  assert.ok(link(tree, '/category/flush-tanks'))
+  button(tree, 'چینی‌آلات بهداشتی').props.onClick()
+  tree = render()
+  assert.equal(panel(tree, button(tree, 'چینی‌آلات بهداشتی')).props.inert, true)
 })

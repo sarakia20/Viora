@@ -4,11 +4,15 @@ import { ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useId, useState } from 'react'
+import { getCategoryGroupLandingPath } from '@/lib/category-config'
 import {
   categoryGroups,
   getCategoryHref,
   getSubCategoryHref,
 } from '@/lib/store-category-menu'
+
+const chevronClass = 'h-4 w-4 shrink-0 text-slate-600 motion-safe:transition-transform'
+const toggleClass = 'flex w-11 shrink-0 items-center justify-end pe-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700'
 
 const cards = [
   { group: 'چینی آلات بهداشتی', title: 'چینی‌آلات بهداشتی', image: 'viora-sanitary.webp' },
@@ -29,39 +33,42 @@ export function HomeCard() {
       {cards.map(({ group, title, image }, index) => {
         const expanded = openGroup === group
         const panelId = `${id}-${index}`
+        const groupHref = getCategoryGroupLandingPath(group) ?? getCategoryHref(group)
         const categoryLinks = group === 'تجهیزات آشپزخانه' || group === 'کاشی و سرامیک'
 
         return (
           <article key={group} className='min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900'>
-            <h2>
-              <button
-                type='button'
-                aria-expanded={expanded}
-                aria-controls={panelId}
-                onClick={() => {
-                  setOpenGroup(expanded ? null : group)
-                  setOpenSubcategory(null)
-                }}
-                className='block w-full text-start hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700'
-              >
-                <span className='relative block aspect-square bg-slate-50'>
-                  <Image
-                    src={`/images/${image}`}
-                    alt=''
-                    fill
-                    sizes='(min-width: 768px) 33vw, 50vw'
-                    className='object-cover'
-                  />
-                </span>
-                <span className='flex min-h-12 items-center justify-between gap-1 px-2 py-2 text-xs font-bold sm:px-4 sm:text-base'>
-                  {title}
-                  <ChevronDown
-                    aria-hidden='true'
-                    className={`h-4 w-4 shrink-0 text-slate-600 motion-safe:transition-transform ${expanded ? 'rotate-180' : ''}`}
-                  />
-                </span>
-              </button>
-            </h2>
+            <div className='relative'>
+              <div className='relative aspect-square bg-slate-50'>
+                <Image
+                  src={`/images/${image}`}
+                  alt=''
+                  fill
+                  sizes='(min-width: 768px) 33vw, 50vw'
+                  className='object-cover'
+                />
+              </div>
+              <div className='flex min-h-12 items-stretch hover:bg-slate-50'>
+                <h2 className='flex min-w-0 flex-1'>
+                  <Link href={groupHref} className='flex w-full items-center py-2 ps-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700 sm:ps-4 sm:text-base'>
+                    {title}
+                  </Link>
+                </h2>
+                <button
+                  type='button'
+                  aria-label={`زیرمجموعه‌های ${title}`}
+                  aria-expanded={expanded}
+                  aria-controls={panelId}
+                  onClick={() => {
+                    setOpenGroup(expanded ? null : group)
+                    setOpenSubcategory(null)
+                  }}
+                  className={`${toggleClass} before:absolute before:inset-x-0 before:top-0 before:aspect-square before:content-[''] sm:pe-4`}
+                >
+                  <ChevronDown aria-hidden='true' className={`${chevronClass} ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            </div>
 
             <div
               id={panelId}
@@ -96,19 +103,21 @@ export function HomeCard() {
 
                     return (
                       <li key={title}>
-                        <button
-                          type='button'
-                          aria-expanded={subcategoryExpanded}
-                          aria-controls={subcategoryId}
-                          onClick={() => setOpenSubcategory(subcategoryExpanded ? null : title)}
-                          className={`${rowClass} w-full justify-between gap-1 text-start`}
-                        >
-                          {label}
-                          <ChevronDown
-                            aria-hidden='true'
-                            className={`h-4 w-4 shrink-0 text-slate-600 motion-safe:transition-transform ${subcategoryExpanded ? 'rotate-180' : ''}`}
-                          />
-                        </button>
+                        <div className='flex items-stretch overflow-hidden rounded-md hover:bg-white'>
+                          <Link href={getCategoryHref(title)} className={`${rowClass} min-w-0 flex-1 pe-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700`}>
+                            {label}
+                          </Link>
+                          <button
+                            type='button'
+                            aria-label={`زیرمجموعه‌های ${title}`}
+                            aria-expanded={subcategoryExpanded}
+                            aria-controls={subcategoryId}
+                            onClick={() => setOpenSubcategory(subcategoryExpanded ? null : title)}
+                            className={toggleClass}
+                          >
+                            <ChevronDown aria-hidden='true' className={`${chevronClass} ${subcategoryExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        </div>
                         <ul id={subcategoryId} hidden={!subcategoryExpanded} className='ms-2 border-s border-slate-200'>
                           {children.map((child) => (
                             <li key={child}>

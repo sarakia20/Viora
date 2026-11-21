@@ -145,12 +145,57 @@ export const categoryConfig = {
   },
 } as const satisfies Record<string, CategoryConfig>
 
-export type CategorySlug = keyof typeof categoryConfig
+// Homepage groups span multiple stored categories. Keep their routes separate
+// from the category aliases used by search and product canonical links.
+const categoryGroupConfig = {
+  'kitchen-equipment': {
+    slug: 'kitchen-equipment',
+    productCategory: 'تجهیزات آشپزخانه',
+    productCategories: ['تجهیزات آشپزخانه', 'هود', 'سینک', 'گاز', 'اجاق گاز', 'فر', 'ماکروویو'],
+    h1: 'تجهیزات آشپزخانه',
+    title: 'تجهیزات آشپزخانه | ویورا',
+    description: 'مدل‌های سینک، هود، اجاق گاز، فر و ماکروویو فروشگاه ویورا را در یک فهرست ببینید.',
+    intro: 'مدل‌های سینک، هود، اجاق گاز، فر و ماکروویو را در فهرست تجهیزات آشپزخانه مقایسه کنید.',
+    guideTitle: 'راهنمای انتخاب تجهیزات آشپزخانه',
+    guideParagraphs: ['پیش از انتخاب، ابعاد محل نصب و دسترسی به برق، گاز یا لوله‌کشی مورد نیاز هر دستگاه را بررسی کنید.'],
+  },
+  'sanitary-ware': {
+    slug: 'sanitary-ware',
+    productCategory: 'چینی آلات بهداشتی',
+    productCategories: ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی', 'فلاش تانک'],
+    h1: 'چینی‌آلات بهداشتی',
+    title: 'چینی‌آلات بهداشتی | ویورا',
+    description: 'مدل‌های توالت ایرانی و فرنگی، روشویی و فلاش تانک فروشگاه ویورا را مقایسه کنید.',
+    intro: 'مدل‌های توالت ایرانی و فرنگی، روشویی و فلاش تانک را در فهرست تجهیزات بهداشتی مقایسه کنید.',
+    guideTitle: 'راهنمای انتخاب چینی‌آلات بهداشتی',
+    guideParagraphs: ['پیش از انتخاب، ابعاد محل نصب و موقعیت ورودی آب و خروجی فاضلاب را با مشخصات محصول تطبیق دهید.'],
+  },
+  'tiles-and-ceramics': {
+    slug: 'tiles-and-ceramics',
+    productCategory: 'کاشی و سرامیک',
+    productCategories: ['کاشی و سرامیک', 'کاشی', 'سرامیک', 'کاشی دیوار', 'سرامیک کف'],
+    h1: 'کاشی و سرامیک',
+    title: 'کاشی و سرامیک | ویورا',
+    description: 'محصولات کاشی و سرامیک کف و دیوار فروشگاه ویورا را در یک فهرست ببینید.',
+    intro: 'مدل‌های کاشی و سرامیک را براساس کاربرد کف یا دیوار و ابعاد مورد نیاز بررسی کنید.',
+    guideTitle: 'راهنمای انتخاب کاشی و سرامیک',
+    guideParagraphs: ['برای انتخاب مدل، کاربرد اعلام‌شده برای کف یا دیوار و متراژ محل اجرا را در نظر بگیرید.'],
+  },
+} as const satisfies Record<string, CategoryConfig>
+
+const categoryPages = { ...categoryConfig, ...categoryGroupConfig }
+
+export type CategorySlug = keyof typeof categoryPages
 
 export function getCategoryConfig(slug: string): CategoryConfig | undefined {
-  return Object.hasOwn(categoryConfig, slug)
-    ? categoryConfig[slug as CategorySlug]
+  return Object.hasOwn(categoryPages, slug)
+    ? categoryPages[slug as CategorySlug]
     : undefined
+}
+
+export function getCategoryGroupLandingPath(group: string) {
+  const category = Object.values(categoryGroupConfig).find((item) => item.productCategory === group)
+  return category ? `/category/${category.slug}` : undefined
 }
 
 export function getCategoryLandingPath(productCategory: string) {
