@@ -55,9 +55,9 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
     >
       <CarouselContent className='ml-0'>
         {items.map((item, index) => (
-          <CarouselItem key={item.title} className='pl-0'>
-            <Link href={item.url} className='block'>
-              <div className='relative aspect-[2/1] w-full overflow-hidden bg-[#f4f2ef] sm:aspect-[8/3]'>
+          <CarouselItem key={item.title} className='flex pl-0'>
+            <Link href={item.url} className='grid w-full'>
+              <div className='relative grid min-h-[max(11rem,50vw)] w-full items-center overflow-hidden bg-[#f4f2ef] sm:min-h-[37.5vw]'>
                 <Image
                   src={
                     item.image === '/images/banner-faucet.jpg'
@@ -76,9 +76,9 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
 
                 <div className='absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-white/55 to-transparent' />
 
-                <div className='absolute inset-y-0 left-0 flex w-[46%] items-center justify-center px-7 text-center sm:px-10 md:px-14 lg:px-20'>
+                <div className='relative flex w-1/2 min-w-0 justify-center py-6 pl-10 pr-2 text-center sm:w-[46%] sm:pl-14 sm:pr-8 md:pl-20 md:pr-10 lg:px-20'>
                   <div className='w-full max-w-xl'>
-                    <h2 className='text-base font-bold leading-tight text-slate-900 xs:text-lg sm:text-2xl md:text-4xl lg:text-5xl'>
+                    <h2 className='break-words text-base font-bold leading-tight text-slate-900 xs:text-lg sm:text-2xl md:text-4xl lg:text-5xl'>
                       {item.title}
                     </h2>
 
@@ -86,8 +86,8 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
                       {getSubtitle(item.title)}
                     </p>
 
-                    <Button className='mt-2 h-8 rounded-lg bg-slate-900 px-3 text-[10px] font-bold text-white hover:bg-slate-800 xs:text-xs sm:mt-3 sm:h-9 sm:px-4 md:mt-6 md:h-11 md:px-6 md:text-sm'>
-                      {t(item.buttonCaption)}
+                    <Button asChild className='mt-2 h-auto min-h-8 max-w-full whitespace-normal rounded-lg bg-slate-900 px-3 py-1 text-[10px] font-bold text-white hover:bg-slate-800 xs:text-xs sm:mt-3 sm:min-h-9 sm:px-4 md:mt-6 md:min-h-11 md:px-6 md:text-sm'>
+                      <span>{t(item.buttonCaption)}</span>
                     </Button>
                   </div>
                 </div>

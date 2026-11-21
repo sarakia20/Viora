@@ -30,8 +30,10 @@ export default async function HomePage() {
       <h1 className='sr-only'>
           فروشگاه ویورا؛ خرید تجهیزات آشپزخانه، ساختمانی و سرویس بهداشتی
       </h1>
-      <div className='space-y-3 bg-border p-3 sm:p-4 md:space-y-4'>
-        <HomeCard />
+      <div className='space-y-3 bg-border px-3 pb-3 sm:px-4 sm:pb-4 md:space-y-4'>
+        <div className={`px-1 sm:px-0 md:px-4 lg:px-6 ${carousels.length ? 'pt-8 sm:pt-9 lg:pt-10' : 'pt-3 sm:pt-4'}`}>
+          <HomeCard />
+        </div>
         <Card className='w-full overflow-hidden rounded-xl'>
           <CardContent className='items-center gap-3 p-3 sm:p-4'>
             <ProductSlider title={t("Today's Deals")} products={todaysDeals} />

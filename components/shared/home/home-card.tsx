@@ -29,7 +29,7 @@ export function HomeCard() {
   const [openSubcategory, setOpenSubcategory] = useState<string | null>(null)
 
   return (
-    <section aria-label='دسته‌بندی محصولات' className='grid grid-cols-2 items-start gap-3 sm:gap-4 md:grid-cols-3'>
+    <section aria-label='دسته‌بندی محصولات' className='grid grid-cols-2 items-start gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 lg:gap-6'>
       {cards.map(({ group, title, image }, index) => {
         const expanded = openGroup === group
         const panelId = `${id}-${index}`
