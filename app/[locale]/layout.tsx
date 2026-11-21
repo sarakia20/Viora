@@ -38,6 +38,9 @@ export async function generateMetadata() {
     },
     description: description,
     metadataBase: SITE_ORIGIN,
+    icons: {
+      icon: { url: '/icon.png', type: 'image/png', sizes: '96x96' },
+    },
   }
 }
 
