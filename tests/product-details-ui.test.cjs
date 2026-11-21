@@ -89,15 +89,51 @@ test('gallery preserves zoom and does not show redundant thumbnails for one imag
   assert.doesNotThrow(() => Gallery({ images: [], productName: 'sample' }))
 })
 
-test('color swatches never use photos and unrecognized finishes remain neutral', () => {
+test('color swatches never use photos and an unrecognized finish remains neutral', () => {
   const Swatch = load('components/shared/product/color-swatch.tsx').default
-  for (const name of ['بامبو', 'ماربل', 'خورشید']) {
+  for (const name of ['ماربل', 'طرح اختصاصی']) {
     const swatch = Swatch({ name, image: '/actual.webp' })
     assert.equal(swatch.type, 'span')
     assert.deepEqual(swatch.props.style, { backgroundColor: '#e2e8f0' })
     assert.equal(swatch.props.children, undefined)
   }
   assert.equal(Swatch({ name: 'مشکی' }).props.style.backgroundColor, '#171717')
+})
+
+test('catalog color aliases, button finishes and Caspian patterns show their recorded colors', () => {
+  const { getSwatchColors } = load('components/shared/product/color-swatch.tsx')
+  for (const [name, expected] of [
+    ['طلایی_مات', ['#c9a227']],
+    ['مشکی مات', ['#171717']],
+    ['کروم_مات', ['#cbd5e1']],
+    ['سفید_طلایی', ['#fff', '#d4af37']],
+    ['سفید با کلید کروم', ['#fff', '#cbd5e1']],
+    ['تیتانیوم کلید کروم', ['#4b5563', '#cbd5e1']],
+    ['ماربل طوسی', ['#fff', '#9ca3af']],
+    ['بامبو', ['#fff', '#cbd5e1']],
+    ['خورشید', ['#fff', '#d4af37']],
+  ]) assert.deepEqual(getSwatchColors(name), expected, name)
+})
+
+test('product highlights come from recorded specifications and render as a capped RTL list', () => {
+  const Highlights = load('components/shared/product/product-highlights.tsx').default
+  const render = description => renderToStaticMarkup(React.createElement(Highlights, { description }))
+  const html = render('مشخصات فنی: • نوع نصب: روکار • ظرفیت مخزن: ۷ لیتر • ظرفیت مخزن: ۷ لیتر • حجم تخلیه: ۲ تا ۸ لیتر • سیستم تخلیه: دوزمانه • فلوتر دیافراگمی • جنس قطعات: ABS • ضمانت: ۵ سال • خدمات پس از فروش: ۱۰ سال')
+  assert.match(html, /dir="rtl"/)
+  assert.ok(html.includes('ویژگی‌های برجسته محصول'))
+  assert.ok(html.includes('ظرفیت مخزن: ۷ لیتر'))
+  assert.equal((html.match(/<li /g) || []).length, 7)
+  assert.equal((html.match(/ظرفیت مخزن/g) || []).length, 1)
+  assert.equal((render('دارای مخزن شفاف').match(/<li /g) || []).length, 1)
+  assert.equal(render(''), '')
+  assert.equal(render('<script>alert(1)</script>'), '')
+  assert.equal(render('توضیحاتی برای این محصول ثبت نشده است.'), '')
+  const dimensions = render('نوع : خروجی به دیوار,طول: ۷۱۰ میلی متر,عرض: ۳۷۷ میلی متر,خروجی به دیوار(آکس) : ۱۶۰ میلی متر')
+  assert.equal((dimensions.match(/<li /g) || []).length, 4)
+  assert.ok(dimensions.includes('عرض: ۳۷۷ میلی متر'))
+  const sink = render('این سینک با ابعاد 104×50 سانتی‌متر طراحی شده و دارای لگن عمیق 25 سانتی‌متری است.')
+  assert.ok(sink.includes('ابعاد 104×50 سانتی‌متر'))
+  assert.ok(sink.includes('لگن عمیق 25 سانتی‌متری'))
 })
 
 test('product information is in server HTML, safely escaped, including products without variants', () => {

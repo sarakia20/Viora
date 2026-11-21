@@ -11,11 +11,13 @@ const colors: Record<string, string> = {
   'نقره': '#c0c0c0', 'نقره‌ای': '#c0c0c0',
   'gold': '#d4af37', 'chrome': '#cbd5e1', 'silver': '#c0c0c0',
   'gray': '#9ca3af', 'grey': '#9ca3af', 'blue': '#2563eb', 'green': '#15803d',
+  'matte gold': '#c9a227', 'matte black': '#171717', 'matte chrome': '#cbd5e1',
+  'تیتانیوم پلاس': '#4b5563', 'طوسی شنی': '#9ca3af',
 }
 
 function normalizeColorName(name: string) {
-  return name.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/‌/g, ' ')
-    .replace(/[+/،,-]/g, ' ').replace(/\s+و\s+/g, ' ')
+  return name.normalize('NFKC').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک')
+    .replace(/[‌_+/،,–—-]/g, ' ').replace(/\s+و\s+/g, ' ')
     .replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
@@ -25,9 +27,12 @@ const normalizedColors: Record<string, string> = Object.fromEntries(
 const colorNames = Object.keys(normalizedColors)
   .sort((a, b) => b.length - a.length)
 
-const compoundColors: Record<string, string[]> = {
-  'مشکی کلید طلایی': ['#171717', '#d4af37'],
-  'مشکی کلید کروم': ['#171717', '#cbd5e1'],
+// These Caspian finish names describe patterns on a white body.
+const patternedFinishes: Record<string, string[]> = {
+  'ماربل طلایی': ['#fff', '#d4af37'],
+  'ماربل طوسی': ['#fff', '#9ca3af'],
+  'بامبو': ['#fff', '#cbd5e1'],
+  'خورشید': ['#fff', '#d4af37'],
 }
 
 export const colorOptionsClassName = 'flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth p-1'
@@ -35,7 +40,15 @@ export const colorOptionsClassName = 'flex w-full min-w-0 flex-nowrap items-cent
 export function getSwatchColors(name: string): string[] | undefined {
   let remaining = normalizeColorName(name)
   if (!remaining) return undefined
-  if (Object.hasOwn(compoundColors, remaining)) return compoundColors[remaining]
+  if (Object.hasOwn(patternedFinishes, remaining)) return patternedFinishes[remaining]
+  const buttonColors = remaining.split(/\s+(?:با\s+)?کلید\s+/)
+  if (buttonColors.length === 2) {
+    const [body, button] = buttonColors
+    if (Object.hasOwn(normalizedColors, body) && Object.hasOwn(normalizedColors, button)) {
+      return [normalizedColors[body], normalizedColors[button]]
+    }
+    return undefined
+  }
   const result: string[] = []
   while (remaining) {
     const match = colorNames.find((color) => remaining === color || remaining.startsWith(`${color} `))

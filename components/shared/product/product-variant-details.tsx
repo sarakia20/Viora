@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check } from 'lucide-react'
 import { IProduct } from '@/lib/db/models/product.model'
@@ -26,9 +26,11 @@ function getGradeLabel(value: string) {
 export default function ProductVariantDetails({
   product,
   initialSize,
+  highlights,
 }: {
   product: IProduct
   initialSize: string
+  highlights?: ReactNode
 }) {
   const t = useTranslations()
   const variants = product.variants ?? []
@@ -151,6 +153,7 @@ export default function ProductVariantDetails({
           </div>
         )}
 
+        {highlights}
       </div>
 
       <div className='lg:sticky lg:top-40 lg:self-start'>

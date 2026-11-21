@@ -12,6 +12,7 @@ import SelectVariant from '@/components/shared/product/select-variant'
 import ProductPrice from '@/components/shared/product/product-price'
 import ProductGallery from '@/components/shared/product/product-gallery'
 import ProductVariantDetails from '@/components/shared/product/product-variant-details'
+import ProductHighlights from '@/components/shared/product/product-highlights'
 import { Separator } from '@/components/ui/separator'
 import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
@@ -148,6 +149,7 @@ export default async function ProductDetails(props: {
   })
 
   const t = await getTranslations()
+  const highlights = <ProductHighlights description={product.description} />
 
   return (
     <div>
@@ -169,6 +171,7 @@ export default async function ProductDetails(props: {
           <ProductVariantDetails
             product={product}
             initialSize={size || product.sizes[0] || ''}
+            highlights={highlights}
           />
         ) : (
         <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
@@ -201,6 +204,7 @@ export default async function ProductDetails(props: {
                 color={color || product.colors[0]}
               />
             </div>
+            {highlights}
           </div>
 
           <div className='lg:sticky lg:top-40 lg:self-start'>
