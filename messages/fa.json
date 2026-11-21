@@ -12,6 +12,12 @@
     "Admin": "مدیریت",
     "Your account": "حساب شما",
     "Your orders": "سفارش‌های شما",
+    "Account menu": {
+      "Account": "حساب کاربری",
+      "Orders": "سفارش‌های من",
+      "Admin": "پنل مدیریت",
+      "Sign out": "خروج از حساب"
+    },
     "Help & Settings": "راهنما و تنظیمات",
     "Search Site": "جستجو در {name}",
     "Cart": "سبد خرید",
