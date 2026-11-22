@@ -2,6 +2,7 @@ import type { IProduct } from '@/lib/db/models/product.model'
 import styles from './product-information.module.css'
 import Link from 'next/link'
 import { getCategoryLandingPath } from '@/lib/category-config'
+import ProductDescription from './product-description'
 
 export default function ProductInformation({ product }: { product: IProduct }) {
   const categoryHref = getCategoryLandingPath(product.category) ??
@@ -27,9 +28,9 @@ export default function ProductInformation({ product }: { product: IProduct }) {
       <div className={styles.panels}>
         <section className={styles.description} aria-labelledby='description-heading'>
           <h2 id='description-heading' className='mb-5 text-lg font-bold text-slate-900'>معرفی {product.name}</h2>
-          <div className='space-y-4 whitespace-pre-wrap break-words text-sm leading-8 text-slate-600 sm:text-base sm:leading-9'>
+          <ProductDescription key={product.slug}>
             {product.description?.trim() ? product.description.split(/\r?\n/).filter(line => line.trim()).map((line, i) => <p key={i}>{line}</p>) : <p>توضیحاتی برای این محصول ثبت نشده است.</p>}
-          </div>
+          </ProductDescription>
         </section>
         <section className={styles.specifications} aria-labelledby='specifications-heading'>
           <h2 id='specifications-heading' className='mb-5 text-lg font-bold text-slate-900'>مشخصات {product.name}</h2>
