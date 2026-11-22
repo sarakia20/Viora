@@ -18,7 +18,7 @@ function nodes(tree) {
   if (Array.isArray(tree)) return tree.flatMap(nodes)
   return [tree, ...nodes(tree.props?.children)]
 }
-function loadPage(value = product, error) {
+function loadPage(value = product, error, relatedProducts = []) {
   const file = 'app/[locale]/(root)/product/[slug]/page.tsx'
   const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const mocks = {}
@@ -39,7 +39,7 @@ function loadPage(value = product, error) {
     '@/lib/category-config': load('lib/category-config.ts'),
     '@/lib/actions/product.actions': {
       async getProductBySlug() { if (error) throw error; return value },
-      async getRelatedProductsByCategory() { return { data: [] } },
+      async getRelatedProductsByCategory() { return { data: relatedProducts } },
     },
     '@/lib/utils': { generateId: () => 'id', round2: value => value },
     'next-intl/server': { getTranslations: async () => key => key },
@@ -107,8 +107,14 @@ test('page produces exactly one Product and Breadcrumb JSON-LD, safely serialize
   assert.equal(schemas[1]['@type'], 'BreadcrumbList')
   assert.equal(schemas[1].itemListElement[1].item, 'https://viora-store.ir/category/faucets')
   assert.equal(tree.filter(node => node.type === 'h1').length, 1)
-  assert.equal(tree.filter(node => node.props?.title === 'محصولات مشابه').length, 1)
-  assert.equal(tree.filter(node => node.props?.title === 'پرفروش‌ترین‌ها').length, 1)
+})
+
+test('product page renders the related products once and in their returned order', async () => {
+  const related = [{ ...product, slug: 'related-first' }, { ...product, slug: 'related-second' }]
+  const tree = nodes(await loadPage(product, undefined, related).default(props()))
+  const sliders = tree.filter(node => node.props?.products === related)
+  assert.equal(sliders.length, 1)
+  assert.equal(sliders[0].props.title, 'محصولات مشابه')
 })
 
 test('missing/unpublished products are not rendered and database errors remain errors', async () => {
@@ -152,7 +158,7 @@ test('public product and related queries require isPublished and exclude the cur
     '@/lib/db/models/product.model': {
       async findOne(filter) { lookup = filter; return null },
       find(filter) { relatedFilter = filter; return { sort() { return this }, skip() { return this }, limit() { return [] } } },
-      countDocuments: async () => 0,
+      countDocuments: async () => assert.fail('Related products are rendered without a count'),
     },
     './setting.actions': { getSetting: async () => ({ common: { pageSize: 4 } }) },
     '../auth-guard': {},

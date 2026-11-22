@@ -276,13 +276,6 @@ export default async function ProductDetails(props: {
         />
       </section>
 
-      <section className='mt-10 sm:mt-12'>
-        <ProductSlider
-          products={relatedProducts.data}
-          title='پرفروش‌ترین‌ها'
-        />
-      </section>
-
       <section className='mt-10 pb-8 sm:mt-16 sm:pb-12' id='reviews'>
   <div className='rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 md:p-8'>
     <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-6'>

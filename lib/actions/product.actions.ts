@@ -420,7 +420,6 @@ export async function getRelatedProductsByCategory({
 
     return {
       data: JSON.parse(JSON.stringify(products)) as IProduct[],
-      totalPages: Math.ceil(filtered.length / limit),
     }
   }
 
@@ -438,11 +437,8 @@ export async function getRelatedProductsByCategory({
     .skip(skipAmount)
     .limit(limit)
 
-  const productsCount = await Product.countDocuments(conditions)
-
   return {
     data: JSON.parse(JSON.stringify(products)) as IProduct[],
-    totalPages: Math.ceil(productsCount / limit),
   }
 }
 
