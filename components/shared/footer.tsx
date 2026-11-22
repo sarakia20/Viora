@@ -65,13 +65,13 @@ export default function Footer() {
             })}
           </div>
 
-          <div className='mb-8 text-center'>
-            <h3 className='mb-4 text-base font-bold text-slate-800'>
-              همراه ما باشید
-            </h3>
-
-            <div className='flex flex-wrap items-center justify-center gap-x-6 gap-y-4'>
+          <div className='mb-8 pt-10 text-center'>
+            <div className='relative flex flex-wrap items-center justify-center gap-x-6 gap-y-4'>
               <div className='flex items-center justify-center gap-5 border-e border-slate-200 py-2 pe-6 text-slate-400'>
+                <h3 className='absolute top-[-2.5rem] whitespace-nowrap text-base font-bold text-slate-800'>
+                  همراه ما باشید
+                </h3>
+
                 <Link
                   href='https://t.me/Viora_RM'
                   target='_blank'
