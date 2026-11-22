@@ -14,7 +14,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { deleteOrder, getAllOrders } from '@/lib/actions/order.actions'
-import { formatDateTime, formatId } from '@/lib/utils'
+import { formatId } from '@/lib/utils'
+import { formatAdminDateTime, formatAdminDigits } from '@/lib/admin-display'
 import { IOrderList } from '@/types'
 import ProductPrice from '@/components/shared/product/product-price'
 
@@ -23,10 +24,12 @@ export const metadata: Metadata = {
 }
 
 export default async function OrdersPage(props: {
-  searchParams: Promise<{ page: string }>
+  searchParams: Promise<{ page?: string; userId?: string | string[] }>
 }) {
   const searchParams = await props.searchParams
-  const { page = '1' } = searchParams
+  const { userId } = searchParams
+  const requestedPage = Number(searchParams.page)
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
 
   const session = await auth()
   if (session?.user.role !== 'Admin') {
@@ -34,20 +37,34 @@ export default async function OrdersPage(props: {
   }
 
   const orders = await getAllOrders({
-    page: Number(page),
+    page,
+    userId: Array.isArray(userId) ? '' : userId,
   })
 
   return (
-    <div className='space-y-4'>
-      <h1 className='h1-bold'>سفارش‌ها</h1>
+    <div dir='rtl' className='space-y-4 text-slate-900'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <h1 className='h1-bold'>{userId === undefined ? 'سفارش‌ها' : 'سفارش‌های کاربر'}</h1>
+        {userId !== undefined && (
+          <Button asChild variant='outline' size='sm'>
+            <Link href='/admin/orders'>مشاهده همه سفارش‌ها</Link>
+          </Button>
+        )}
+      </div>
 
-      <div className='overflow-x-auto rounded-xl border bg-card'>
-        <Table>
+      <div className='overflow-hidden rounded-xl border border-slate-200 bg-white'>
+        {orders.data.length > 0 && (
+          <p id='orders-scroll' className='border-b border-slate-100 px-4 py-2 text-xs text-slate-600 md:hidden'>
+            برای دیدن همه ستون‌ها، جدول را افقی بکشید.
+          </p>
+        )}
+        <Table aria-describedby={orders.data.length ? 'orders-scroll' : undefined} className='[&_td]:px-4 [&_td]:py-3 [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:text-right [&_th]:text-slate-700'>
           <TableHeader>
             <TableRow>
+              <TableHead>گیرنده</TableHead>
+              <TableHead>خریدار</TableHead>
               <TableHead>شناسه</TableHead>
               <TableHead>تاریخ</TableHead>
-              <TableHead>خریدار</TableHead>
               <TableHead>مبلغ کل</TableHead>
               <TableHead>پرداخت</TableHead>
               <TableHead>ارسال</TableHead>
@@ -56,16 +73,32 @@ export default async function OrdersPage(props: {
           </TableHeader>
 
           <TableBody>
+            {!orders.data.length && (
+              <TableRow>
+                <TableCell colSpan={8} className='h-24 text-center text-slate-600'>
+                  سفارشی یافت نشد
+                </TableCell>
+              </TableRow>
+            )}
             {orders.data.map((order: IOrderList) => (
               <TableRow key={order._id}>
-                <TableCell>{formatId(order._id)}</TableCell>
-
                 <TableCell>
-                  {formatDateTime(order.createdAt!).dateTime}
+                  <Link href={`/admin/orders/${order._id}`} className='font-semibold text-slate-900 hover:underline'>
+                    {order.shippingAddress?.fullName?.trim() || 'ثبت نشده'}
+                  </Link>
+                  <div className='mt-1 text-xs text-slate-600'>
+                    {order.shippingAddress?.phone?.trim()
+                      ? <bdi dir='ltr'>{formatAdminDigits(order.shippingAddress.phone)}</bdi>
+                      : 'ثبت نشده'}
+                  </div>
                 </TableCell>
+                <TableCell>
+                  {order.user ? order.user.name?.trim() || 'ثبت نشده' : 'کاربر حذف‌شده'}
+                </TableCell>
+                <TableCell><bdi dir='ltr'>{formatAdminDigits(formatId(order._id))}</bdi></TableCell>
 
                 <TableCell>
-                  {order.user ? order.user.name : 'کاربر حذف‌شده'}
+                  {order.createdAt ? formatAdminDateTime(order.createdAt) : 'ثبت نشده'}
                 </TableCell>
 
                 <TableCell>
@@ -74,22 +107,23 @@ export default async function OrdersPage(props: {
 
                 <TableCell>
                   {order.isPaid && order.paidAt
-                    ? formatDateTime(order.paidAt).dateTime
+                    ? formatAdminDateTime(order.paidAt)
                     : 'پرداخت نشده'}
                 </TableCell>
 
                 <TableCell>
                   {order.isDelivered && order.deliveredAt
-                    ? formatDateTime(order.deliveredAt).dateTime
+                    ? formatAdminDateTime(order.deliveredAt)
                     : 'ارسال نشده'}
                 </TableCell>
 
-                <TableCell className='flex gap-2'>
-                  <Button asChild variant='outline' size='sm'>
-                    <Link href={`/admin/orders/${order._id}`}>جزئیات</Link>
-                  </Button>
-
-                  <DeleteDialog id={order._id} action={deleteOrder} />
+                <TableCell>
+                  <div className='flex gap-2'>
+                    <Button asChild variant='outline' size='sm'>
+                      <Link href={`/admin/orders/${order._id}`}>جزئیات</Link>
+                    </Button>
+                    <DeleteDialog id={order._id} action={deleteOrder} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

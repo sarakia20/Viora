@@ -400,23 +400,29 @@ export async function deleteOrder(id: string) {
 export async function getAllOrders({
   limit,
   page,
+  userId,
 }: {
   limit?: number
   page: number
+  userId?: string
 }) {
   await requireAdmin()
+  if (userId !== undefined && (typeof userId !== 'string' || !/^[a-f\d]{24}$/i.test(userId))) {
+    return { data: [], totalPages: 0 }
+  }
   const {
     common: { pageSize },
   } = await getSetting()
   limit = limit || pageSize
   await connectToDatabase()
   const skipAmount = (Number(page) - 1) * limit
-  const orders = await Order.find()
+  const filter = userId === undefined ? {} : { user: userId }
+  const orders = await Order.find(filter)
     .populate('user', 'name')
     .sort({ createdAt: 'desc' })
     .skip(skipAmount)
     .limit(limit)
-  const ordersCount = await Order.countDocuments()
+  const ordersCount = await Order.countDocuments(filter)
   return {
     data: JSON.parse(JSON.stringify(orders)) as IOrderList[],
     totalPages: Math.ceil(ordersCount / limit),

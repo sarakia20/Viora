@@ -12,6 +12,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getSetting } from './setting.actions'
 import { requireAdmin } from '../auth-guard'
+import Order from '../db/models/order.model'
+import { Types } from 'mongoose'
 
 // CREATE
 export async function registerUser(userSignUp: IUserSignUp) {
@@ -149,14 +151,30 @@ export async function getAllUsers({
   const skipAmount = (Number(page) - 1) * limit
 
   const users = await User.find()
+    .select('name phone email role')
     .sort({ createdAt: 'desc' })
     .skip(skipAmount)
     .limit(limit)
+    .lean()
 
   const usersCount = await User.countDocuments()
+  const orderCounts = users.length
+    ? await Order.aggregate<{ _id: Types.ObjectId; total: number }>([
+        { $match: { user: { $in: users.map(({ _id }) => _id) } } },
+        { $group: { _id: '$user', total: { $sum: 1 } } },
+      ])
+    : []
+  const totalsByUser = new Map(orderCounts.map(({ _id, total }) => [String(_id), total]))
 
   return {
-    data: JSON.parse(JSON.stringify(users)) as IUser[],
+    data: users.map(({ _id, name, phone, email, role }) => ({
+      _id: String(_id),
+      name,
+      phone,
+      email,
+      role,
+      orderCount: totalsByUser.get(String(_id)) ?? 0,
+    })),
     totalPages: Math.ceil(usersCount / limit),
   }
 }

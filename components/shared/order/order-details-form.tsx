@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { resolveProductImage } from '@/lib/store-images'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/table'
 import { IOrder } from '@/lib/db/models/order.model'
 import { cn, formatDateTime } from '@/lib/utils'
+import { formatAdminDateTime } from '@/lib/admin-display'
 import { buttonVariants } from '@/components/ui/button'
 import ProductPrice from '../product/product-price'
 import ActionButton from '../action-button'
@@ -25,9 +27,11 @@ import { isTipaxShipping, SHIPPING_PAY_ON_DELIVERY } from '@/lib/shipping'
 export default function OrderDetailsForm({
   order,
   isAdmin,
+  shippingDetails,
 }: {
   order: IOrder
   isAdmin: boolean
+  shippingDetails?: ReactNode
 }) {
   const {
     shippingAddress,
@@ -42,6 +46,8 @@ export default function OrderDetailsForm({
     deliveredAt,
     expectedDeliveryDate,
   } = order
+  const displayDate = (date: Date) =>
+    shippingDetails ? formatAdminDateTime(date) : formatDateTime(date).dateTime
 
   return (
     <div className='grid md:grid-cols-3 md:gap-5'>
@@ -50,18 +56,22 @@ export default function OrderDetailsForm({
           <CardContent className='p-4 gap-4'>
             <h2 className='text-xl pb-4'>اطلاعات ارسال</h2>
             {isTipaxShipping(order) && <p>روش ارسال: {order.shippingMethod} — {SHIPPING_PAY_ON_DELIVERY}</p>}
-            <p>
-              {shippingAddress.fullName} {shippingAddress.phone}
-            </p>
-            <p>
-              {shippingAddress.street}, {shippingAddress.city},{' '}
-              {shippingAddress.province}, {shippingAddress.postalCode},{' '}
-              {shippingAddress.country}{' '}
-            </p>
+            {shippingDetails ?? (
+              <>
+                <p>
+                  {shippingAddress.fullName} {shippingAddress.phone}
+                </p>
+                <p>
+                  {shippingAddress.street}, {shippingAddress.city},{' '}
+                  {shippingAddress.province}, {shippingAddress.postalCode},{' '}
+                  {shippingAddress.country}{' '}
+                </p>
+              </>
+            )}
 
             {isDelivered ? (
               <Badge>
-                 تحویل شده در {formatDateTime(deliveredAt!).dateTime}
+                 تحویل شده در {displayDate(deliveredAt!)}
               </Badge>
             ) : (
               <div>
@@ -69,7 +79,7 @@ export default function OrderDetailsForm({
                 <Badge variant='destructive'>تحویل نشده</Badge>
                 {expectedDeliveryDate && <div>
                   زمان تقریبی تحویل:{' '}
-                  {formatDateTime(expectedDeliveryDate).dateTime}
+                  {displayDate(expectedDeliveryDate)}
                 </div>}
               </div>
             )}
@@ -80,7 +90,7 @@ export default function OrderDetailsForm({
             <h2 className='text-xl pb-4'>روش پرداخت</h2>
             <p>{paymentMethod}</p>
             {isPaid ? (
-              <Badge> پرداخت شده در {formatDateTime(paidAt!).dateTime}</Badge>
+              <Badge> پرداخت شده در {displayDate(paidAt!)}</Badge>
             ) : (
               <Badge variant='destructive'>پرداخت نشده</Badge>
             )}
@@ -115,7 +125,7 @@ export default function OrderDetailsForm({
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <span className='px-2'>{item.quantity}</span>
+                      <span className='px-2'>{shippingDetails ? item.quantity.toLocaleString('fa-IR') : item.quantity}</span>
                     </TableCell>
                    <TableCell className='text-right'>
   {item.price.toLocaleString('fa-IR')} تومان
