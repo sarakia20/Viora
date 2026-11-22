@@ -1,12 +1,22 @@
 import { Check } from 'lucide-react'
 import { getProductHighlights } from '@/lib/product-highlights'
 
-export default function ProductHighlights({ description }: { description?: string }) {
+export default function ProductHighlights({
+  description,
+  showDivider = true,
+}: {
+  description?: string
+  showDivider?: boolean
+}) {
   const features = getProductHighlights(description)
   if (!features.length) return null
 
   return (
-    <section dir='rtl' aria-labelledby='product-highlights-heading' className='min-w-0 border-t border-slate-200 pt-4'>
+    <section
+      dir='rtl'
+      aria-labelledby='product-highlights-heading'
+      className={showDivider ? 'min-w-0 border-t border-slate-200 pt-4' : 'min-w-0'}
+    >
       <h2 id='product-highlights-heading' className='mb-3 text-sm font-bold text-slate-900'>
         ویژگی‌های برجسته محصول
       </h2>

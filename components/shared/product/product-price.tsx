@@ -71,7 +71,10 @@ const convertedListPrice = round2(listPrice)
     >
       <div className={cn('w-full flex items-center justify-end gap-1.5', detail && 'flex-wrap')}>
         {hasDiscount && (
-          <span className='shrink-0 rounded-full bg-red-600 px-1.5 py-[2px] text-[10px] font-bold leading-none text-white'>
+          <span className={cn(
+            'shrink-0 rounded-full bg-red-600 font-bold leading-none text-white',
+            detail ? 'px-[7.5px] py-[2.5px] text-xs' : 'px-1.5 py-[2px] text-[10px]'
+          )}>
             {discountText}٪
           </span>
         )}

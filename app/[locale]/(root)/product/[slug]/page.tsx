@@ -149,7 +149,14 @@ export default async function ProductDetails(props: {
   })
 
   const t = await getTranslations()
-  const highlights = <ProductHighlights description={product.description} />
+  const hasVariants = Boolean(product.variants?.length)
+  const hasColorOptions = product.colors.length > 0
+  const highlights = (
+    <ProductHighlights
+      description={product.description}
+      showDivider={hasVariants || hasColorOptions}
+    />
+  )
 
   return (
     <div>
@@ -167,7 +174,7 @@ export default async function ProductDetails(props: {
       />
 
       <section>
-        {product.variants && product.variants.length > 0 ? (
+        {hasVariants ? (
           <ProductVariantDetails
             product={product}
             initialSize={size || product.sizes[0] || ''}
@@ -194,16 +201,18 @@ export default async function ProductDetails(props: {
                 ratingDistribution={product.ratingDistribution}
               />
 
-              <Separator />
+              {hasColorOptions && <Separator />}
             </div>
 
-            <div>
-              <SelectVariant
-                product={product}
-                size={size || product.sizes[0]}
-                color={color || product.colors[0]}
-              />
-            </div>
+            {(hasColorOptions || product.sizes.length > 0) && (
+              <div>
+                <SelectVariant
+                  product={product}
+                  size={size || product.sizes[0]}
+                  color={color || product.colors[0]}
+                />
+              </div>
+            )}
             {highlights}
           </div>
 
