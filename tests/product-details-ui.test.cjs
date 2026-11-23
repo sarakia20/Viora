@@ -45,6 +45,8 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
   let tree = render()
   assert.equal(tree.filter(n => n.type === 'h1').length, 1)
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/white.webp'])
+  assert.equal(tree.find(n => n.type === Price).props.price, 1200)
+  assert.equal(tree.find(n => n.type === Price).props.listPrice, 1500)
   tree.find(n => n.type === 'button' && n.props['aria-label'] === 'مشکی').props.onClick()
   tree = render()
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/black.webp'])
@@ -71,6 +73,35 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
   tree = render()
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, product.images)
   product.variants[2].image = '/bamboo.webp'
+})
+
+test('product cards show the same default grade offer as the detail page and add that grade', () => {
+  const Cart = () => null
+  const Price = load('components/shared/product/product-price.tsx', {
+    'next-intl': { useLocale: () => 'en' },
+    '@/hooks/use-setting-store': select => select({ setting: { availableCurrencies: [{ code: 'IRT' }], currency: 'IRT' } }),
+  }).default
+  const Card = load('components/shared/product/product-card.tsx', {
+    'next/image': 'img', 'next/link': 'a',
+    '@/components/ui/card': { Card: 'div', CardContent: 'div', CardFooter: 'div', CardHeader: 'div' },
+    '@/lib/product-seo': { getProductPath: slug => '/product/' + slug },
+    './rating': () => null, './image-hover': () => null,
+    './add-to-cart': Cart, './product-price': Price,
+  }).default
+  const sample = { ...product, price: 9000, listPrice: 10000, countInStock: 0,
+    variants: product.variants.map((variant, index) => ({ ...variant, color: 'درجه ' + (index + 1) })) }
+  // Inspect the nested components before expanding ProductPrice and AddToCart.
+  const components = nodes(Card({ product: sample })).flatMap(node =>
+    ['ProductDetails', 'AddButton'].includes(node.type?.name) ? nodes(node.type()) : [])
+  const displayed = components.find(node => node.type === Price)
+  const added = components.find(node => node.type === Cart).props.item
+  assert.equal(displayed.props.price, 1200)
+  assert.equal(displayed.props.listPrice, 1500)
+  assert.equal(added.price, 1200)
+  assert.equal(added.color, 'درجه 1')
+  assert.equal(added.countInStock, 4)
+  const markup = renderToStaticMarkup(displayed)
+  for (const value of ['1,200', '1,500', '20٪']) assert.ok(markup.includes(value))
 })
 
 test('gallery preserves zoom and does not show redundant thumbnails for one image', () => {

@@ -12,6 +12,7 @@ import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
 import { getProductPath } from '@/lib/product-seo'
 import { resolveProductImage } from '@/lib/store-images'
+import { getProductVariant } from '@/lib/product-variant'
 
 const ProductCard = ({
   product,
@@ -24,6 +25,8 @@ const ProductCard = ({
   hideBorder?: boolean
   hideAddToCart?: boolean
 }) => {
+  const variant = getProductVariant(product)
+  const offer = variant ?? product
   const imageSizes = hideDetails
     ? '(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 17vw'
     : '(max-width: 639px) 82vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw'
@@ -49,7 +52,7 @@ const ProductCard = ({
             />
           </div>
         )}
-        {hideDetails && product.countInStock === 0 && (
+        {hideDetails && offer.countInStock === 0 && (
           <span className='absolute bottom-2 right-2 rounded-md bg-background/90 px-2 py-1 text-sm font-bold text-red-600 shadow-sm'>
             ناموجود
           </span>
@@ -77,11 +80,11 @@ const ProductCard = ({
 </div>
 
 
-      {product.countInStock > 0 ? (
+      {offer.countInStock > 0 ? (
         <ProductPrice
           isDeal={product.tags.includes('todays-deal')}
-          price={product.price}
-          listPrice={product.listPrice}
+          price={offer.price}
+          listPrice={offer.listPrice}
           forListing
         />
       ) : (
@@ -99,14 +102,14 @@ const ProductCard = ({
           clientId: generateId(),
           product: product._id.toString(),
           size: product.sizes[0],
-          color: product.colors[0],
-          countInStock: product.countInStock,
+          color: variant ? variant.color : product.colors[0],
+          countInStock: offer.countInStock,
           name: product.name,
           slug: product.slug,
           category: product.category,
-          price: round2(product.price),
+          price: round2(offer.price),
           quantity: 1,
-          image: product.images[0],
+          image: variant?.image || product.images[0],
         }}
       />
     </div>
@@ -120,7 +123,7 @@ const ProductCard = ({
           <div className='p-3 flex-1 text-center'>
             <ProductDetails />
           </div>
-          {!hideAddToCart && product.countInStock > 0 && <AddButton />}
+          {!hideAddToCart && offer.countInStock > 0 && <AddButton />}
         </>
       )}
     </div>
@@ -135,7 +138,7 @@ const ProductCard = ({
             <ProductDetails />
           </CardContent>
           <CardFooter className='p-3'>
-            {!hideAddToCart && product.countInStock > 0 && <AddButton />}
+            {!hideAddToCart && offer.countInStock > 0 && <AddButton />}
           </CardFooter>
         </>
       )}

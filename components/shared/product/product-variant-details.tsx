@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Check } from 'lucide-react'
 import { IProduct } from '@/lib/db/models/product.model'
 import { generateId, round2 } from '@/lib/utils'
+import { DEFAULT_PRODUCT_VARIANT_INDEX, getProductVariant } from '@/lib/product-variant'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import AddToCart from './add-to-cart'
@@ -34,9 +35,9 @@ export default function ProductVariantDetails({
 }) {
   const t = useTranslations()
   const variants = product.variants ?? []
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(DEFAULT_PRODUCT_VARIANT_INDEX)
   const [selectedSize, setSelectedSize] = useState(initialSize)
-  const selectedVariant = variants[selectedVariantIndex] ?? variants[0]
+  const selectedVariant = getProductVariant(product, selectedVariantIndex)
 
   if (!selectedVariant) return null
 

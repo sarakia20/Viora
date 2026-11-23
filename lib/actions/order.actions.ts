@@ -1,7 +1,7 @@
 'use server'
 
 import { Cart, IOrderList, OrderItem, ShippingAddress } from '@/types'
-import { formatError } from '../utils'
+import { formatError, round2 } from '../utils'
 import { connectToDatabase } from '../db'
 import { auth } from '@/auth'
 import { OrderInputSchema } from '../validator'
@@ -127,7 +127,7 @@ const createOrderFromCart = async (
       slug: product.slug,
       image: variant?.image || product.images[0],
       category: product.category,
-      price: variant?.price ?? product.price,
+      price: round2((variant ?? product).price),
       countInStock,
       quantity: item.quantity,
       ...(item.size ? { size: item.size } : {}),

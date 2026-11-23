@@ -44,11 +44,11 @@ const useCartStore = create(
         )
 
         if (existItem) {
-          if (existItem.countInStock < quantity + existItem.quantity) {
+          if (item.countInStock < quantity + existItem.quantity) {
             throw new Error('Not enough items in stock')
           }
         } else {
-          if (item.countInStock < item.quantity) {
+          if (item.countInStock < quantity) {
             throw new Error('Not enough items in stock')
           }
         }
@@ -58,7 +58,7 @@ const useCartStore = create(
               x.product === item.product &&
               x.color === item.color &&
               x.size === item.size
-                ? { ...existItem, quantity: existItem.quantity + quantity }
+                ? { ...item, clientId: existItem.clientId, quantity: existItem.quantity + quantity }
                 : x
             )
           : [...items, { ...item, quantity }]

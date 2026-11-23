@@ -12,7 +12,7 @@ const authority = 'A' + '1'.repeat(35)
 const address = { fullName: 'مشتری', street: 'آدرس', city: 'شیراز', province: 'فارس', phone: '09123456789', postalCode: '1234567890', country: 'Iran' }
 const item = { product: productId, clientId: 'test-item', name: 'کالا', slug: 'test-product', category: 'test', image: '/test.png', price: 1, countInStock: 10, quantity: 2 }
 
-function harness() {
+function harness(productOverrides = {}) {
   const stored = [], requests = []
   let receipts = 0
   const model = {
@@ -48,7 +48,7 @@ function harness() {
     '@/auth': { auth: async () => ({ user: { id: userId } }) },
     '../db/models/order.model': model,
     '@/lib/db/models/order.model': model,
-    '../db/models/product.model': { findById: async () => ({ ...item, images: [item.image], _id: productId, price: 1200, isPublished: true }) },
+    '../db/models/product.model': { findById: async () => ({ ...item, images: [item.image], _id: productId, price: 1200, isPublished: true, ...productOverrides }) },
     '../db/models/user.model': {},
     '@/emails': { sendPurchaseReceipt: async () => { receipts++ } },
     '../paypal': {},
@@ -113,6 +113,27 @@ test('server calculates and persists canonical product amount, Tipax, and zero o
     assert.equal(h.stored[0].totalPrice, 2400)
     assert.equal(h.stored[0].expectedDeliveryDate, undefined)
   }
+})
+
+test('adding a grade refreshes its existing cart price and checkout charges the selected grade', async () => {
+  const selected = { color: 'درجه ۲', price: 2400.125, listPrice: 3000, countInStock: 6 }
+  const variants = [{ color: 'درجه ۱', price: 3600, listPrice: 4000, countInStock: 2 }, selected]
+  const store = load('hooks/use-cart-store.ts', {
+    'zustand/middleware': { persist: initializer => initializer },
+    '@/lib/actions/order.actions': { calcDeliveryDateAndPrice: async ({ items }) => calculateTipaxTotals(items) },
+  }).default
+  store.setState({ cart: cart({ items: [{ ...item, color: selected.color, quantity: 1 }] }) })
+  await store.getState().addItem({ ...item, ...selected, price: 2400.13, clientId: 'new-id' }, 1)
+  const updatedCart = store.getState().cart
+  assert.equal(updatedCart.items[0].clientId, item.clientId)
+  assert.equal(updatedCart.items[0].price, 2400.13)
+  assert.equal(updatedCart.totalPrice, 4800.26)
+  const h = harness({ variants })
+  const result = await h.actions.createOrder(updatedCart)
+  assert.equal(result.success, true, result.message)
+  assert.equal(h.stored[0].items[0].color, selected.color)
+  assert.equal(h.stored[0].items[0].price, 2400.13)
+  assert.equal(h.stored[0].totalPrice, updatedCart.totalPrice)
 })
 
 test('missing, disabled or legacy delivery selection cannot create an order', async () => {
