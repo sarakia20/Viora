@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -11,11 +10,13 @@ import ProductPrice from './product-price'
 import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
 import { getProductPath } from '@/lib/product-seo'
-import { resolveProductImage } from '@/lib/store-images'
 import { getProductVariant } from '@/lib/product-variant'
+import { getProductStock, hasProductPrice, normalizeProduct } from '@/lib/product-display'
+import { PRODUCT_IMAGE_PLACEHOLDER } from '@/lib/store-images'
+import CatalogImage from './product-image'
 
 const ProductCard = ({
-  product,
+  product: rawProduct,
   hideBorder = false,
   hideDetails = false,
   hideAddToCart = false,
@@ -25,8 +26,11 @@ const ProductCard = ({
   hideBorder?: boolean
   hideAddToCart?: boolean
 }) => {
+  const product = normalizeProduct(rawProduct)
   const variant = getProductVariant(product)
   const offer = variant ?? product
+  const stock = getProductStock(product, variant)
+  const canPurchase = stock > 0 && hasProductPrice(offer.price)
   const imageSizes = hideDetails
     ? '(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 17vw'
     : '(max-width: 639px) 82vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw'
@@ -43,8 +47,8 @@ const ProductCard = ({
           />
         ) : (
           <div className='relative h-40 sm:h-52'>
-            <Image
-              src={resolveProductImage(product.images[0])}
+            <CatalogImage
+              src={product.images[0]}
               alt={product.name}
               fill
               sizes={imageSizes}
@@ -52,7 +56,7 @@ const ProductCard = ({
             />
           </div>
         )}
-        {hideDetails && offer.countInStock === 0 && (
+        {hideDetails && stock === 0 && (
           <span className='absolute bottom-2 right-2 rounded-md bg-background/90 px-2 py-1 text-sm font-bold text-red-600 shadow-sm'>
             ناموجود
           </span>
@@ -80,14 +84,16 @@ const ProductCard = ({
 </div>
 
 
-      {offer.countInStock > 0 ? (
+      {stock > 0 || !hasProductPrice(offer.price) ? (
         <ProductPrice
           isDeal={product.tags.includes('todays-deal')}
           price={offer.price}
           listPrice={offer.listPrice}
+          discountPercent={variant?.discountPercent}
           forListing
         />
-      ) : (
+      ) : null}
+      {stock === 0 && (
         <div className='flex min-h-[38px] w-full items-center justify-end'>
           <span className='font-bold text-red-600'>ناموجود</span>
         </div>
@@ -103,13 +109,13 @@ const ProductCard = ({
           product: product._id.toString(),
           size: product.sizes[0],
           color: variant ? variant.color : product.colors[0],
-          countInStock: offer.countInStock,
+          countInStock: stock,
           name: product.name,
           slug: product.slug,
           category: product.category,
           price: round2(offer.price),
           quantity: 1,
-          image: variant?.image || product.images[0],
+          image: variant?.image || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
         }}
       />
     </div>
@@ -123,7 +129,7 @@ const ProductCard = ({
           <div className='p-3 flex-1 text-center'>
             <ProductDetails />
           </div>
-          {!hideAddToCart && offer.countInStock > 0 && <AddButton />}
+          {!hideAddToCart && canPurchase && <AddButton />}
         </>
       )}
     </div>
@@ -138,7 +144,7 @@ const ProductCard = ({
             <ProductDetails />
           </CardContent>
           <CardFooter className='p-3'>
-            {!hideAddToCart && offer.countInStock > 0 && <AddButton />}
+            {!hideAddToCart && canPurchase && <AddButton />}
           </CardFooter>
         </>
       )}

@@ -20,6 +20,8 @@ import { SITE_URL } from '../site-url'
 import { calculateTipaxTotals, TIPAX_SHIPPING_METHOD } from '../shipping'
 import { createHash } from 'node:crypto'
 import { isZarinPalPaymentMethod } from '../payment-methods'
+import { getProductStock, hasProductPrice, normalizeProduct } from '../product-display'
+import { PRODUCT_IMAGE_PLACEHOLDER } from '../store-images'
 
 async function getOrderAccessFilter(orderId: string) {
   const session = await requireUser()
@@ -101,9 +103,11 @@ const createOrderFromCart = async (
   const settings = await getSetting()
   if (!settings.availablePaymentMethods.some((method) => method.name === clientSideCart.paymentMethod))
     throw new CheckoutInputError('روش پرداخت انتخاب‌شده در فروشگاه فعال نیست. لطفاً روش پرداخت را دوباره انتخاب کنید.')
+  const sharedStockQuantities = new Map<string, number>()
   const canonicalItems = await Promise.all(clientSideCart.items.map(async (item) => {
-    const product = await Product.findById(item.product)
-    if (!product || !product.isPublished) throw new CheckoutInputError('یکی از کالاهای سبد خرید دیگر قابل سفارش نیست. سبد خرید را بررسی کنید.')
+    const rawProduct = await Product.findById(item.product).lean()
+    if (!rawProduct?.isPublished) throw new CheckoutInputError('یکی از کالاهای سبد خرید دیگر قابل سفارش نیست. سبد خرید را بررسی کنید.')
+    const product = normalizeProduct(rawProduct)
     // Legacy products use colors with the base price/stock; newer products use variants.
     // Never fall back to base pricing when a product has variants.
     const hasVariants = Boolean(product.variants?.length)
@@ -115,19 +119,23 @@ const createOrderFromCart = async (
       (!hasVariants && (item.color ? !product.colors?.includes(item.color) : Boolean(product.colors?.length))) ||
       (item.size ? !product.sizes?.includes(item.size) : Boolean(product.sizes?.length))
     ) throw new CheckoutInputError(`گزینه انتخاب‌شده برای «${product.name}» دیگر معتبر نیست. این کالا را از سبد حذف کنید و گزینه موجود را از صفحه محصول دوباره اضافه کنید.`)
-    if (variant && (typeof variant.price !== 'number' || typeof variant.countInStock !== 'number'))
-      throw new CheckoutInputError(`اطلاعات قیمت یا موجودی گزینه «${item.color}» برای «${product.name}» کامل نیست. لطفاً با پشتیبانی تماس بگیرید.`)
-    const countInStock = variant?.countInStock ?? product.countInStock
-    if (!Number.isFinite(countInStock) || !Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < item.quantity)
+    const price = (variant ?? product).price
+    if (!hasProductPrice(price))
+      throw new CheckoutInputError(`قیمت «${product.name}» نیاز به استعلام دارد. لطفاً با فروشگاه تماس بگیرید.`)
+    const countInStock = getProductStock(product, variant)
+    const productId = product._id.toString()
+    const quantityAgainstStock = (variant?.usesProductStock ? sharedStockQuantities.get(productId) ?? 0 : 0) + item.quantity
+    if (!Number.isFinite(countInStock) || !Number.isInteger(item.quantity) || item.quantity < 1 || countInStock < quantityAgainstStock)
       throw new CheckoutInputError('موجودی یکی از کالاها برای تعداد انتخاب‌شده کافی نیست. تعداد کالاها را بررسی کنید.')
+    if (variant?.usesProductStock) sharedStockQuantities.set(productId, quantityAgainstStock)
     return {
-      product: product._id.toString(),
+      product: productId,
       clientId: item.clientId,
       name: product.name,
       slug: product.slug,
-      image: variant?.image || product.images[0],
+      image: variant?.image || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
       category: product.category,
-      price: round2((variant ?? product).price),
+      price: round2(price),
       countInStock,
       quantity: item.quantity,
       ...(item.size ? { size: item.size } : {}),

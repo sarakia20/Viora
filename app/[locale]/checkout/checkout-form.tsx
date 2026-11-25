@@ -25,8 +25,7 @@ import { calculateTipaxTotals, SHIPPING_PAY_ON_DELIVERY, TIPAX_SHIPPING_METHOD }
 import { MobilePhoneSchema, ShippingAddressSchema } from '@/lib/validator'
 import { normalizeMobileDigits } from '@/lib/phone'
 import { zodResolver } from '@hookform/resolvers/zod'
-import Image from 'next/image'
-import { resolveProductImage } from '@/lib/store-images'
+import ProductImage from '@/components/shared/product/product-image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -546,8 +545,8 @@ const CheckoutForm = () => {
         className='flex min-w-0 flex-col gap-3 border-b py-3 last:border-b-0 xs:flex-row xs:gap-4'
       >
         <div className='relative w-16 h-16'>
-          <Image
-            src={resolveProductImage(item.image)}
+          <ProductImage
+            src={item.image}
             alt={item.name}
             fill
             sizes='20vw'

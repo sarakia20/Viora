@@ -9,6 +9,7 @@ import { Minus, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { hasProductPrice } from '@/lib/product-display'
 
 export default function AddToCart({
   item,
@@ -23,6 +24,8 @@ export default function AddToCart({
   const [quantity, setQuantity] = useState(1)
   const t = useTranslations()
 
+  if (!hasProductPrice(item.price) || item.countInStock < 1) return null
+
   const increaseQuantity = () => {
     if (quantity < item.countInStock) setQuantity(quantity + 1)
   }
@@ -34,9 +37,9 @@ export default function AddToCart({
   return minimal ? (
     <Button
       className='rounded-full w-auto bg-slate-900 text-white hover:bg-slate-800'
-      onClick={() => {
+      onClick={async () => {
         try {
-          addItem(item, 1)
+          await addItem(item, 1)
           toast({
             description: t('Product.Added to Cart'),
             action: (
@@ -103,9 +106,9 @@ export default function AddToCart({
 
       <Button
         variant='secondary'
-        onClick={() => {
+        onClick={async () => {
           try {
-            addItem(item, quantity)
+            await addItem(item, quantity)
             router.push(`/checkout`)
           } catch (error: any) {
             toast({

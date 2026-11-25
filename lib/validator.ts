@@ -54,7 +54,12 @@ export const ProductInputSchema = z.object({
         image: z.string(),
         price: z.number(),
         listPrice: z.number(),
-        countInStock: z.number(),
+        discountPercent: z.number().min(0).max(100).optional(),
+        usesProductStock: z.boolean().optional(),
+        countInStock: z.number().optional(),
+      }).refine((variant) => variant.usesProductStock || variant.countInStock !== undefined, {
+        path: ['countInStock'],
+        message: 'Variant stock is required',
       })
     )
     .optional(),

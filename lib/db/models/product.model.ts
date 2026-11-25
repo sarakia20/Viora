@@ -75,6 +75,8 @@ const productSchema = new Schema<IProduct>(
         image: String,
         price: Number,
         listPrice: Number,
+        discountPercent: Number,
+        usesProductStock: Boolean,
         countInStock: Number,
         _id: false,
       },

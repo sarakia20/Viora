@@ -156,7 +156,7 @@ test('public product and related queries require isPublished and exclude the cur
     '@/lib/data': { products: [] },
     '@/lib/db': { connectToDatabase: async () => {} },
     '@/lib/db/models/product.model': {
-      async findOne(filter) { lookup = filter; return null },
+      findOne(filter) { lookup = filter; return { lean: async () => null } },
       find(filter) { relatedFilter = filter; return { sort() { return this }, skip() { return this }, limit() { return [] } } },
       countDocuments: async () => assert.fail('Related products are rendered without a count'),
     },

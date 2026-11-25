@@ -48,7 +48,7 @@ function harness(productOverrides = {}) {
     '@/auth': { auth: async () => ({ user: { id: userId } }) },
     '../db/models/order.model': model,
     '@/lib/db/models/order.model': model,
-    '../db/models/product.model': { findById: async () => ({ ...item, images: [item.image], _id: productId, price: 1200, isPublished: true, ...productOverrides }) },
+    '../db/models/product.model': { findById: () => ({ lean: async () => ({ ...item, images: [item.image], _id: productId, price: 1200, isPublished: true, ...productOverrides }) }) },
     '../db/models/user.model': {},
     '@/emails': { sendPurchaseReceipt: async () => { receipts++ } },
     '../paypal': {},

@@ -6,6 +6,8 @@ import { Check } from 'lucide-react'
 import { IProduct } from '@/lib/db/models/product.model'
 import { generateId, round2 } from '@/lib/utils'
 import { DEFAULT_PRODUCT_VARIANT_INDEX, getProductVariant } from '@/lib/product-variant'
+import { getProductStock, hasProductPrice } from '@/lib/product-display'
+import { PRODUCT_IMAGE_PLACEHOLDER } from '@/lib/store-images'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import AddToCart from './add-to-cart'
@@ -44,13 +46,14 @@ export default function ProductVariantDetails({
   const gradeLabels = variants.map((variant) => getGradeLabel(variant.color))
   const hasQualityGrades = gradeLabels.every(Boolean)
   const selectedGrade = gradeLabels[selectedVariantIndex] ?? gradeLabels[0]
-  const image = selectedVariant.image || product.images[0]
+  const image = selectedVariant.image || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER
   const galleryImage =
     product.slug === 'yaris60' && selectedVariant.image === '/images/yaris60.png'
       ? '/images/yaris60.webp'
       : selectedVariant.image
   const galleryImages = galleryImage ? [galleryImage] : product.images
-  const isInStock = selectedVariant.countInStock > 0
+  const stock = getProductStock(product, selectedVariant)
+  const isInStock = stock > 0
 
   return (
     <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
@@ -160,14 +163,14 @@ export default function ProductVariantDetails({
                 detail
                 price={selectedVariant.price}
                 listPrice={selectedVariant.listPrice}
+                discountPercent={selectedVariant.discountPercent}
               />
             </div>
 
-            {selectedVariant.countInStock > 0 &&
-              selectedVariant.countInStock <= 3 && (
+            {isInStock && stock <= 3 && (
                 <div className='text-destructive font-bold'>
                   {t('Product.Only X left in stock - order soon', {
-                    count: selectedVariant.countInStock,
+                    count: stock,
                   })}
                 </div>
               )}
@@ -182,14 +185,14 @@ export default function ProductVariantDetails({
               {isInStock ? 'موجود' : 'ناموجود'}
             </div>
 
-            {isInStock && (
+            {isInStock && hasProductPrice(selectedVariant.price) && (
               <div className='flex justify-center items-center'>
                 <AddToCart
                   key={`${selectedVariantIndex}-${selectedSize}`}
                   item={{
                     clientId: generateId(),
                     product: product._id.toString(),
-                    countInStock: selectedVariant.countInStock,
+                    countInStock: stock,
                     name: product.name,
                     slug: product.slug,
                     category: product.category,

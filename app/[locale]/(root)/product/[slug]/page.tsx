@@ -8,6 +8,8 @@ import {
 } from '@/lib/actions/product.actions'
 
 import { generateId, round2 } from '@/lib/utils'
+import { hasProductPrice } from '@/lib/product-display'
+import { PRODUCT_IMAGE_PLACEHOLDER } from '@/lib/store-images'
 import SelectVariant from '@/components/shared/product/select-variant'
 import ProductPrice from '@/components/shared/product/product-price'
 import ProductGallery from '@/components/shared/product/product-gallery'
@@ -219,7 +221,7 @@ export default async function ProductDetails(props: {
           <div className='lg:sticky lg:top-40 lg:self-start'>
             <Card className='rounded-2xl border-slate-200 bg-slate-50/70 shadow-none'>
               <CardContent className='flex flex-col gap-5 p-5 sm:p-6'>
-                {product.countInStock > 0 && (
+                {(product.countInStock > 0 || !hasProductPrice(product.price)) && (
   <ProductPrice detail price={product.price} listPrice={product.listPrice} />
 )}
 
@@ -241,7 +243,7 @@ export default async function ProductDetails(props: {
                   </div>
                 )}
 
-{product.countInStock > 0 && (
+{product.countInStock > 0 && hasProductPrice(product.price) && (
   <div className='flex justify-center items-center'>
     <AddToCart
       item={{
@@ -253,7 +255,7 @@ export default async function ProductDetails(props: {
         category: product.category,
         price: round2(product.price),
         quantity: 1,
-        image: product.images[0],
+        image: product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
         size: size || product.sizes[0],
         color: color || product.colors[0],
       }}

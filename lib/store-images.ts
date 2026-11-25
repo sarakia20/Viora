@@ -31,6 +31,23 @@ export function resolveProductImage(src: string) {
   return legacyProductImages.get(src) ?? src
 }
 
+export const PRODUCT_IMAGE_PLACEHOLDER = '/images/product-placeholder.svg'
+
+export function getProductImageSource(value: unknown) {
+  if (typeof value !== 'string') return undefined
+  const source = resolveProductImage(value.trim())
+  try {
+    if (source.startsWith('/') && !source.startsWith('//') && !source.includes('\\')) {
+      encodeURIComponent(source)
+      return source
+    }
+    const url = new URL(source)
+    if ((url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password) return url.href
+  } catch {
+    return undefined
+  }
+}
+
 export function isDirectGalleryImage(src: string) {
   return directGalleryImages.has(src)
 }

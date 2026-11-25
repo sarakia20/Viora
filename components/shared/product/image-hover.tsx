@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import Image from 'next/image'
-import { resolveProductImage } from '@/lib/store-images'
+import ProductImage from './product-image'
 import { useRef, useState } from 'react'
 
 const ImageHover = ({
@@ -51,8 +49,8 @@ const ImageHover = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Image
-        src={resolveProductImage(src)}
+      <ProductImage
+        src={src}
         alt={alt}
         fill
         sizes={sizes}
@@ -61,12 +59,17 @@ const ImageHover = ({
         }`}
       />
       {shouldLoadHover && (
-        <Image
-          src={resolveProductImage(hoverSrc)}
+        <ProductImage
+          src={hoverSrc}
+          fallback={false}
           alt={alt}
           fill
           sizes={sizes}
           onLoad={handleHoverImageLoad}
+          onError={() => {
+            isHoverImageLoaded.current = false
+            setIsHovered(false)
+          }}
           className={`absolute inset-0 object-contain transition-opacity duration-500 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}

@@ -105,7 +105,7 @@ test('server action rejects invalid mobile without inserting an order and stores
   const actions = load('lib/actions/order.actions.ts', {
     '../db': { connectToDatabase: async () => connection },
     '@/auth': { auth: async () => ({ user: { id: new mongoose.Types.ObjectId().toString() } }) },
-    '../db/models/order.model': Order, '../db/models/product.model': { findById: async () => product },
+    '../db/models/order.model': Order, '../db/models/product.model': { findById: () => ({ lean: async () => product }) },
     '../db/models/user.model': {}, '@/emails': {}, '../paypal': {}, '../auth-guard': {},
     './setting.actions': { getSetting: async () => ({ availablePaymentMethods: [{ name: 'ZarinPal' }] }) },
     'next/cache': {}, 'next/navigation': {},

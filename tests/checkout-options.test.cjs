@@ -18,7 +18,7 @@ function setup(overrides = {}) {
       findOne: async () => null,
       create: async order => { saved.push(order); return order },
     },
-    '../db/models/product.model': { findById: async () => product },
+    '../db/models/product.model': { findById: () => ({ lean: async () => product }) },
     '../db/models/user.model': {}, '@/emails': {}, '../paypal': {},
     './setting.actions': { getSetting: async () => ({ availablePaymentMethods: [{ name: 'ZarinPal' }] }) },
     '../auth-guard': {}, 'next/cache': {}, 'next/navigation': {},
@@ -26,8 +26,10 @@ function setup(overrides = {}) {
   })
   return {
     saved,
-    submit: item => actions.createOrder({
-      items: [{ product: product._id, clientId: 'line', quantity: 2, price: 1, countInStock: 999, ...item }],
+    submit: (...items) => actions.createOrder({
+      items: items.map((item, index) => ({
+        product: product._id, clientId: 'line-' + index, quantity: 2, price: 1, countInStock: 999, ...item,
+      })),
       shippingAddress: { fullName: 'آزمایشی', street: 'آدرس', city: 'شیراز', province: 'فارس', phone: '09123456789', postalCode: '1234567890', country: 'Iran' },
       shippingMethod: 'تیپاکس', paymentMethod: 'ZarinPal',
       itemsPrice: 1, shippingPrice: 1, taxPrice: 1, totalPrice: 1,
@@ -88,4 +90,30 @@ test('out of stock and incomplete variants cannot fall back to base stock or pri
     assert.equal((await submit({ color: 'مشکی' })).success, false)
     assert.equal(saved.length, 0)
   }
+})
+
+test('grade checkout stores both selected grades and validates shared product stock', async () => {
+  const first = '\u062f\u0631\u062c\u0647 \u06f1'
+  const second = '\u062f\u0631\u062c\u0647 \u06f2'
+  const { submit, saved } = setup({ countInStock: 4, variants: [
+    { color: first, price: 2500, usesProductStock: true },
+    { color: second, price: 1800, usesProductStock: true },
+  ] })
+  assert.equal((await submit({ color: first }, { color: second })).success, true)
+  assert.deepEqual(saved[0].items.map(({ color, price, countInStock }) => [color, price, countInStock]),
+    [[first, 2500, 4], [second, 1800, 4]])
+  assert.equal((await submit({ color: first, quantity: 3 }, { color: second })).success, false)
+  assert.equal(saved.length, 1)
+})
+
+test('checkout accepts legacy stock and rejects zero prices and explicit zero stock', async () => {
+  const legacy = setup({ countInStock: undefined, stock: 6 })
+  assert.equal((await legacy.submit({})).success, true)
+  assert.equal(legacy.saved[0].items[0].countInStock, 6)
+
+  const unavailable = setup({ countInStock: 0, stock: 6 })
+  const inquiry = setup({ price: 0 })
+  assert.equal((await unavailable.submit({})).success, false)
+  assert.equal((await inquiry.submit({})).success, false)
+  assert.equal(inquiry.saved.length, 0)
 })

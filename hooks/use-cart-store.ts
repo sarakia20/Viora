@@ -5,6 +5,7 @@ import { Cart, OrderItem, ShippingAddress } from '@/types'
 import { calcDeliveryDateAndPrice } from '@/lib/actions/order.actions'
 import { normalizeCartShipping, TIPAX_SHIPPING_METHOD } from '@/lib/shipping'
 import { ShippingAddressSchema } from '@/lib/validator'
+import { hasProductPrice } from '@/lib/product-display'
 
 const initialState: Cart = {
   items: [],
@@ -35,6 +36,9 @@ const useCartStore = create(
       cart: initialState,
 
       addItem: async (item: OrderItem, quantity: number) => {
+        if (!hasProductPrice(item.price)) {
+          throw new Error('قیمت این محصول نیاز به استعلام دارد.')
+        }
         const { items, shippingAddress } = get().cart
         const existItem = items.find(
           (x) =>

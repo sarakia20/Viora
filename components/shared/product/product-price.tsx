@@ -4,6 +4,7 @@ import React from 'react'
 import useSettingStore from '@/hooks/use-setting-store'
 import { cn, round2 } from '@/lib/utils'
 import { useLocale } from 'next-intl'
+import { hasProductPrice } from '@/lib/product-display'
 
 function formatNumber(value: number, isFa: boolean) {
   return new Intl.NumberFormat(isFa ? 'fa-IR' : 'en-US', {
@@ -19,12 +20,14 @@ function getDiscountPercent(price: number, listPrice: number) {
 export default function ProductPrice({
   price,
   listPrice = 0,
+  discountPercent: storedDiscount,
   className,
   plain = false,
   detail = false,
 }: {
   price: number
   listPrice?: number
+  discountPercent?: number
   className?: string
   isDeal?: boolean
   forListing?: boolean
@@ -34,6 +37,14 @@ export default function ProductPrice({
   const locale = useLocale()
   const isFa = locale.startsWith('fa')
   const setting = useSettingStore((state) => state.setting)
+
+  if (!plain && !hasProductPrice(price)) {
+    return (
+      <div className={cn('flex min-h-[38px] items-center justify-end font-bold', className)}>
+        استعلام قیمت
+      </div>
+    )
+  }
 
   const currency =
     setting.availableCurrencies.find((c) => c.code === setting.currency) ||
@@ -45,13 +56,15 @@ const convertedListPrice = round2(listPrice)
   const hasDiscount =
     convertedListPrice > 0 && convertedListPrice > convertedPrice
 
-  const discountPercent = hasDiscount
+  const discountPercent = storedDiscount ?? (hasDiscount
     ? getDiscountPercent(convertedPrice, convertedListPrice)
-    : 0
+    : 0)
 
   const mainPrice = formatNumber(convertedPrice, isFa)
   const oldPrice = formatNumber(convertedListPrice, isFa)
-  const discountText = formatNumber(discountPercent, isFa)
+  const discountText = new Intl.NumberFormat(isFa ? 'fa-IR' : 'en-US', {
+    maximumFractionDigits: 20,
+  }).format(discountPercent)
 
   if (plain) {
     return (
@@ -70,7 +83,7 @@ const convertedListPrice = round2(listPrice)
       )}
     >
       <div className={cn('w-full flex items-center justify-end gap-1.5', detail && 'flex-wrap')}>
-        {hasDiscount && (
+        {(hasDiscount || storedDiscount !== undefined) && (
           <span className={cn(
             'shrink-0 rounded-full bg-red-600 font-bold leading-none text-white',
             detail ? 'px-[7.5px] py-[2.5px] text-xs' : 'px-1.5 py-[2px] text-[10px]'
@@ -89,7 +102,7 @@ const convertedListPrice = round2(listPrice)
         </div>
       </div>
 
- {hasDiscount && (
+ {(hasDiscount || (storedDiscount !== undefined && convertedListPrice > 0)) && (
   <div className='mt-1 w-full flex justify-end pl-[42px]'>
     <span className={cn('text-sm leading-none text-gray-400 line-through tabular-nums', detail && 'sm:text-base')}>
       {oldPrice}

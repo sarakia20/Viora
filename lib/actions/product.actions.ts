@@ -10,6 +10,9 @@ import { IProductInput } from '@/types'
 import { z } from 'zod'
 import { getSetting } from './setting.actions'
 import { requireAdmin } from '../auth-guard'
+import { normalizeProduct } from '../product-display'
+import { productSearchPattern } from '../product-search'
+import { Types } from 'mongoose'
 
 const isSkipDb = process.env.SKIP_DB === 'true'
 
@@ -19,6 +22,31 @@ const mockProducts = data.products.map((product, index) => ({
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 })) as unknown as IProduct[]
+
+function prepareSearchProduct(product: Pick<IProduct, '_id' | 'slug' | 'name'>) {
+  const rawId = product?._id
+  const id = typeof rawId === 'string' ? rawId : rawId instanceof Types.ObjectId ? rawId.toHexString() : undefined
+  const slug = typeof product?.slug === 'string' ? product.slug : undefined
+  try {
+    if (!id || !slug?.trim() || typeof product.name !== 'string') {
+      throw new TypeError('Invalid product identity')
+    }
+    // encodeURIComponent in the card path rejects malformed Unicode.
+    encodeURIComponent(slug)
+    return normalizeProduct(JSON.parse(JSON.stringify(product)) as IProduct)
+  } catch {
+    console.error('[catalog] Could not prepare product for search', {
+      productId: id?.slice(0, 100),
+      slug: slug?.slice(0, 200),
+    })
+    return null
+  }
+}
+
+function productNameFilter(query: unknown) {
+  const pattern = productSearchPattern(query)
+  return pattern ? { name: { $regex: pattern, $options: 'i' } } : {}
+}
 
 function filterProducts({
   query,
@@ -37,14 +65,12 @@ function filterProducts({
   price?: string
   rating?: string
 }) {
+  const pattern = productSearchPattern(query)
+  const nameMatcher = pattern ? new RegExp(pattern, 'iu') : undefined
   return mockProducts.filter((product) => {
     if (!product.isPublished) return false
 
-    if (
-      query &&
-      query !== 'all' &&
-      !product.name.toLowerCase().includes(query.toLowerCase())
-    ) {
+    if (nameMatcher && !nameMatcher.test(product.name)) {
       return false
     }
 
@@ -216,15 +242,7 @@ export async function getAllProductsForAdmin({
 
   await connectToDatabase()
 
-  const queryFilter =
-    query && query !== 'all'
-      ? {
-          name: {
-            $regex: query,
-            $options: 'i',
-          },
-        }
-      : {}
+  const queryFilter = productNameFilter(query)
 
   const order: Record<string, 1 | -1> =
     sort === 'best-selling'
@@ -384,13 +402,13 @@ export async function getProductBySlug(slug: string) {
   if (isSkipDb) {
     const product = mockProducts.find((p) => p.slug === slug && p.isPublished)
     if (!product) throw new Error('Product not found')
-    return JSON.parse(JSON.stringify(product)) as IProduct
+    return normalizeProduct(JSON.parse(JSON.stringify(product)) as IProduct)
   }
 
   await connectToDatabase()
-  const product = await Product.findOne({ slug, isPublished: true })
+  const product = await Product.findOne({ slug, isPublished: true }).lean()
   if (!product) throw new Error('Product not found')
-  return JSON.parse(JSON.stringify(product)) as IProduct
+  return normalizeProduct(JSON.parse(JSON.stringify(product)) as IProduct)
 }
 
 export async function getRelatedProductsByCategory({
@@ -484,10 +502,10 @@ export async function getAllProducts({
 
     const sorted = sortProducts(filtered, sort)
     const start = limit * (Number(page) - 1)
-    const products = sorted.slice(start, start + limit)
+    const products = sorted.slice(start, start + limit).flatMap((product) => prepareSearchProduct(product) ?? [])
 
     return {
-      products: JSON.parse(JSON.stringify(products)) as IProduct[],
+      products,
       totalPages: Math.ceil(filtered.length / limit),
       totalProducts: filtered.length,
       from: filtered.length === 0 ? 0 : start + 1,
@@ -497,15 +515,7 @@ export async function getAllProducts({
 
   await connectToDatabase()
 
-  const queryFilter =
-    query && query !== 'all'
-      ? {
-          name: {
-            $regex: query,
-            $options: 'i',
-          },
-        }
-      : {}
+  const queryFilter = productNameFilter(query)
 
   const categoryFilter =
     category && category !== 'all'
@@ -566,17 +576,14 @@ export async function getAllProducts({
   .limit(limit)
   .lean()
 
-const uniqueProducts = Array.from(
-  new Map(
-    products.map((product) => [
-      product._id.toString(),
-      product,
-    ])
-  ).values()
-)
+  const prepared = products.flatMap((product) => {
+    const result = prepareSearchProduct(product)
+    return result ? [result] : []
+  })
+  const uniqueProducts = Array.from(new Map(prepared.map((product) => [product._id, product])).values())
 
   return {
-   products: JSON.parse(JSON.stringify(uniqueProducts)) as IProduct[],
+    products: uniqueProducts,
     totalPages: Math.ceil(countProducts / limit),
     totalProducts: countProducts,
     from: limit * (Number(page) - 1) + 1,

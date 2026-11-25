@@ -31,12 +31,12 @@ export function getProductImageUrls(product: Pick<IProduct, 'images' | 'variants
 export function getProductJsonLd(product: IProduct) {
   if (!product.isPublished) return null
   const url = getAbsoluteUrl(getProductPath(product.slug))
-  const makeOffer = (price: number, stock: number, name?: string) => {
+  const makeOffer = (price: number, stock: number | undefined, name?: string) => {
     // Only advertise a price that exactly matches the whole-toman UI.
     // Do not round a database price to invent a different offer amount.
     const rialPrice = price * 10
     if (!Number.isSafeInteger(price) || price <= 0 || !Number.isSafeInteger(rialPrice) ||
-      !Number.isInteger(stock) || stock < 0) return []
+      stock === undefined || !Number.isInteger(stock) || stock < 0) return []
     return [{
       '@type': 'Offer',
       ...(name?.trim() ? { name: name.trim() } : {}),
@@ -47,7 +47,9 @@ export function getProductJsonLd(product: IProduct) {
     }]
   }
   const offers = product.variants?.length
-    ? product.variants.flatMap((variant) => makeOffer(variant.price, variant.countInStock, variant.color))
+    ? product.variants.flatMap((variant) => makeOffer(
+      variant.price, variant.usesProductStock ? product.countInStock : variant.countInStock, variant.color
+    ))
     // This branch hides price when out of stock; don't advertise an invisible price.
     : product.countInStock > 0 ? makeOffer(product.price, product.countInStock) : []
   const images = getProductImageUrls(product)
