@@ -40,6 +40,7 @@ export default function ProductGallery({
               alt={`${productName} - تصویر ${index + 1}`}
               width={48}
               height={48}
+              fetchPriority='low'
             />
           </button>
         ))}
@@ -56,6 +57,7 @@ export default function ProductGallery({
               sizes='(min-width: 1024px) 38vw, 90vw'
               className='object-contain'
               priority
+              fetchPriority='high'
             />
           </div>
         </Zoom>

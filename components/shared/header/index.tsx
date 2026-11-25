@@ -8,8 +8,7 @@ import { getSetting } from '@/lib/actions/setting.actions'
 import { getTranslations } from 'next-intl/server'
 
 export default async function Header() {
-  const { site } = await getSetting()
-  const t = await getTranslations()
+  const [{ site }, t] = await Promise.all([getSetting(), getTranslations()])
   const logoSrc = site.logo === '/icons/logo.svg' ? '/icons/viora-logo.png' : site.logo
 
   return (

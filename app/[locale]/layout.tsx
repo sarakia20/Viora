@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Geist, Vazirmatn } from 'next/font/google'
 import '../globals.css'
 import ClientProviders from '@/components/shared/client-providers'
@@ -69,6 +70,7 @@ export default async function AppLayout({
         <meta name="enamad" content="14560157" /> 
       </head>
       <body
+        style={{ '--font-vazir-primary': vazir.style.fontFamily.split(',')[0] } as CSSProperties}
         className={`min-h-screen ${geistSans.variable} ${vazir.variable} antialiased`}
       >
         <script type='application/ld+json' dangerouslySetInnerHTML={{

@@ -58,8 +58,8 @@ type ProductPageProps = {
 }
 
 export async function generateMetadata(props: ProductPageProps) {
-  const params = await props.params
-  const product = await getPublicProductOrNotFound(params.slug)
+  const [{ slug }, query] = await Promise.all([props.params, props.searchParams])
+  const product = await getPublicProductOrNotFound(slug)
 
   const title = `خرید ${product.name} | ویورا`
   const model = product.name.trim().replace(/\s+/g, ' ')
@@ -69,7 +69,6 @@ export async function generateMetadata(props: ProductPageProps) {
     : recordedDescription
   const summary = !facts || facts.startsWith(model) ? facts || model : `${model}؛ ${facts}`
   const description = truncateSeoDescription(summary)
-  const query = await props.searchParams
   const requestedIndex = getRequestedVariantIndex(product, query)
   const hasSelection = query.color !== undefined || query.grade !== undefined
   const legacyColor = query.grade === undefined && typeof query.color === 'string' &&
@@ -120,13 +119,14 @@ export default async function ProductDetails(props: ProductPageProps) {
     })),
   }
 
-  const relatedProducts = await getRelatedProductsByCategory({
-    category: product.category,
-    productId: product._id.toString(),
-    page: parsePage(searchParams.page) ?? 1,
-  })
-
-  const t = await getTranslations()
+  const [relatedProducts, t] = await Promise.all([
+    getRelatedProductsByCategory({
+      category: product.category,
+      productId: product._id.toString(),
+      page: parsePage(searchParams.page) ?? 1,
+    }),
+    getTranslations(),
+  ])
   const hasVariants = Boolean(product.variants?.length)
   const hasColorOptions = product.colors.length > 0
   const highlights = (
@@ -183,7 +183,7 @@ export default async function ProductDetails(props: ProductPageProps) {
                 برند: {productBrandHref ? <Link href={productBrandHref} className='hover:underline'>{product.brand}</Link> : product.brand}
               </p>
 
-              <h1 className='text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>
+              <h1 className='product-title text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>
 
               <RatingSummary
                 avgRating={product.avgRating}

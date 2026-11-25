@@ -169,7 +169,8 @@ export function CatalogLanding({ result }: { result: Page }) {
     <section aria-labelledby='catalog-products' className='space-y-4'>
       <h2 id='catalog-products' className='text-lg font-bold'>محصولات <span className='text-sm font-normal text-muted-foreground'>({data.totalProducts})</span></h2>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-        {data.products.map(product => <ProductCard key={product.slug} product={product} />)}
+        {data.products.map((product, index) =>
+          <ProductCard key={product.slug} product={product} priorityImage={index === 0} />)}
       </div>
       {data.totalPages > 1 && <Pagination path={landing.path} query={paginationQuery} page={page} totalPages={data.totalPages} />}
     </section>

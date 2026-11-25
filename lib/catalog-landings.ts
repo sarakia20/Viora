@@ -8,6 +8,11 @@ export type CatalogProduct = {
   subCategory?: string
 }
 
+const flushTankCategory = 'فلاش تانک'
+const concealedTanks = 'فلاش تانک توکار'
+const flushPlates = 'صفحه کلید فلاش تانک توکار'
+const flushPlateName = /صفحه[\s‌]+کلید/
+
 type Collection = {
   slug: string
   label: string
@@ -46,12 +51,12 @@ export const collections: readonly Collection[] = [
     guide: 'فاصله محل پیچ‌ها و مشخصات سازه پشت دیوار را پیش از سفارش بررسی کنید. اقلام همراه کاسه و تجهیزات نصب را جداگانه در صفحه مدل بخوانید.',
   },
   {
-    slug: 'concealed-flush-tanks', label: 'فلاش تانک توکار', category: 'فلاش تانک', subCategory: 'فلاش تانک توکار',
+    slug: 'concealed-flush-tanks', label: 'فلاش تانک توکار', category: flushTankCategory, subCategory: concealedTanks,
     description: 'مخزن‌ها و قطعات ثبت‌شده در گروه فلاش تانک توکار ویورا را همراه مشخصات نصب و قیمت مدل‌ها بررسی کنید.',
     guide: 'در این گروه ممکن است مخزن، سازه و کلید جداگانه عرضه شوند. قبل از خرید مشخص کنید به مجموعه کامل نیاز دارید یا قطعه سازگار برای مخزن موجود.',
   },
   {
-    slug: 'flush-plates', label: 'صفحه کلید فلاش تانک', category: 'فلاش تانک', nameMatch: /صفحه[\s‌]+کلید/,
+    slug: 'flush-plates', label: 'صفحه کلید فلاش تانک', category: flushTankCategory, subCategory: flushPlates,
     description: 'صفحه کلیدهای فلاش‌تانک را بر اساس مدل، نوع کنترل، رنگ و سازگاری با مخزن در ویورا بررسی کنید.',
     guide: 'سازگاری با مدل مخزن را پیش از انتخاب رنگ کنترل کنید. شباهت ظاهری یا ابعاد نزدیک، سازگاری صفحه کلید با مکانیزم مخزن را تضمین نمی‌کند.',
   },
@@ -122,9 +127,29 @@ export function collectionHref(slug: string) {
   return '/subcategory/' + slug
 }
 
+export function matchesCatalogSubcategory(product: Pick<CatalogProduct, 'category' | 'subCategory' | 'name'>, subCategory: string) {
+  if (product.subCategory === subCategory) return true
+  if (product.category !== flushTankCategory) return false
+  if (subCategory === concealedTanks && product.subCategory === flushPlates) return true
+  return (subCategory === concealedTanks || subCategory === flushPlates) &&
+    flushPlateName.test(product.name ?? '')
+}
+
+export function catalogSubcategoryFilter(subCategory?: string) {
+  if (!subCategory || subCategory === 'all') return {}
+  if (subCategory !== concealedTanks && subCategory !== flushPlates) return { subCategory }
+  return {
+    $or: [
+      { subCategory },
+      ...(subCategory === concealedTanks ? [{ category: flushTankCategory, subCategory: flushPlates }] : []),
+      { category: flushTankCategory, name: flushPlateName },
+    ],
+  }
+}
+
 function matches(product: CatalogProduct, definition: Collection) {
   return product.category === definition.category &&
-    (!definition.subCategory || product.subCategory === definition.subCategory) &&
+    (!definition.subCategory || matchesCatalogSubcategory(product, definition.subCategory)) &&
     (!definition.nameMatch || definition.nameMatch.test(product.name ?? ''))
 }
 

@@ -13,6 +13,7 @@ import { requireAdmin } from '../auth-guard'
 import { normalizeProduct } from '../product-display'
 import { productSearchPattern } from '../product-search'
 import { Types } from 'mongoose'
+import { catalogSubcategoryFilter, matchesCatalogSubcategory } from '../catalog-landings'
 
 const isSkipDb = process.env.SKIP_DB === 'true'
 
@@ -82,7 +83,7 @@ function filterProducts({
     if (
       subCategory &&
       subCategory !== 'all' &&
-      product.subCategory !== subCategory
+      !matchesCatalogSubcategory(product, subCategory)
     ) {
       return false
     }
@@ -298,12 +299,12 @@ export async function hasPublishedCategorySelection(category: string, subCategor
   const selection = {
     isPublished: true,
     ...(category !== 'all' ? { category } : {}),
-    ...(subCategory !== 'all' ? { subCategory } : {}),
+    ...catalogSubcategoryFilter(subCategory),
   }
   if (isSkipDb) {
     return mockProducts.some((product) => product.isPublished &&
       (category === 'all' || product.category === category) &&
-      (subCategory === 'all' || product.subCategory === subCategory))
+      (subCategory === 'all' || matchesCatalogSubcategory(product, subCategory)))
   }
   await connectToDatabase()
   return Boolean(await Product.exists(selection))
@@ -321,7 +322,7 @@ export async function getBrandsByCategory({
     (!category || category === 'all' || product.category === category) &&
     (!subCategory ||
       subCategory === 'all' ||
-      product.subCategory === subCategory)
+      matchesCatalogSubcategory(product, subCategory))
 
   const brands = isSkipDb
     ? mockProducts.filter(matchesSelection).map((product) => product.brand)
@@ -330,7 +331,7 @@ export async function getBrandsByCategory({
         return Product.find({
           isPublished: true,
           ...(category && category !== 'all' ? { category } : {}),
-          ...(subCategory && subCategory !== 'all' ? { subCategory } : {}),
+          ...catalogSubcategoryFilter(subCategory),
         }).distinct('brand')
       })()
 
@@ -545,8 +546,7 @@ export async function getAllProducts({
     category && category !== 'all'
       ? { category: typeof category === 'string' ? category : { $in: [...category] } }
       : {}
-  const subCategoryFilter =
-    subCategory && subCategory !== 'all' ? { subCategory } : {}
+  const subCategoryFilter = catalogSubcategoryFilter(subCategory)
   const brandFilter = brand && brand !== 'all' ? { brand } : {}
   const tagFilter = tag && tag !== 'all' ? { tags: tag } : {}
 
@@ -593,13 +593,18 @@ export async function getAllProducts({
   ...priceFilter,
   ...ratingFilter,
   }
-  const countProducts = await Product.countDocuments(conditions)
-  // Avoid a large skip query for an out-of-range category page.
-  const products = page > Math.ceil(countProducts / limit) ? [] : await Product.find(conditions, cardFields)
-  .sort({ ...order, _id: order._id ?? -1 })
-  .skip(limit * (Number(page) - 1))
-  .limit(limit)
-  .lean()
+  const readPage = () => Product.find(conditions, cardFields)
+    .sort({ ...order, _id: order._id ?? -1 })
+    .skip(limit * (page - 1))
+    .limit(limit)
+    .lean()
+  const count = Product.countDocuments(conditions)
+  // Only page one can safely start its bounded read before the count resolves.
+  const [countProducts, products] = await (page === 1
+    ? Promise.all([count, readPage()])
+    : Promise.resolve(count).then(async (total) =>
+        [total, page > Math.ceil(total / limit) ? [] : await readPage()] as const
+      ))
 
   const prepared = products.flatMap((product) => {
     const result = prepareSearchProduct(product)

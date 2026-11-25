@@ -20,11 +20,13 @@ const ProductCard = ({
   hideBorder = false,
   hideDetails = false,
   hideAddToCart = false,
+  priorityImage = false,
 }: {
   product: IProduct
   hideDetails?: boolean
   hideBorder?: boolean
   hideAddToCart?: boolean
+  priorityImage?: boolean
 }) => {
   const product = normalizeProduct(rawProduct)
   const variant = getProductVariant(product)
@@ -44,6 +46,7 @@ const ProductCard = ({
             hoverSrc={product.images[1]}
             alt={getProductImageAlt(product)}
             sizes={imageSizes}
+            priority={priorityImage}
           />
         ) : (
           <div className='relative h-40 sm:h-52'>
@@ -52,6 +55,8 @@ const ProductCard = ({
               alt={getProductImageAlt(product)}
               fill
               sizes={imageSizes}
+              priority={priorityImage}
+              fetchPriority={priorityImage ? 'high' : undefined}
               className='object-contain'
             />
           </div>

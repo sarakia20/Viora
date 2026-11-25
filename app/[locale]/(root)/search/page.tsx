@@ -23,7 +23,6 @@ import { getCategoryLandingPath } from '@/lib/category-config'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
-import CollapsibleOnMobile from '@/components/shared/collapsible-on-mobile'
 import { getTranslations } from 'next-intl/server'
 import { ChevronLeft } from 'lucide-react'
 
@@ -462,7 +461,6 @@ const cleanCategories = categories.filter(
 
       <div className='grid gap-5 bg-background md:grid-cols-[280px_1fr]'>
        <aside className='hidden md:order-1 md:block'>
-  <CollapsibleOnMobile title={t('Search.Filters')}>
     <div className='sticky top-4 space-y-4'>
 
       {/* SIDEBAR جدید (دیجی‌کالا استایل) */}
@@ -479,7 +477,6 @@ const cleanCategories = categories.filter(
       
 
     </div>
-  </CollapsibleOnMobile>
 </aside>
 
         <main className='order-1 space-y-4 md:order-2'>

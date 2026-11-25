@@ -7,11 +7,13 @@ const ImageHover = ({
   hoverSrc,
   alt,
   sizes,
+  priority = false,
 }: {
   src: string
   hoverSrc: string
   alt: string
   sizes: string
+  priority?: boolean
 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const [shouldLoadHover, setShouldLoadHover] = useState(false)
@@ -54,6 +56,8 @@ const ImageHover = ({
         alt={alt}
         fill
         sizes={sizes}
+        priority={priority}
+        fetchPriority={priority ? 'high' : undefined}
         className={`object-contain transition-opacity duration-500 ${
           isHovered ? 'opacity-0' : 'opacity-100'
         }`}

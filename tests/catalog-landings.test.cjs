@@ -1,7 +1,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const load = require('./helpers/load-typescript.cjs')
-const { buildCatalogLandings, getExactCollection, getProductCollection, getBrandSlug } =
+const { buildCatalogLandings, getExactCollection, getProductCollection, getBrandSlug, matchesCatalogSubcategory, catalogSubcategoryFilter } =
   load('lib/catalog-landings.ts', {}, { URLSearchParams })
 
 const product = (slug, brand, category, name, subCategory) => ({ slug, brand, category, name, subCategory })
@@ -39,4 +39,32 @@ test('selected combinations require enough inventory and distinct parent assortm
   assert.equal(index.selected.length, 1)
   assert.equal(index.selected[0].configuration.collection, 'flush-plates')
   assert.deepEqual(index.selected[0].products.map(item => item.slug), items.map(item => item.slug))
+})
+
+test('concealed tanks include all flush plates while their dedicated category remains distinct', () => {
+  const category = 'فلاش تانک'
+  const parent = 'فلاش تانک توکار'
+  const child = 'صفحه کلید فلاش تانک توکار'
+  const items = [
+    product('tank', 'سارودی', category, 'مخزن توکار', parent),
+    product('aral-100', 'سارودی', category, 'آرال ۱۰۰', child),
+    product('legacy', 'ایمن آب', category, 'صفحه‌کلید فلاش تانک', parent),
+    product('unrelated', 'ایمن آب', category, 'مخزن روکار', 'فلاش تانک روکار'),
+    product('other-category', 'ایمن آب', 'اکسسوری', 'صفحه کلید'),
+  ]
+  const catalogue = buildCatalogLandings(items)
+  const slugs = group => catalogue.subcategories.get(group).products.map(item => item.slug)
+  assert.deepEqual(Array.from(slugs('concealed-flush-tanks')), ['tank', 'aral-100', 'legacy'])
+  assert.deepEqual(Array.from(slugs('flush-plates')), ['aral-100', 'legacy'])
+  assert.equal(getExactCollection(category, child).slug, 'flush-plates')
+  assert.equal(getProductCollection(items[1]).slug, 'flush-plates')
+
+  for (const [label, slug] of [[parent, 'concealed-flush-tanks'], [child, 'flush-plates']]) {
+    const predicate = catalogSubcategoryFilter(label)
+    const indexed = items.filter(item => predicate.$or.some(condition =>
+      Object.entries(condition).every(([key, value]) =>
+        Object.prototype.toString.call(value) === '[object RegExp]' ? value.test(item[key] ?? '') : value === item[key])))
+    assert.deepEqual(indexed.map(item => item.slug), Array.from(slugs(slug)))
+    assert.deepEqual(items.filter(item => matchesCatalogSubcategory(item, label)).map(item => item.slug), Array.from(slugs(slug)))
+  }
 })

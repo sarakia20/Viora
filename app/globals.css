@@ -12,6 +12,18 @@ html[lang^='fa'] body {
   font-family: var(--font-vazir), var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Match the advance width of Vazirmatn in the product heading while the font loads. */
+@font-face {
+  font-family: 'Viora Product Title Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 700;
+  size-adjust: 110%;
+}
+
+html[lang^='fa'] .product-title {
+  font-family: var(--font-vazir-primary), 'Viora Product Title Fallback', var(--font-vazir), sans-serif;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
