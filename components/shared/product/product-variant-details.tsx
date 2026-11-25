@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Check } from 'lucide-react'
 import { IProduct } from '@/lib/db/models/product.model'
 import { generateId, round2 } from '@/lib/utils'
-import { DEFAULT_PRODUCT_VARIANT_INDEX, getProductVariant } from '@/lib/product-variant'
+import { DEFAULT_PRODUCT_VARIANT_INDEX, getProductImageAlt, getProductVariant, getVariantImage, getVariantSelection } from '@/lib/product-variant'
 import { getProductStock, hasProductPrice } from '@/lib/product-display'
 import { PRODUCT_IMAGE_PLACEHOLDER } from '@/lib/store-images'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,42 +16,43 @@ import ProductPrice from './product-price'
 import RatingSummary from './rating-summary'
 import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './color-swatch'
 
-const gradeDigits = '۱۲۳123١٢٣'
-
-function getGradeLabel(value: string) {
-  const digit = /^درجه(?:[\s‌]+کیفیت)?[\s‌]*([۱۲۳123١٢٣])$/.exec(value?.trim() ?? '')?.[1]
-  if (!digit) return ''
-
-  const index = gradeDigits.indexOf(digit) % 3
-  return `درجه ${gradeDigits[index]}`
-}
-
 export default function ProductVariantDetails({
   product,
   initialSize,
+  initialVariantIndex = DEFAULT_PRODUCT_VARIANT_INDEX,
   highlights,
 }: {
   product: IProduct
   initialSize: string
+  initialVariantIndex?: number
   highlights?: ReactNode
 }) {
   const t = useTranslations()
   const variants = product.variants ?? []
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(DEFAULT_PRODUCT_VARIANT_INDEX)
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(initialVariantIndex)
   const [selectedSize, setSelectedSize] = useState(initialSize)
   const selectedVariant = getProductVariant(product, selectedVariantIndex)
 
   if (!selectedVariant) return null
 
-  const gradeLabels = variants.map((variant) => getGradeLabel(variant.color))
-  const hasQualityGrades = gradeLabels.every(Boolean)
-  const selectedGrade = gradeLabels[selectedVariantIndex] ?? gradeLabels[0]
-  const image = selectedVariant.image || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER
-  const galleryImage =
-    product.slug === 'yaris60' && selectedVariant.image === '/images/yaris60.png'
-      ? '/images/yaris60.webp'
-      : selectedVariant.image
+  const selections = variants.map(getVariantSelection)
+  const hasQualityGrades = selections.every(({ key }) => key === 'grade')
+  const selectedGrade = selections[selectedVariantIndex]?.label
+  const galleryImage = getVariantImage(product.slug, selectedVariant)
+  const image = galleryImage || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER
   const galleryImages = galleryImage ? [galleryImage] : product.images
+
+  function selectVariant(index: number) {
+    setSelectedVariantIndex(index)
+    if (typeof window === 'undefined') return
+    const selection = selections[index]
+    const url = new URL(window.location.href)
+    url.searchParams.delete('color')
+    url.searchParams.delete('grade')
+    url.searchParams.set(selection.key, selection.value)
+    window.history.replaceState(null, '', url)
+  }
+
   const stock = getProductStock(product, selectedVariant)
   const isInStock = stock > 0
 
@@ -61,7 +62,7 @@ export default function ProductVariantDetails({
         <ProductGallery
           key={galleryImage || image}
           images={galleryImages}
-          productName={`${product.name} - ${selectedVariant.color}`}
+          productName={getProductImageAlt(product, galleryImage || hasQualityGrades ? selectedVariant : undefined)}
         />
       </div>
 
@@ -89,14 +90,14 @@ export default function ProductVariantDetails({
               درجه کیفیت محصول: <span aria-live='polite'>{selectedGrade}</span>
             </legend>
             <div className='flex flex-wrap gap-2'>
-              {gradeLabels.map((label, index) => {
+              {selections.map(({ label }, index) => {
                 const isSelected = selectedVariantIndex === index
 
                 return (
                   <button
                     key={`${label}-${index}`}
                     type='button'
-                    onClick={() => setSelectedVariantIndex(index)}
+                    onClick={() => selectVariant(index)}
                     aria-pressed={isSelected}
                     className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-sm font-medium text-slate-900 focus-visible:outline-slate-900 ${isSelected ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-white hover:border-slate-500'}`}
                   >
@@ -115,7 +116,7 @@ export default function ProductVariantDetails({
                 <button
                   key={`${variant.color}-${index}`}
                   type='button'
-                  onClick={() => setSelectedVariantIndex(index)}
+                  onClick={() => selectVariant(index)}
                   aria-pressed={selectedVariantIndex === index}
                   aria-label={variant.color}
                   title={variant.color}

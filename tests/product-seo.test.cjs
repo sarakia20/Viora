@@ -36,6 +36,7 @@ function loadPage(value = product, error, relatedProducts = []) {
     react: { ...React, cache: fn => fn },
     '@/lib/product-seo': seo,
     '@/lib/public-seo': load('lib/public-seo.ts'),
+    '@/lib/product-variant': load('lib/product-variant.ts'),
     '@/lib/site-url': load('lib/site-url.ts'),
     '@/lib/category-config': load('lib/category-config.ts'),
     '@/lib/actions/product.actions': {
@@ -76,7 +77,7 @@ test('offers use real valid prices and stock; no ratings inferred from counters'
   for (const price of [NaN, Infinity, -1, 0, 0.1, 12500.5, Number.MAX_VALUE, undefined]) {
     assert.ok(!('offers' in seo.getProductJsonLd({ ...product, price })))
   }
-  assert.ok(!('offers' in seo.getProductJsonLd({ ...product, countInStock: 0 })), 'hidden base price is not advertised')
+  assert.equal(seo.getProductJsonLd({ ...product, countInStock: 0 }).offers[0].availability, 'https://schema.org/OutOfStock')
   assert.equal(seo.getProductJsonLd({ ...product, isPublished: false }), null)
 })
 
@@ -87,11 +88,25 @@ test('variant offers use variant price and stock without falling back to the bas
     { color: 'بدون قیمت معتبر', image: '', price: NaN, countInStock: 3 },
   ]
   const schema = seo.getProductJsonLd({ ...product, price: 999999, variants })
-  assert.deepEqual(schema.offers.map(offer => offer.price), [10000, 20000])
-  assert.deepEqual(schema.offers.map(offer => offer.availability), ['https://schema.org/OutOfStock', 'https://schema.org/InStock'])
-  assert.equal(schema.offers[0].name, 'کروم')
-  assert.ok(schema.image.includes('https://viora-store.ir/black.webp'))
-  assert.ok(!('offers' in seo.getProductJsonLd({ ...product, variants: [variants[2]] })))
+  assert.equal(schema['@type'], 'ProductGroup')
+  assert.equal(schema.productGroupID, product.slug)
+  assert.deepEqual(schema.variesBy, ['https://schema.org/color'])
+  const [chrome, black, inquiry] = schema.hasVariant
+  assert.equal(chrome.color, 'کروم')
+  assert.equal(chrome.offers[0].price, 10000)
+  assert.equal(chrome.offers[0].availability, 'https://schema.org/OutOfStock')
+  assert.equal(black.offers[0].price, 20000)
+  assert.deepEqual(black.image, ['https://viora-store.ir/black.webp'])
+  assert.equal(new URL(black.url).searchParams.get('color'), 'مشکی')
+  assert.equal(black.offers[0].url, black.url)
+  assert.equal(black.isVariantOf['@id'], schema['@id'])
+  assert.equal(new Set(schema.hasVariant.map(item => item['@id'])).size, variants.length)
+  assert.ok(!('offers' in inquiry))
+  assert.ok(!('image' in inquiry))
+  assert.ok(!('offers' in schema))
+  assert.ok(!('sku' in black) && !('gtin' in black) && !('mpn' in black))
+  const changed = seo.getProductJsonLd({ ...product, variants: [variants[1], variants[0]] })
+  assert.equal(changed.hasVariant[0]['@id'], black['@id'])
 })
 
 test('image URLs omit empty and unsafe values, preserve variant fallback and deduplicate', () => {
@@ -176,4 +191,39 @@ test('public product and related queries require isPublished and exclude the cur
   await actions.getRelatedProductsByCategory({ category: 'شیرآلات', productId: 'current', page: 1 })
   assert.equal(relatedFilter.isPublished, true)
   assert.equal(relatedFilter._id.$ne, 'current')
+})
+
+test('grade selection is separate from color and keeps shared availability and actual regular price', async () => {
+  const variants = [
+    { color: 'درجه ۱', price: 1200, image: '/front.webp', usesProductStock: true, countInStock: 0 },
+    { color: 'درجه کیفیت ۲', price: 1000, listPrice: 1500, image: '', usesProductStock: true, countInStock: 0 },
+  ]
+  const graded = { ...product, variants, countInStock: 4, subCategory: 'شیر آشپزخانه' }
+  const request = { ...props(), searchParams: Promise.resolve({ grade: '۲' }) }
+  const page = loadPage(graded)
+  const tree = nodes(await page.default(request))
+  const graphic = tree.find(node => node.props?.initialVariantIndex !== undefined)
+  assert.equal(graphic.props.initialVariantIndex, 1)
+  const [schema, crumbs] = tree.filter(node => node.type === 'script')
+    .map(node => JSON.parse(node.props.dangerouslySetInnerHTML.__html))
+  assert.equal(schema['@type'], 'ProductGroup')
+  assert.ok(!('variesBy' in schema))
+  const selected = schema.hasVariant[0]
+  assert.equal(selected.additionalProperty.value, 'درجه ۲')
+  assert.ok(!('color' in selected) && !('size' in selected))
+  assert.equal(new URL(selected.url).searchParams.get('grade'), '2')
+  assert.equal(selected.offers[0].availability, 'https://schema.org/InStock')
+  assert.equal(selected.offers[0].price, 10000)
+  assert.equal(selected.offers[0].priceSpecification.price, 15000)
+  assert.equal(selected.offers[0].priceSpecification.priceType, 'https://schema.org/StrikethroughPrice')
+  assert.equal((await page.generateMetadata(request)).alternates.canonical, schema.url)
+  const nav = tree.find(node => node.type === 'nav')
+  const hrefs = nodes(nav).filter(node => node.props?.href).map(node => new URL(node.props.href, schema.url).href)
+  assert.deepEqual(hrefs, crumbs.itemListElement.slice(0, -1).map(crumb => crumb.item))
+  for (const query of [{ grade: '4' }, { grade: ['1', '2'] }, { color: 'درجه ۱' }, { grade: '2', color: 'قرمز' }]) {
+    const invalid = { ...props(), searchParams: Promise.resolve(query) }
+    assert.equal((await page.generateMetadata(invalid)).robots.index, false)
+    assert.equal(nodes(await page.default(invalid)).find(node => node.props?.initialVariantIndex !== undefined)
+      .props.initialVariantIndex, 0)
+  }
 })

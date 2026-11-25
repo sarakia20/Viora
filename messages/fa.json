@@ -65,6 +65,7 @@
     "List price": "قیمت اصلی",
     "Off": "تخفیف",
     "In Stock": "موجود",
+    "Only X left in stock - order soon": "فقط {count, number} عدد در انبار باقی مانده است",
     "Out of Stock": "ناموجود",
     "Add to Cart": "افزودن به سبد خرید",
     "Quantity": "تعداد",

@@ -22,6 +22,9 @@ test('production probes literal paths and pre-release Mongo checks resolve verif
   assert.equal(findRenderedProduct(html, product.slug).variants[0].image, raw)
   const item = { ...product, references, schemaImages: [raw], ogImages: [raw] }
   assert.ok(buildImageIndex([item], origin, 'live').images.has(origin + raw))
+  const staging = 'https://staging.example.test'
+  assert.ok(buildImageIndex([{ ...item, schemaImages: [origin + raw] }], staging, 'live')
+    .images.has(staging + raw))
   assert.ok(buildImageIndex([item], origin, 'mongo').images.has(origin + '/images/alvand-chrome-kitchen-faucet.webp'))
 })
 

@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import Link from 'next/link'
 import ProductInformation from '@/components/shared/product/product-information'
 import AddToCart from '@/components/shared/product/add-to-cart'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,8 +21,9 @@ import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
 import { getCategoryLandingPath } from '@/lib/category-config'
-import { publicMetadata } from '@/lib/public-seo'
-import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
+import { parsePage, publicMetadata, type QueryParams } from '@/lib/public-seo'
+import { getProductImageAlt, getRequestedVariantIndex } from '@/lib/product-variant'
+import { getAbsoluteUrl } from '@/lib/site-url'
 import { notFound } from 'next/navigation'
 import { getProductDescription, getProductImageUrls, getProductJsonLd, getProductPath } from '@/lib/product-seo'
 
@@ -49,9 +51,12 @@ function truncateSeoDescription(value: string, maxLength = 160) {
   return `${result.replace(/[،؛:,.!?؟]+$/u, '')}…`
 }
 
-export async function generateMetadata(props: {
+type ProductPageProps = {
   params: Promise<{ slug: string }>
-}) {
+  searchParams: Promise<QueryParams>
+}
+
+export async function generateMetadata(props: ProductPageProps) {
   const params = await props.params
   const product = await getPublicProductOrNotFound(params.slug)
 
@@ -63,77 +68,56 @@ export async function generateMetadata(props: {
     : recordedDescription
   const summary = !facts || facts.startsWith(model) ? facts || model : `${model}؛ ${facts}`
   const description = truncateSeoDescription(summary)
-  const images = getProductImageUrls(product)
+  const query = await props.searchParams
+  const requestedIndex = getRequestedVariantIndex(product, query)
+  const hasSelection = query.color !== undefined || query.grade !== undefined
+  const legacyColor = query.grade === undefined && typeof query.color === 'string' &&
+    (!query.color || product.colors.includes(query.color))
+  const index = !hasSelection || (product.variants?.length ? requestedIndex !== undefined : legacyColor)
+  const images = getProductImageUrls(product, requestedIndex)
   return publicMetadata({
     title, description, path: getProductPath(product.slug),
     images: images.length ? images : undefined,
+    index,
   })
 }
 
-export default async function ProductDetails(props: {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<{ page: string; color: string; size: string }>
-}) {
-  const searchParams = await props.searchParams
-  const { page, color, size } = searchParams
-
-  const params = await props.params
-  const { slug } = params
-
+export default async function ProductDetails(props: ProductPageProps) {
+  const [searchParams, { slug }] = await Promise.all([props.searchParams, props.params])
   const product = await getPublicProductOrNotFound(slug)
 
-  const canonical = getAbsoluteUrl(getProductPath(product.slug))
-  const productJsonLd = getProductJsonLd(product)
-  const categoryParams = new URLSearchParams({ category: product.category })
-  const categoryLandingPath = getCategoryLandingPath(product.category)
-  const subCategory = product.subCategory?.trim()
-  const breadcrumbItems = [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: 'خانه',
-      item: SITE_URL,
-    },
-    {
-      '@type': 'ListItem',
-      position: 2,
-      name: product.category,
-      item: getAbsoluteUrl(
-        categoryLandingPath ?? `/search?${categoryParams.toString()}`
-      ),
-    },
-  ]
-
-  if (subCategory) {
-    const subCategoryParams = new URLSearchParams({
-      category: product.category,
-      subCategory,
+  const selectedIndex = getRequestedVariantIndex(product, searchParams) ?? 0
+  const size = typeof searchParams.size === 'string' && product.sizes.includes(searchParams.size)
+    ? searchParams.size : product.sizes[0] || ''
+  const color = typeof searchParams.color === 'string' && product.colors.includes(searchParams.color)
+    ? searchParams.color : product.colors[0] || ''
+  const productJsonLd = getProductJsonLd(product, selectedIndex)
+  const breadcrumbs = [{ name: 'خانه', href: '/' }]
+  if (product.category?.trim() && product.category !== 'all') {
+    const selection = new URLSearchParams({ category: product.category })
+    breadcrumbs.push({
+      name: product.category.trim(),
+      href: getCategoryLandingPath(product.category) ?? `/search?${selection}`,
     })
-    breadcrumbItems.push({
-      '@type': 'ListItem',
-      position: breadcrumbItems.length + 1,
-      name: subCategory,
-      item: getAbsoluteUrl(`/search?${subCategoryParams.toString()}`),
-    })
+    if (product.subCategory?.trim() && product.subCategory !== 'all') {
+      selection.set('subCategory', product.subCategory)
+      breadcrumbs.push({ name: product.subCategory.trim(), href: `/search?${selection}` })
+    }
   }
-
-  breadcrumbItems.push({
-    '@type': 'ListItem',
-    position: breadcrumbItems.length + 1,
-    name: product.name,
-    item: canonical,
-  })
+  breadcrumbs.push({ name: product.name, href: getProductPath(product.slug) })
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbItems,
+    itemListElement: breadcrumbs.map(({ name, href }, index) => ({
+      '@type': 'ListItem', position: index + 1, name, item: getAbsoluteUrl(href),
+    })),
   }
 
   const relatedProducts = await getRelatedProductsByCategory({
     category: product.category,
     productId: product._id.toString(),
-    page: Number(page || '1'),
+    page: parsePage(searchParams.page) ?? 1,
   })
 
   const t = await getTranslations()
@@ -161,17 +145,29 @@ export default async function ProductDetails(props: {
         }}
       />
 
+      <nav aria-label='مسیر راهنما' className='mb-3 flex flex-wrap gap-2 text-sm text-muted-foreground'>
+        {breadcrumbs.map(({ href, name }, index) => (
+          <span key={href} className='inline-flex items-center gap-2'>
+            {index > 0 && <span aria-hidden='true'>/</span>}
+            {index === breadcrumbs.length - 1
+              ? <span aria-current='page'>{name}</span>
+              : <Link href={href}>{name}</Link>}
+          </span>
+        ))}
+      </nav>
       <section>
         {hasVariants ? (
           <ProductVariantDetails
+            key={selectedIndex + ':' + size}
             product={product}
-            initialSize={size || product.sizes[0] || ''}
+            initialSize={size}
+            initialVariantIndex={selectedIndex}
             highlights={highlights}
           />
         ) : (
         <div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(260px,0.8fr)] lg:gap-8'>
           <div className='min-w-0'>
-            <ProductGallery images={product.images} productName={product.name} />
+            <ProductGallery images={product.images} productName={getProductImageAlt(product)} />
           </div>
 
           <div className='flex min-w-0 w-full flex-col gap-6 lg:py-4'>
@@ -196,8 +192,8 @@ export default async function ProductDetails(props: {
               <div>
                 <SelectVariant
                   product={product}
-                  size={size || product.sizes[0]}
-                  color={color || product.colors[0]}
+                  size={size}
+                  color={color}
                 />
               </div>
             )}
@@ -207,9 +203,7 @@ export default async function ProductDetails(props: {
           <div className='lg:sticky lg:top-40 lg:self-start'>
             <Card className='rounded-2xl border-slate-200 bg-slate-50/70 shadow-none'>
               <CardContent className='flex flex-col gap-5 p-5 sm:p-6'>
-                {(product.countInStock > 0 || !hasProductPrice(product.price)) && (
-  <ProductPrice detail price={product.price} listPrice={product.listPrice} />
-)}
+                <ProductPrice detail price={product.price} listPrice={product.listPrice} />
 
                 {product.countInStock > 0 && product.countInStock <= 3 && (
                   <div className='text-destructive font-bold'>
@@ -242,8 +236,8 @@ export default async function ProductDetails(props: {
         price: round2(product.price),
         quantity: 1,
         image: product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
-        size: size || product.sizes[0],
-        color: color || product.colors[0],
+        size,
+        color,
       }}
     />
   </div>

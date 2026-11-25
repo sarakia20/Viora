@@ -41,7 +41,10 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
     './product-price': Price, './rating-summary': () => null,
     './color-swatch': load('components/shared/product/color-swatch.tsx'),
   }).default
-  const render = () => { cursor = 0; return nodes(Details({ product, initialSize: 'S' })) }
+  const render = (initialVariantIndex) => {
+    cursor = 0
+    return nodes(Details({ product, initialSize: 'S', initialVariantIndex }))
+  }
   let tree = render()
   assert.equal(tree.filter(n => n.type === 'h1').length, 1)
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/white.webp'])
@@ -73,6 +76,11 @@ test('variant selection keeps gallery, price, stock and exact cart model synchro
   tree = render()
   assert.deepEqual(tree.find(n => n.type === Gallery).props.images, product.images)
   product.variants[2].image = '/bamboo.webp'
+  state.length = 0
+  tree = render(1)
+  assert.equal(tree.find(n => n.type === Cart).props.item.color, 'مشکی')
+  assert.equal(tree.find(n => n.type === Cart).props.item.price, 2400)
+  assert.deepEqual(tree.find(n => n.type === Gallery).props.images, ['/black.webp'])
 })
 
 test('product cards show the same default grade offer as the detail page and add that grade', () => {

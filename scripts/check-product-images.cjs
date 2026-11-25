@@ -91,7 +91,8 @@ async function readLive(origin) {
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const html = await response.text()
       const schema = [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
-        .map((match) => JSON.parse(match[1])).find((item) => item['@type'] === 'Product')
+        .map((match) => JSON.parse(match[1])).find((item) =>
+          item['@type'] === 'Product' || item['@type'] === 'ProductGroup')
       if (!schema) throw new Error('Product JSON-LD missing')
       const slug = decodeURIComponent(pathname.slice('/product/'.length))
       const rendered = findRenderedProduct(html, slug)
@@ -99,7 +100,8 @@ async function readLive(origin) {
         .map((match) => decodeHtml(match[1]))
       return {
         slug, name: schema.name, brand: schema.brand?.name, rendered: Boolean(rendered),
-        schemaImages: [schema.image].flat().filter(Boolean), ogImages,
+        schemaImages: [schema.image, ...(schema.hasVariant ?? []).map((variant) => variant.image)]
+          .flat().filter(Boolean), ogImages,
         references: rendered ? productImageReferences(rendered) : [],
       }
     } catch (error) {
@@ -168,13 +170,16 @@ function buildImageIndex(products, origin, source) {
         if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
           throw new Error('Invalid image URL')
         }
+        const target = url.origin === production && origin !== production ? new URL(origin) : url
+        target.pathname = url.pathname
+        target.search = url.search
         decodeURIComponent(url.pathname)
-        url.hash = ''
+        target.hash = ''
         if (url.pathname === '/images/product-placeholder.svg') {
           invalidReferences.push({ ...usage, issue: 'Placeholder used as a catalog image' })
         }
-        if (!images.has(url.href)) images.set(url.href, [])
-        images.get(url.href).push(usage)
+        if (!images.has(target.href)) images.set(target.href, [])
+        images.get(target.href).push(usage)
       } catch {
         invalidReferences.push({ ...usage, issue: 'Invalid image path' })
       }

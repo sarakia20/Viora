@@ -10,7 +10,7 @@ import ProductPrice from './product-price'
 import ImageHover from './image-hover'
 import AddToCart from './add-to-cart'
 import { getProductPath } from '@/lib/product-seo'
-import { getProductVariant } from '@/lib/product-variant'
+import { getProductImageAlt, getProductVariant } from '@/lib/product-variant'
 import { getProductStock, hasProductPrice, normalizeProduct } from '@/lib/product-display'
 import { PRODUCT_IMAGE_PLACEHOLDER } from '@/lib/store-images'
 import CatalogImage from './product-image'
@@ -42,14 +42,14 @@ const ProductCard = ({
           <ImageHover
             src={product.images[0]}
             hoverSrc={product.images[1]}
-            alt={product.name}
+            alt={getProductImageAlt(product)}
             sizes={imageSizes}
           />
         ) : (
           <div className='relative h-40 sm:h-52'>
             <CatalogImage
               src={product.images[0]}
-              alt={product.name}
+              alt={getProductImageAlt(product)}
               fill
               sizes={imageSizes}
               className='object-contain'

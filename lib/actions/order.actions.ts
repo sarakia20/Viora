@@ -21,6 +21,7 @@ import { calculateTipaxTotals, TIPAX_SHIPPING_METHOD } from '../shipping'
 import { createHash } from 'node:crypto'
 import { isZarinPalPaymentMethod } from '../payment-methods'
 import { getProductStock, hasProductPrice, normalizeProduct } from '../product-display'
+import { getVariantImage } from '../product-variant'
 import { PRODUCT_IMAGE_PLACEHOLDER } from '../store-images'
 
 async function getOrderAccessFilter(orderId: string) {
@@ -133,7 +134,7 @@ const createOrderFromCart = async (
       clientId: item.clientId,
       name: product.name,
       slug: product.slug,
-      image: variant?.image || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
+      image: getVariantImage(product.slug, variant) || product.images[0] || PRODUCT_IMAGE_PLACEHOLDER,
       category: product.category,
       price: round2(price),
       countInStock,
