@@ -8,17 +8,20 @@ import { Button } from '../ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { pageHref } from '@/lib/public-seo'
 
 type PaginationProps = {
   page: number | string
   totalPages: number
   urlParamName?: string
+  path?: string
+  query?: string
 }
 
 const controlClass = 'size-8 shrink-0 rounded-lg border border-slate-200 bg-white text-slate-800 shadow-none hover:bg-slate-50 hover:text-slate-800 focus-visible:ring-slate-600 sm:size-10'
 const disabledClass = 'disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-100'
 
-const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
+const Pagination = ({ page, totalPages, urlParamName, path, query }: PaginationProps) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const lastPage = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1
@@ -27,6 +30,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
     ? Math.min(parsedPage, lastPage)
     : 1
   const getPageHref = (target: number) => {
+    if (path) return pageHref(path, target, new URLSearchParams(query))
     const params = new URLSearchParams(searchParams.toString())
     params.set(urlParamName || 'page', String(target))
     return `${pathname}?${params.toString()}`

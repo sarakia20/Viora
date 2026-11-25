@@ -1,52 +1,45 @@
 import type { MetadataRoute } from 'next'
-import { unstable_cache } from 'next/cache'
 
 import { connectToDatabase } from '@/lib/db'
 import Product from '@/lib/db/models/product.model'
-import { categoryConfig, type CategoryConfig } from '@/lib/category-config'
+import data from '@/lib/data'
+import { categoryConfig, getCategoryLandingPath, type CategoryConfig } from '@/lib/category-config'
+import { pageHref } from '@/lib/public-seo'
 import { getAbsoluteUrl } from '@/lib/site-url'
 
-// Read at runtime: database access may be unavailable during the image build.
 export const dynamic = 'force-dynamic'
 
-// Cache successful queries, not a fallback sitemap with missing products.
-const getPublishedProducts = unstable_cache(
-  async () => {
-    await connectToDatabase()
-    return Product.find({ isPublished: true })
-      .select({ _id: 0, slug: 1, updatedAt: 1, category: 1 })
-      .lean<Array<{ slug: string; updatedAt?: Date; category: string }>>()
-  },
-  ['sitemap-published-products-v2'],
-  { revalidate: 3600 }
-)
+type SitemapProduct = { slug: string; category: string; subCategory?: string }
+
+async function readPublishedProducts(): Promise<SitemapProduct[]> {
+  if (process.env.SKIP_DB === 'true') return data.products.filter((product) => product.isPublished)
+  await connectToDatabase()
+  // Direct database edits must appear too. A projection keeps this uncached read small.
+  return Product.find({ isPublished: true })
+    .select({ _id: 0, slug: 1, category: 1, subCategory: 1 })
+    .lean<SitemapProduct[]>()
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes: MetadataRoute.Sitemap = [
-    '',
-    '/page/about-us',
-  ].map((route) => ({ url: getAbsoluteUrl(route || '/') }))
-
-  let productRoutes: MetadataRoute.Sitemap = []
-  let categoryRoutes: MetadataRoute.Sitemap = []
-
-  try {
-    const products = await getPublishedProducts()
-    const publishedCategories = new Set(products.map((product) => product.category))
-    categoryRoutes = (Object.values(categoryConfig) as CategoryConfig[])
-      .filter((category) => !category.requireProducts ||
-        (category.productCategories ?? [category.productCategory])
-          .some((name) => publishedCategories.has(name)))
-      .map((category) => ({ url: getAbsoluteUrl(`/category/${category.slug}`) }))
-
-    productRoutes = products.map((product) => ({
-      url: getAbsoluteUrl(`/product/${encodeURIComponent(product.slug)}`),
-      ...(product.updatedAt ? { lastModified: product.updatedAt } : {}),
-    }))
-  } catch (error) {
-    // Do not log connection details or return a successful partial sitemap.
-    throw new Error('Failed to load published products for sitemap', { cause: error })
+  const products = await readPublishedProducts()
+  const categories = new Set(products.map((product) => product.category))
+  const paths = new Set(['/', '/page/about-us'])
+  const landings: CategoryConfig[] = Object.values(categoryConfig)
+  for (const category of landings) {
+    if ((category.productCategories ?? [category.productCategory]).some((name) => categories.has(name))) {
+      paths.add('/category/' + category.slug)
+    }
   }
-
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes]
+  for (const { slug, category, subCategory } of products) {
+    // updatedAt includes operational mutations such as stock and sales counters.
+    if (slug?.trim() && slug !== '.' && slug !== '..') paths.add('/product/' + encodeURIComponent(slug))
+    if (!category?.trim() || category === 'all') continue
+    const selection = new URLSearchParams({ category })
+    if (!getCategoryLandingPath(category)) paths.add(pageHref('/search', 1, selection))
+    if (subCategory?.trim() && subCategory !== 'all') {
+      selection.set('subCategory', subCategory)
+      paths.add(pageHref('/search', 1, selection))
+    }
+  }
+  return [...paths].map((path) => ({ url: getAbsoluteUrl(path) }))
 }

@@ -35,6 +35,7 @@ function loadPage(value = product, error, relatedProducts = []) {
   Object.assign(mocks, {
     react: { ...React, cache: fn => fn },
     '@/lib/product-seo': seo,
+    '@/lib/public-seo': load('lib/public-seo.ts'),
     '@/lib/site-url': load('lib/site-url.ts'),
     '@/lib/category-config': load('lib/category-config.ts'),
     '@/lib/actions/product.actions': {
@@ -51,11 +52,18 @@ const props = () => ({ params: Promise.resolve({ slug: product.slug }), searchPa
 
 test('metadata preserves short real descriptions and falls back only to recorded facts', async () => {
   const metadata = await loadPage().generateMetadata(props())
-  assert.equal(metadata.description, product.description)
-  assert.ok(metadata.title.includes(product.name))
+  assert.equal(metadata.description, [product.name, product.description].join('؛ '))
+  assert.ok(metadata.title.absolute.includes(product.name))
   assert.equal(metadata.alternates.canonical, 'https://viora-store.ir/product/' + encodeURIComponent(product.slug))
   const fallback = await loadPage({ ...product, description: '' }).generateMetadata(props())
   assert.equal(fallback.description, [product.name, product.brand, product.category].join('؛ '))
+  assert.equal(metadata.openGraph.url, metadata.alternates.canonical)
+  assert.equal(metadata.openGraph.locale, 'fa_IR')
+  assert.equal(metadata.twitter.card, 'summary_large_image')
+  const model = await loadPage({ ...product, name: 'مدل دیگر' }).generateMetadata(props())
+  assert.notEqual(model.description, metadata.description)
+  const price = await loadPage({ ...product, description: 'قیمت ۱٬۲۰۰ تومان' }).generateMetadata(props())
+  assert.equal(price.description, fallback.description)
 })
 
 test('offers use real valid prices and stock; no ratings inferred from counters', () => {

@@ -294,6 +294,21 @@ export async function getAllCategories() {
   return Array.from(new Set([...categories, ...requiredCategories]))
 }
 
+export async function hasPublishedCategorySelection(category: string, subCategory: string) {
+  const selection = {
+    isPublished: true,
+    ...(category !== 'all' ? { category } : {}),
+    ...(subCategory !== 'all' ? { subCategory } : {}),
+  }
+  if (isSkipDb) {
+    return mockProducts.some((product) => product.isPublished &&
+      (category === 'all' || product.category === category) &&
+      (subCategory === 'all' || product.subCategory === subCategory))
+  }
+  await connectToDatabase()
+  return Boolean(await Product.exists(selection))
+}
+
 export async function getBrandsByCategory({
   category,
   subCategory,

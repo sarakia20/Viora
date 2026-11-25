@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import data from '@/lib/data'
 import { connectToDatabase } from '@/lib/db'
 import WebPage, { IWebPage } from '@/lib/db/models/web-page.model'
 import { formatError } from '@/lib/utils'
@@ -76,8 +77,10 @@ export async function getWebPageById(webPageId: string) {
 
 // GET ONE PAGE BY SLUG
 export async function getWebPageBySlug(slug: string) {
+  if (process.env.SKIP_DB === 'true') {
+    return data.webPages.find((page) => page.slug === slug && page.isPublished) ?? null
+  }
   await connectToDatabase()
   const webPage = await WebPage.findOne({ slug, isPublished: true })
-  if (!webPage) throw new Error('WebPage not found')
-  return JSON.parse(JSON.stringify(webPage)) as IWebPage
+  return webPage ? JSON.parse(JSON.stringify(webPage)) as IWebPage : null
 }

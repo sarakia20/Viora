@@ -20,11 +20,10 @@ import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
 import { getCategoryLandingPath } from '@/lib/category-config'
+import { publicMetadata } from '@/lib/public-seo'
 import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
 import { notFound } from 'next/navigation'
 import { getProductDescription, getProductImageUrls, getProductJsonLd, getProductPath } from '@/lib/product-seo'
-
-const SITE_NAME = 'فروشگاه ویورا'
 
 const getPublicProductOrNotFound = cache(async (slug: string) => {
   try {
@@ -56,32 +55,19 @@ export async function generateMetadata(props: {
   const params = await props.params
   const product = await getPublicProductOrNotFound(params.slug)
 
-  const title = `خرید ${product.name}`
-  const openGraphTitle = `${title} | ${SITE_NAME}`
-  const description = truncateSeoDescription(getProductDescription(product))
-  const canonical = getAbsoluteUrl(getProductPath(product.slug))
-  const imageUrls = getProductImageUrls(product)
-  const images = imageUrls.length ? imageUrls : undefined
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      title: openGraphTitle,
-      description,
-      url: canonical,
-      siteName: SITE_NAME,
-      type: 'website',
-      images,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: openGraphTitle,
-      description,
-      images,
-    },
-  }
+  const title = `خرید ${product.name} | ویورا`
+  const model = product.name.trim().replace(/\s+/g, ' ')
+  const recordedDescription = getProductDescription(product)
+  const facts = /(?:[\d۰-۹٠-٩][\d۰-۹٠-٩,.٬،\s]*\s*(?:تومان|ریال|﷼))/.test(recordedDescription)
+    ? [product.brand, product.category].filter(Boolean).join('؛ ')
+    : recordedDescription
+  const summary = !facts || facts.startsWith(model) ? facts || model : `${model}؛ ${facts}`
+  const description = truncateSeoDescription(summary)
+  const images = getProductImageUrls(product)
+  return publicMetadata({
+    title, description, path: getProductPath(product.slug),
+    images: images.length ? images : undefined,
+  })
 }
 
 export default async function ProductDetails(props: {

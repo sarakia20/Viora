@@ -7,16 +7,14 @@ import { getProductsByTag } from '@/lib/actions/product.actions'
 import { getSetting } from '@/lib/actions/setting.actions'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { getAbsoluteUrl } from '@/lib/site-url'
+import { publicMetadata } from '@/lib/public-seo'
 
-export const metadata: Metadata = {
-  title: { absolute: 'فروشگاه ویورا | خرید شیرآلات، سینک، هود و تجهیزات ساختمانی' },
+export const metadata: Metadata = publicMetadata({
+  title: 'فروشگاه ویورا | خرید شیرآلات، سینک، هود و تجهیزات ساختمانی',
   description:
     'خرید انواع شیرآلات، سینک ظرفشویی، هود، گاز، فلاش تانک و تجهیزات سرویس بهداشتی از فروشگاه ویورا. مشاهده مدل‌ها، مشخصات، قیمت و موجودی محصولات.',
-  alternates: {
-    canonical: getAbsoluteUrl('/'),
-  },
-}
+  path: '/',
+})
 
 export default async function HomePage() {
   const t = await getTranslations('Home')
@@ -28,10 +26,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomeCarousel items={carousels} />
       <h1 className='sr-only'>
           فروشگاه ویورا؛ خرید تجهیزات آشپزخانه، ساختمانی و سرویس بهداشتی
       </h1>
+      <HomeCarousel items={carousels} />
       <div className='space-y-3 bg-border px-3 pb-3 sm:px-4 sm:pb-4 md:space-y-4'>
         <div className={`px-1 sm:px-0 md:px-4 lg:px-6 ${carousels.length ? 'pt-8 sm:pt-9 lg:pt-10' : 'pt-3 sm:pt-4'}`}>
           <HomeCard />

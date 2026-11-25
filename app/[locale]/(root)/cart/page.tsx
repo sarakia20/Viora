@@ -35,6 +35,7 @@ export default function CartPage() {
   const t = useTranslations()
   return (
     <div>
+      <h1 className='sr-only'>سبد خرید</h1>
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-4'>
         {items.length === 0 ? (
             <Card className='col-span-4 rounded-xl'>

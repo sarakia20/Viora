@@ -68,9 +68,9 @@ export default function Footer() {
           <div className='mb-8 pt-10 text-center'>
             <div className='relative flex flex-wrap items-center justify-center gap-x-6 gap-y-4'>
               <div className='flex items-center justify-center gap-5 border-e border-slate-200 py-2 pe-6 text-slate-400'>
-                <h3 className='absolute top-[-2.5rem] whitespace-nowrap text-base font-bold text-slate-800'>
+                <p className='absolute top-[-2.5rem] whitespace-nowrap text-base font-bold text-slate-800'>
                   همراه ما باشید
-                </h3>
+                </p>
 
                 <Link
                   href='https://t.me/Viora_RM'

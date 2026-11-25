@@ -9,21 +9,10 @@ import ProductCard from '@/components/shared/product/product-card'
 import { getCategoryConfig } from '@/lib/category-config'
 import { getAllProducts } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
+import { normalizedPageHref, pageHref, parsePage, publicMetadata, type QueryParams } from '@/lib/public-seo'
 import { SITE_URL } from '@/lib/site-url'
 
 import CategoryGuidePreview from './category-guide-preview'
-
-const SITE_NAME = 'ویورا'
-
-function getPageNumber(value: string | string[] | undefined) {
-  if (value === undefined) return 1
-  if (Array.isArray(value) || !/^\d+$/.test(value)) notFound()
-  const page = Number(value)
-  if (!Number.isSafeInteger(page) || page < 1) notFound()
-  return page
-}
-
-type CategorySearchParams = Record<string, string | string[] | undefined>
 
 // Metadata and the page share the same published-product query per request.
 const getCategoryPage = cache(async (slug: string, page: number) => {
@@ -45,69 +34,41 @@ const getCategoryPage = cache(async (slug: string, page: number) => {
   return { category, data }
 })
 
-function normalizePageUrl(slug: string, page: number, params: CategorySearchParams) {
-  if (params.page === undefined || (page > 1 && params.page === String(page))) return
-  const query = new URLSearchParams()
-  for (const [key, value] of Object.entries(params)) {
-    if (key === 'page' || value === undefined) continue
-    for (const item of Array.isArray(value) ? value : [value]) query.append(key, item)
-  }
-  if (page > 1) query.set('page', String(page))
-  permanentRedirect(`/category/${slug}${query.size ? `?${query}` : ''}`)
-}
-
-function getCanonical(slug: string, page: number) {
-  const url = new URL(`/category/${slug}`, SITE_URL)
-
-  if (page > 1) {
-    url.searchParams.set('page', String(page))
-  }
-
-  return url.toString()
-}
-
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<CategorySearchParams>
+  searchParams: Promise<QueryParams>
 }): Promise<Metadata> {
   const [{ slug }, searchParams] = await Promise.all([
     props.params,
     props.searchParams,
   ])
-  const page = getPageNumber(searchParams.page)
-  const { category } = await getCategoryPage(slug, page)
-  normalizePageUrl(slug, page, searchParams)
-  const canonical = getCanonical(category.slug, page)
+  const page = parsePage(searchParams.page)
+  if (page === null) notFound()
+  const { category, data } = await getCategoryPage(slug, page)
+  const redirect = normalizedPageHref('/category/' + category.slug, page, searchParams)
+  if (redirect) permanentRedirect(redirect)
   const title =
     page > 1 ? `${category.title} - صفحه ${page}` : category.title
 
-  return {
-    title: { absolute: title },
-    description: category.description,
-    alternates: { canonical },
-    robots: { index: true, follow: true },
-    openGraph: {
-      title,
-      description: category.description,
-      url: canonical,
-      siteName: SITE_NAME,
-      type: 'website',
-      locale: 'fa_IR',
-    },
-  }
+  return publicMetadata({
+    title, description: category.description, path: pageHref('/category/' + category.slug, page),
+    index: data.totalProducts > 0,
+  })
 }
 
 export default async function CategoryPage(props: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<CategorySearchParams>
+  searchParams: Promise<QueryParams>
 }) {
   const [{ slug }, searchParams] = await Promise.all([
     props.params,
     props.searchParams,
   ])
-  const page = getPageNumber(searchParams.page)
+  const page = parsePage(searchParams.page)
+  if (page === null) notFound()
   const { category, data } = await getCategoryPage(slug, page)
-  normalizePageUrl(slug, page, searchParams)
+  const redirect = normalizedPageHref('/category/' + category.slug, page, searchParams)
+  if (redirect) permanentRedirect(redirect)
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -123,7 +84,7 @@ export default async function CategoryPage(props: {
         '@type': 'ListItem',
         position: 2,
         name: category.productCategory,
-        item: getCanonical(category.slug, 1),
+        item: new URL('/category/' + category.slug, SITE_URL).toString(),
       },
     ],
   }
@@ -174,7 +135,7 @@ export default async function CategoryPage(props: {
         )}
 
         {data.totalPages > 1 && (
-          <Pagination page={page} totalPages={data.totalPages} />
+          <Pagination page={page} totalPages={data.totalPages} path={'/category/' + category.slug} />
         )}
       </section>
 

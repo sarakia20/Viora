@@ -1,5 +1,6 @@
 'use client'
 
+import { signInCallback } from '@/lib/sign-in-callback'
 import { redirect, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,7 +33,7 @@ export default function CredentialsSignInForm() {
   } = useSettingStore()
 
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl = signInCallback(searchParams.get('callbackUrl'))
 
   const form = useForm<IUserSignIn>({
     resolver: zodResolver(UserSignInSchema),

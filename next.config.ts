@@ -6,6 +6,8 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Resolve canonical and robots metadata before sending the HTML head.
+  htmlLimitedBots: /.*/,
 
   images: {
     formats: ['image/avif', 'image/webp'],

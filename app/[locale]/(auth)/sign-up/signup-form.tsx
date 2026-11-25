@@ -1,5 +1,6 @@
 'use client'
 
+import { signInCallback } from '@/lib/sign-in-callback'
 import { useState } from 'react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -33,7 +34,7 @@ const signUpDefaultValues = {
 
 export default function CredentialsSignUpForm() {
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl = signInCallback(searchParams.get('callbackUrl'))
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -211,7 +212,7 @@ export default function CredentialsSignUpForm() {
 
           <div className='text-sm text-center'>
             قبلاً حساب کاربری ساخته‌اید؟{' '}
-            <Link className='link' href={`/sign-in?callbackUrl=${callbackUrl}`}>
+            <Link className='link' href={`/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
               ورود
             </Link>
           </div>

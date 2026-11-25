@@ -1,3 +1,12 @@
+import { publicMetadata } from '@/lib/public-seo'
+
+export const metadata = publicMetadata({
+  title: 'درباره فروشگاه ویورا | تجهیزات ساختمان و آشپزخانه',
+  description: 'با فروشگاه ویورا، حوزه فعالیت در تجهیزات ساختمان، آشپزخانه و سرویس بهداشتی و راه‌های تماس و مراجعه حضوری در شهرری آشنا شوید.',
+  path: '/page/about-us',
+  images: ['/images/viora-logo.png'],
+})
+
 export default function AboutPage() {
   return (
     <main className="mx-auto max-w-5xl px-3 py-6 text-right sm:px-4 sm:py-10">

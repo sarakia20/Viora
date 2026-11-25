@@ -1,4 +1,5 @@
-import { Metadata } from 'next'
+import { signInCallback } from '@/lib/sign-in-callback'
+import { publicMetadata } from '@/lib/public-seo'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import SeparatorWithOr from '@/components/shared/separator-or'
@@ -12,9 +13,12 @@ import CredentialsSignInForm from './credentials-signin-form'
 import { Button } from '@/components/ui/button'
 import { getSetting } from '@/lib/actions/setting.actions'
 
-export const metadata: Metadata = {
-  title: 'ورود',
-}
+export const metadata = publicMetadata({
+  title: 'ورود به حساب کاربری ویورا',
+  description: 'برای مشاهده حساب کاربری و پیگیری سفارش‌های خود وارد فروشگاه ویورا شوید.',
+  path: '/sign-in',
+  index: false,
+})
 
 export default async function SignInPage(props: {
   searchParams: Promise<{
@@ -24,7 +28,7 @@ export default async function SignInPage(props: {
   const searchParams = await props.searchParams
   const { site } = await getSetting()
 
-  const { callbackUrl = '/' } = searchParams
+  const callbackUrl = signInCallback(searchParams.callbackUrl)
 
   const session = await auth()
   if (session) {
@@ -35,7 +39,7 @@ export default async function SignInPage(props: {
     <div className='w-full'>
       <Card>
         <CardHeader className='p-4 sm:p-6'>
-          <CardTitle className='text-xl sm:text-2xl'>ورود به حساب کاربری</CardTitle>
+          <CardTitle className='text-xl sm:text-2xl'><h1>ورود به حساب کاربری</h1></CardTitle>
         </CardHeader>
         <CardContent className='p-4 pt-0 sm:p-6 sm:pt-0'>
           <div>

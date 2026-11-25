@@ -1,6 +1,10 @@
 
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { cache } from 'react'
+import { isTrackingParam, normalizedPageHref, pageHref, parsePage, publicMetadata, type QueryParams } from '@/lib/public-seo'
+import { categoryGroups } from '@/lib/store-category-menu'
 
 import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
@@ -10,6 +14,7 @@ import {
   getAllProducts,
   getAllTags,
   getBrandsByCategory,
+  hasPublishedCategorySelection,
 } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
 import { getCategoryLandingPath } from '@/lib/category-config'
@@ -151,10 +156,6 @@ function FilterBox({
   )
 }
 
-type SearchMetadataParams = Record<string, string | string[] | undefined>
-
-const SITE_NAME = 'ویورا'
-
 const categorySeo: Record<string, { title: string; description: string }> = {
   سینک: {
     title: 'خرید سینک ظرفشویی | قیمت و انواع سینک آشپزخانه | ویورا',
@@ -206,98 +207,91 @@ const subCategorySeo: Record<string, { title: string; description: string }> = {
   },
 }
 
-function getSingleParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value
+function selectionValue(value: QueryParams[string]) {
+  if (Array.isArray(value)) notFound()
+  return value?.trim() ? value : 'all'
 }
 
-export async function generateMetadata(props: {
-  searchParams: Promise<SearchMetadataParams>
-}): Promise<Metadata> {
-  const searchParams = await props.searchParams
-  const category = getSingleParam(searchParams.category)?.trim()
-  const subCategory = getSingleParam(searchParams.subCategory)?.trim()
-  const hasCategory = Boolean(category && category !== 'all')
-  const hasSubCategory = Boolean(subCategory && subCategory !== 'all')
-  const seo = hasSubCategory
-    ? subCategorySeo[subCategory!] ?? {
-        title: `خرید ${subCategory} | قیمت و مدل‌ها | ویورا`,
-        description: `انواع ${subCategory} را با مشاهده مدل‌ها، مشخصات و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.`,
-      }
-    : hasCategory
-      ? categorySeo[category!] ?? {
-          title: `خرید ${category} | قیمت و مدل‌ها | ویورا`,
-          description: `انواع ${category} را با مشاهده مدل‌ها، مشخصات و قیمت در فروشگاه ویورا بررسی و انتخاب کنید.`,
-        }
-      : {
-          title: 'جستجوی محصولات | ویورا',
-          description: 'محصولات فروشگاه ویورا را جستجو و بر اساس نیاز خود مقایسه کنید.',
-        }
+const filterKeys = ['q', 'brand', 'tag', 'price', 'rating', 'sort'] as const
+const defaultFilters = { q: 'all', brand: 'all', tag: 'all', price: 'all', rating: 'all', sort: 'best-selling' }
 
-  const canonicalParams = new URLSearchParams()
-  if (hasCategory) canonicalParams.set('category', category!)
-  if (hasSubCategory) canonicalParams.set('subCategory', subCategory!)
-  const query = canonicalParams.toString()
-  const searchCanonical = new URL(
-    `/search${query ? `?${query}` : ''}`,
-    SITE_URL
-  ).toString()
-  const allowedParams = new Set(['category', 'subCategory'])
-  const hasExtraFilters = Object.keys(searchParams).some(
-    (key) => !allowedParams.has(key)
-  )
-  const landingPath = category ? getCategoryLandingPath(category) : undefined
-  const isCategoryOnlyLandingSearch = Boolean(
-    landingPath && hasCategory && !hasSubCategory && !hasExtraFilters
-  )
-  const canonical = isCategoryOnlyLandingSearch
-    ? new URL(landingPath!, SITE_URL).toString()
-    : searchCanonical
-  const indexable = hasCategory && !hasExtraFilters && !isCategoryOnlyLandingSearch
-
-  return {
-    title: { absolute: seo.title },
-    description: seo.description,
-    alternates: { canonical },
-    robots: { index: indexable, follow: true },
-    openGraph: {
-      title: seo.title,
-      description: seo.description,
-      url: canonical,
-      siteName: SITE_NAME,
-      type: 'website',
-      locale: 'fa_IR',
-    },
+function isConfiguredSelection(category: string, subCategory: string) {
+  const groups = Object.entries(categoryGroups)
+  if (subCategory === 'all') {
+    return Boolean(getCategoryLandingPath(category)) || groups.some(([name, items]) =>
+      name === category || items.some((item) => item.title === category))
   }
+  return groups.some(([name, items]) => items.some((item) =>
+    (item.title === category && item.children?.includes(subCategory)) ||
+    (name === category && item.title === subCategory)))
 }
 
-export default async function SearchPage(props: {
-  searchParams: Promise<{
-    q: string
-    category: string
-    subCategory: string
-    brand: string
-    tag: string
-    price: string
-    rating: string
-    sort: string
-    page: string
-  }>
-}) {
-  const searchParams = await props.searchParams
+const getSearchPage = cache(async (queryKey: string) => {
+  const searchParams: QueryParams = JSON.parse(queryKey)
+  const page = parsePage(searchParams.page)
+  if (page === null) notFound()
+  const category = selectionValue(searchParams.category)
+  const subCategory = selectionValue(searchParams.subCategory)
+  const filters = { ...defaultFilters }
+  for (const key of filterKeys) {
+    const value = searchParams[key]
+    if (typeof value === 'string' && value.trim()) filters[key] = value
+  }
+  // Malformed filter ranges must not become NaN predicates in MongoDB.
+  if (filters.price !== 'all' && (!/^\d+(?:\.\d+)?-\d+(?:\.\d+)?$/.test(filters.price) ||
+    !filters.price.split('-').map(Number).every(Number.isFinite))) filters.price = 'all'
+  if (filters.rating !== 'all' && !/^[1-5]$/.test(filters.rating)) filters.rating = 'all'
+  const params = { category, subCategory, ...filters, page: String(page) }
+  const data = await getAllProducts({ ...params, query: filters.q, page })
+  const hasSelection = category !== 'all' || subCategory !== 'all'
+  if (hasSelection && !data.totalProducts && !isConfiguredSelection(category, subCategory) &&
+      !await hasPublishedCategorySelection(category, subCategory)) notFound()
+  if (page > Math.max(1, data.totalPages)) notFound()
+  const redirect = normalizedPageHref('/search', page, searchParams)
+  if (redirect) permanentRedirect(redirect)
+  return { params, page, data }
+})
 
-  const {
-    q = 'all',
-    category = 'all',
-    subCategory = 'all',
-    brand = 'all',
-    tag = 'all',
-    price = 'all',
-    rating = 'all',
-    sort = 'best-selling',
-    page = '1',
-  } = searchParams
-  const hasCategory = Boolean(category && category !== 'all')
-  const hasSubCategory = Boolean(subCategory && subCategory !== 'all')
+export async function generateMetadata(props: { searchParams: Promise<QueryParams> }): Promise<Metadata> {
+  const searchParams = await props.searchParams
+  const { params: { category, subCategory }, page, data } = await getSearchPage(JSON.stringify(searchParams))
+  const hasCategory = category !== 'all'
+  const hasSubCategory = subCategory !== 'all'
+  const term = hasSubCategory ? subCategory : category
+  const definition = hasSubCategory ? subCategorySeo : categorySeo
+  const seo = term === 'all'
+    ? { title: 'جستجوی محصولات | ویورا', description: 'محصولات فروشگاه ویورا را جستجو کنید و مدل‌ها را بر اساس نیاز خود مقایسه کنید.' }
+    : Object.hasOwn(definition, term) ? definition[term] : {
+      title: `خرید ${term} | مدل‌ها و مشخصات | ویورا`,
+      description: `مدل‌های ${term} را در ویورا بررسی کنید و مشخصات محصولات این گروه را با هم مقایسه کنید.`,
+    }
+  const selection = new URLSearchParams()
+  if (hasCategory) selection.set('category', category)
+  if (hasSubCategory) selection.set('subCategory', subCategory)
+  const filtered = Object.keys(searchParams).some((key) =>
+    !['category', 'subCategory', 'page'].includes(key) && !isTrackingParam(key))
+  const landing = !hasSubCategory && hasCategory ? getCategoryLandingPath(category) : undefined
+  const index = hasCategory && !filtered && !landing && data.totalProducts > 0
+  return publicMetadata({
+    title: page > 1 ? `${seo.title} - صفحه ${page}` : seo.title,
+    description: seo.description,
+    path: landing ?? pageHref('/search', filtered ? 1 : page, selection),
+    index,
+  })
+}
+
+export default async function SearchPage(props: { searchParams: Promise<QueryParams> }) {
+  const searchParams = await props.searchParams
+  const { params, page, data } = await getSearchPage(JSON.stringify(searchParams))
+  const { q, category, subCategory, brand, tag, price, rating, sort } = params
+  const hasCategory = category !== 'all'
+  const hasSubCategory = subCategory !== 'all'
+  const paginationQuery = new URLSearchParams()
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (key !== 'page' && !isTrackingParam(key) && typeof value === 'string') {
+      paginationQuery.set(key, value)
+    }
+  }
   const breadcrumbItems = hasCategory
     ? [
         {
@@ -341,33 +335,9 @@ export default async function SearchPage(props: {
       }
     : null
 
-  const params = {
-    q,
-    category,
-    subCategory,
-    brand,
-    tag,
-    price,
-    rating,
-    sort,
-    page,
-  }
-
-  const categories = await getAllCategories()
-  const tags = await getAllTags()
-  const brands = await getBrandsByCategory({ category, subCategory })
-  const data = await getAllProducts({
-    category,
-    subCategory,
-    brand,
-    tag,
-    query: q,
-    price,
-    rating,
-    page: Number(page),
-    sort,
-  })
-
+  const [categories, tags, brands] = await Promise.all([
+    getAllCategories(), getAllTags(), getBrandsByCategory({ category, subCategory }),
+  ])
   const t = await getTranslations()
 
 const cleanCategories = categories.filter(
@@ -390,7 +360,7 @@ const cleanCategories = categories.filter(
       <div className='rounded-xl border bg-card p-4'>
   <div className='flex flex-wrap items-center justify-between gap-3'>
     <div>
-      <h2 className='text-lg font-bold'>نتایج جستجو</h2>
+      <h1 className='text-lg font-bold'>نتایج جستجو</h1>
       <p className='text-sm text-muted-foreground'>
         {data.totalProducts} محصول یافت شد
       </p>
@@ -519,7 +489,7 @@ const cleanCategories = categories.filter(
           </div>
 
           {data.totalPages > 1 && (
-            <Pagination page={page} totalPages={data.totalPages} />
+            <Pagination page={page} totalPages={data.totalPages} path='/search' query={paginationQuery.toString()} />
           )}
         </main>
       </div>

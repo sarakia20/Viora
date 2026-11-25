@@ -9,6 +9,7 @@ import Image from 'next/image'
 import { resolveProductImage } from '@/lib/store-images'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import useIsMounted from '@/hooks/use-is-mounted'
 import useCartStore from '@/hooks/use-cart-store'
 import { useTranslations } from 'next-intl'
 
@@ -17,9 +18,16 @@ export default function CartAddItem({ itemId }: { itemId: string }) {
     cart: { items, itemsPrice },
   } = useCartStore()
 
+  const isMounted = useIsMounted()
   const item = items.find((x) => x.clientId === itemId)
   const t = useTranslations('Cart')
 
+  if (!isMounted) return (
+    <div className='flex flex-col items-center justify-center min-h-screen'>
+      <h1 className='sr-only'>سبد خرید</h1>
+      <div className='p-6 rounded-lg shadow-md w-1/3 text-center'>در حال بارگذاری...</div>
+    </div>
+  )
   if (!item) return notFound()
 
   const totalItems = items.reduce((sum, cartItem) => {

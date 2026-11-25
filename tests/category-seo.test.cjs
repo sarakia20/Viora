@@ -272,7 +272,14 @@ test('old search URLs remain usable and point to new landings without changing s
   const search = load('app/[locale]/(root)/search/page.tsx', {
     '@/components/shared/pagination': () => null,
     '@/components/shared/product/product-card': () => null,
-    '@/lib/actions/product.actions': {},
+    'next/navigation': { notFound() { throw new Error('NOT_FOUND') } },
+    '@/lib/actions/product.actions': {
+      async getAllProducts({ category, subCategory }) {
+        const invalid = category === 'fake' || subCategory === 'fake'
+        return { products: [], totalPages: invalid ? 0 : 3, totalProducts: invalid ? 0 : 21 }
+      },
+      async hasPublishedCategorySelection() { return false },
+    },
     '@/components/shared/product/product-sort-selector': () => null,
     '@/components/shared/product/rating': () => null,
     '@/components/shared/collapsible-on-mobile': () => null,
@@ -290,6 +297,17 @@ test('old search URLs remain usable and point to new landings without changing s
   }) })
   assert.equal(new URL(subcategory.alternates.canonical).pathname, '/search')
   assert.equal(subcategory.robots.index, true)
+  const searchMetadata = (searchParams) => search.generateMetadata({ searchParams: Promise.resolve(searchParams) })
+  const selection = { category: 'اجاق گاز', subCategory: 'اجاق گاز استیل' }
+  const second = await searchMetadata({ ...selection, page: '2', utm_source: 'audit' })
+  assert.equal(second.robots.index, true)
+  assert.equal(new URL(second.alternates.canonical).searchParams.get('page'), '2')
+  assert.equal(new URL(second.alternates.canonical).searchParams.get('utm_source'), null)
+  assert.equal((await searchMetadata({ ...selection, q: 'x' })).robots.index, false)
+  assert.equal((await searchMetadata({ ...selection, page: '2', brand: 'x' })).robots.index, false)
+  for (const query of [{ category: 'fake' }, { ...selection, subCategory: 'fake' }, { ...selection, page: '99' }]) {
+    await assert.rejects(searchMetadata(query), /NOT_FOUND/)
+  }
 })
 
 test('pagination still renders real links for a valid second page', () => {
@@ -388,4 +406,30 @@ test('homepage category names navigate independently from exclusive disclosure b
   button(tree, 'چینی‌آلات بهداشتی').props.onClick()
   tree = render()
   assert.equal(panel(tree, button(tree, 'چینی‌آلات بهداشتی')).props.inert, true)
+})
+
+test('sitemap reads direct edits and excludes operational timestamps', async () => {
+  let products = [{ slug: 'before', category: 'سینک', subCategory: 'گرانیتی', updatedAt: new Date() }]
+  const { default: sitemap } = load('app/sitemap.ts', {
+    '@/lib/db': { connectToDatabase: async () => {} },
+    '@/lib/db/models/product.model': {
+      find() { return { select() { return this }, async lean() { return products } } },
+    },
+  })
+  const first = await sitemap()
+  assert.ok(first.some(({ url }) => url.endsWith('/product/before')))
+  assert.ok(first.some(({ url }) => new URL(url).searchParams.get('subCategory') === 'گرانیتی'))
+  assert.ok(first.every(item => item.lastModified === undefined))
+  products = [{ ...products[0], slug: 'after' }]
+  const updated = await sitemap()
+  assert.ok(updated.some(({ url }) => url.endsWith('/product/after')))
+  assert.ok(!updated.some(({ url }) => url.endsWith('/product/before')))
+})
+
+test('sign-in callback keeps the checkout destination and rejects self-redirects', () => {
+  const { signInCallback } = load('lib/sign-in-callback.ts')
+  assert.equal(signInCallback('/checkout/order?retry=1'), '/checkout/order?retry=1')
+  for (const URL of ['/sign-in', '/fa/sign-up', '//other.example', 'https://viora-store.ir//other.example', 'https://other.example/']) {
+    assert.equal(signInCallback(URL), '/')
+  }
 })
