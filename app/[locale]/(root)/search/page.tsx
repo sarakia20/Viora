@@ -17,6 +17,8 @@ import {
   hasPublishedCategorySelection,
 } from '@/lib/actions/product.actions'
 import { IProduct } from '@/lib/db/models/product.model'
+import { getCatalogLandings } from '@/lib/catalog-data'
+import { brandHref, collectionHref, getBrandSlug, getExactCollection } from '@/lib/catalog-landings'
 import { getCategoryLandingPath } from '@/lib/category-config'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
@@ -271,11 +273,21 @@ export async function generateMetadata(props: { searchParams: Promise<QueryParam
   const filtered = Object.keys(searchParams).some((key) =>
     !['category', 'subCategory', 'page'].includes(key) && !isTrackingParam(key))
   const landing = !hasSubCategory && hasCategory ? getCategoryLandingPath(category) : undefined
-  const index = hasCategory && !filtered && !landing && data.totalProducts > 0
+  const collection = hasCategory && hasSubCategory && data.totalProducts > 0
+    ? getExactCollection(category, subCategory) : undefined
+  const rawBrand = searchParams.brand
+  const brandOnly = !hasCategory && !hasSubCategory && typeof rawBrand === 'string' && rawBrand !== 'all' &&
+    Object.keys(searchParams).every(key => key === 'brand' || key === 'page' || isTrackingParam(key))
+  const brandSlug = brandOnly ? getBrandSlug(rawBrand) : undefined
+  const brand = brandSlug ? (await getCatalogLandings()).brands.get(brandSlug) : undefined
+  const equivalentBrand = brandSlug && brand && brand.products.length === data.totalProducts &&
+    brand.products.every(product => product.brand === rawBrand) ? brandHref(brandSlug) : undefined
+  const index = hasCategory && !filtered && !landing && !collection && data.totalProducts > 0
   return publicMetadata({
     title: page > 1 ? `${seo.title} - صفحه ${page}` : seo.title,
     description: seo.description,
-    path: landing ?? pageHref('/search', filtered ? 1 : page, selection),
+    path: (equivalentBrand ? pageHref(equivalentBrand, page) : landing) ?? (collection ? pageHref(collectionHref(collection.slug), filtered ? 1 : page)
+      : pageHref('/search', filtered ? 1 : page, selection)),
     index,
   })
 }

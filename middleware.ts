@@ -7,7 +7,7 @@ import { routing } from './i18n/routing'
 import { getCategoryConfig } from './lib/category-config'
 
 const intl = createMiddleware(routing)
-const publicPath = /^(?:\/|\/(?:search|sign-in|sign-up)|\/cart(?:\/[^/]+)?|\/(?:product|category|page)\/[^/]+)\/?$/
+const publicPath = /^(?:\/|\/(?:search|sign-in|sign-up)|\/cart(?:\/[^/]+)?|\/(?:product|category|page|subcategory)\/[^/]+|\/brand\/[^/]+(?:\/[^/]+)?)\/?$/
 const legacyLocale = /^\/(?:fa|en|en-US|fr|ar)(?=\/|$)/
 const protect = NextAuth({ ...authConfig, callbacks: {} }).auth((request, _event: NextFetchEvent) => {
   if (request.auth) return intl(request)

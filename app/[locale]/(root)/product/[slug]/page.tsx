@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator'
 import RatingSummary from '@/components/shared/product/rating-summary'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { getTranslations } from 'next-intl/server'
+import { brandHref, collectionHref, getBrandSlug, getProductCollection } from '@/lib/catalog-landings'
 import { getCategoryLandingPath } from '@/lib/category-config'
 import { parsePage, publicMetadata, type QueryParams } from '@/lib/public-seo'
 import { getProductImageAlt, getRequestedVariantIndex } from '@/lib/product-variant'
@@ -93,13 +94,18 @@ export default async function ProductDetails(props: ProductPageProps) {
     ? searchParams.color : product.colors[0] || ''
   const productJsonLd = getProductJsonLd(product, selectedIndex)
   const breadcrumbs = [{ name: 'خانه', href: '/' }]
+  const brandSlug = getBrandSlug(product.brand)
+  const productBrandHref = brandSlug && brandHref(brandSlug)
+  const collection = getProductCollection(product)
   if (product.category?.trim() && product.category !== 'all') {
     const selection = new URLSearchParams({ category: product.category })
     breadcrumbs.push({
       name: product.category.trim(),
       href: getCategoryLandingPath(product.category) ?? `/search?${selection}`,
     })
-    if (product.subCategory?.trim() && product.subCategory !== 'all') {
+    if (collection) {
+      breadcrumbs.push({ name: collection.label, href: collectionHref(collection.slug) })
+    } else if (product.subCategory?.trim() && product.subCategory !== 'all') {
       selection.set('subCategory', product.subCategory)
       breadcrumbs.push({ name: product.subCategory.trim(), href: `/search?${selection}` })
     }
@@ -162,6 +168,7 @@ export default async function ProductDetails(props: ProductPageProps) {
             product={product}
             initialSize={size}
             initialVariantIndex={selectedIndex}
+            brandUrl={productBrandHref}
             highlights={highlights}
           />
         ) : (
@@ -173,7 +180,7 @@ export default async function ProductDetails(props: ProductPageProps) {
           <div className='flex min-w-0 w-full flex-col gap-6 lg:py-4'>
             <div className='flex flex-col gap-3'>
               <p className='w-fit rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600'>
-                برند: {product.brand}
+                برند: {productBrandHref ? <Link href={productBrandHref} className='hover:underline'>{product.brand}</Link> : product.brand}
               </p>
 
               <h1 className='text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>

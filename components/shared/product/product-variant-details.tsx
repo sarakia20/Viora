@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check } from 'lucide-react'
@@ -19,11 +20,13 @@ import ColorSwatch, { colorOptionClassName, colorOptionsClassName } from './colo
 export default function ProductVariantDetails({
   product,
   initialSize,
+  brandUrl,
   initialVariantIndex = DEFAULT_PRODUCT_VARIANT_INDEX,
   highlights,
 }: {
   product: IProduct
   initialSize: string
+  brandUrl?: string
   initialVariantIndex?: number
   highlights?: ReactNode
 }) {
@@ -69,7 +72,7 @@ export default function ProductVariantDetails({
       <div className='flex min-w-0 w-full flex-col gap-6 lg:py-4'>
         <div className='flex flex-col gap-3'>
           <p className='w-fit rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600'>
-            برند: {product.brand}
+            برند: {brandUrl ? <Link href={brandUrl} className='hover:underline'>{product.brand}</Link> : product.brand}
           </p>
 
           <h1 className='text-xl font-bold leading-relaxed text-slate-900 lg:text-2xl'>{product.name}</h1>

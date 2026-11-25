@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { cache } from 'react'
 
+import CategoryDiscovery from '@/components/shared/category-discovery'
 import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
 import { getCategoryConfig } from '@/lib/category-config'
@@ -138,6 +139,8 @@ export default async function CategoryPage(props: {
           <Pagination page={page} totalPages={data.totalPages} path={'/category/' + category.slug} />
         )}
       </section>
+
+      {page === 1 && <CategoryDiscovery categories={category.productCategories ?? [category.productCategory]} />}
 
       {page === 1 && (
         <section

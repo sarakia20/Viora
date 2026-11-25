@@ -477,6 +477,7 @@ export async function getRelatedProductsByCategory({
 
 export async function getAllProducts({
   query,
+  slugs,
   limit,
   page,
   category,
@@ -488,6 +489,7 @@ export async function getAllProducts({
   sort,
 }: {
   query: string
+  slugs?: readonly string[]
   category: string | readonly string[]
   subCategory?: string
   brand?: string
@@ -515,15 +517,16 @@ export async function getAllProducts({
       rating,
     })
 
-    const sorted = sortProducts(filtered, sort)
+    const eligible = slugs ? new Set(slugs) : null
+    const sorted = sortProducts(filtered.filter(product => !eligible || eligible.has(product.slug)), sort)
     const start = limit * (Number(page) - 1)
     const products = sorted.slice(start, start + limit).flatMap((product) => prepareSearchProduct(product) ?? [])
 
     return {
       products,
-      totalPages: Math.ceil(filtered.length / limit),
-      totalProducts: filtered.length,
-      from: filtered.length === 0 ? 0 : start + 1,
+      totalPages: Math.ceil(sorted.length / limit),
+      totalProducts: sorted.length,
+      from: sorted.length === 0 ? 0 : start + 1,
       to: start + products.length,
     }
   }
@@ -575,6 +578,7 @@ export async function getAllProducts({
 
   const conditions = {
   ...isPublished,
+  ...(slugs ? { slug: { $in: [...slugs] } } : {}),
   ...queryFilter,
   ...tagFilter,
   ...categoryFilter,

@@ -268,11 +268,14 @@ test('product listing uses exact published category values and retains filters a
   assert.equal(findFilter.category, 'سینک', 'existing exact category filter remains unchanged')
 })
 
-test('old search URLs remain usable and point to new landings without changing subcategory canonicals', async () => {
+test('equivalent legacy search URLs keep their use and canonicalize to dedicated landings', async () => {
   const search = load('app/[locale]/(root)/search/page.tsx', {
     '@/components/shared/pagination': () => null,
     '@/components/shared/product/product-card': () => null,
     'next/navigation': { notFound() { throw new Error('NOT_FOUND') } },
+    '@/lib/catalog-data': { getCatalogLandings: async () => ({
+      brands: new Map([['mix-plus', { products: Array.from({ length: 21 }, () => ({ brand: 'میکس پلاس' })) }]]),
+    }) },
     '@/lib/actions/product.actions': {
       async getAllProducts({ category, subCategory }) {
         const invalid = category === 'fake' || subCategory === 'fake'
@@ -295,14 +298,17 @@ test('old search URLs remain usable and point to new landings without changing s
   const subcategory = await search.generateMetadata({ searchParams: Promise.resolve({
     category: 'اجاق گاز', subCategory: 'اجاق گاز استیل',
   }) })
-  assert.equal(new URL(subcategory.alternates.canonical).pathname, '/search')
-  assert.equal(subcategory.robots.index, true)
+  assert.equal(new URL(subcategory.alternates.canonical).pathname, '/subcategory/steel-cooktops')
+  assert.equal(subcategory.robots.index, false)
   const searchMetadata = (searchParams) => search.generateMetadata({ searchParams: Promise.resolve(searchParams) })
   const selection = { category: 'اجاق گاز', subCategory: 'اجاق گاز استیل' }
   const second = await searchMetadata({ ...selection, page: '2', utm_source: 'audit' })
-  assert.equal(second.robots.index, true)
+  assert.equal(second.robots.index, false)
   assert.equal(new URL(second.alternates.canonical).searchParams.get('page'), '2')
   assert.equal(new URL(second.alternates.canonical).searchParams.get('utm_source'), null)
+  const brand = await searchMetadata({ brand: 'میکس پلاس', page: '2', utm_source: 'audit' })
+  assert.equal(brand.robots.index, false)
+  assert.equal(brand.alternates.canonical, 'https://viora-store.ir/brand/mix-plus?page=2')
   assert.equal((await searchMetadata({ ...selection, q: 'x' })).robots.index, false)
   assert.equal((await searchMetadata({ ...selection, page: '2', brand: 'x' })).robots.index, false)
   for (const query of [{ category: 'fake' }, { ...selection, subCategory: 'fake' }, { ...selection, page: '99' }]) {
@@ -418,7 +424,8 @@ test('sitemap reads direct edits and excludes operational timestamps', async () 
   })
   const first = await sitemap()
   assert.ok(first.some(({ url }) => url.endsWith('/product/before')))
-  assert.ok(first.some(({ url }) => new URL(url).searchParams.get('subCategory') === 'گرانیتی'))
+  assert.ok(first.some(({ url }) => url.endsWith('/subcategory/granite-sinks')))
+  assert.ok(!first.some(({ url }) => new URL(url).searchParams.get('subCategory') === 'گرانیتی'))
   assert.ok(first.every(item => item.lastModified === undefined))
   products = [{ ...products[0], slug: 'after' }]
   const updated = await sitemap()

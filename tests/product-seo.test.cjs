@@ -39,6 +39,7 @@ function loadPage(value = product, error, relatedProducts = []) {
     '@/lib/product-variant': load('lib/product-variant.ts'),
     '@/lib/site-url': load('lib/site-url.ts'),
     '@/lib/category-config': load('lib/category-config.ts'),
+    '@/lib/catalog-landings': load('lib/catalog-landings.ts'),
     '@/lib/actions/product.actions': {
       async getProductBySlug() { if (error) throw error; return value },
       async getRelatedProductsByCategory() { return { data: relatedProducts } },
