@@ -27,8 +27,26 @@ const directGalleryImages = new Set([
   '/images/mix-plus-e6507.webp',
 ])
 
+// These catalog records include an extra directory. Each reviewed destination
+// has the same model and finish and is already served from /images.
+const misplacedProductImages = new Map([
+  'flash-tank-imenab-persian-black.webp',
+  'flash-tank-imenab-persian-titanium.webp',
+  'flash-tank-imenab-persian-white-chrome.webp',
+  'flash-tank-imenab-persian-white-gold.webp',
+  'sarodi-alma-shiny-gold.webp',
+  'sarodi-alma-titanium-chrome.webp',
+  'sarodi-alma-white-chrome.webp',
+  'sarodi-alma-white-gold.webp',
+  'sarodi-alma-white.webp',
+].map((name) => [`/images/products/${name}`, `/images/${name}`]))
+
+export function getProductImageRewrites() {
+  return Array.from(misplacedProductImages, ([source, destination]) => ({ source, destination }))
+}
+
 export function resolveProductImage(src: string) {
-  return legacyProductImages.get(src) ?? src
+  return legacyProductImages.get(src) ?? misplacedProductImages.get(src) ?? src
 }
 
 export const PRODUCT_IMAGE_PLACEHOLDER = '/images/product-placeholder.svg'

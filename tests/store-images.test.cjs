@@ -7,7 +7,21 @@ const { createElement } = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
 const loadTypescript = require('./helpers/load-typescript.cjs')
 
-const { resolveProductImage, isDirectGalleryImage } = loadTypescript('lib/store-images.ts')
+const { resolveProductImage, isDirectGalleryImage, getProductImageRewrites } = loadTypescript('lib/store-images.ts')
+
+test('verified extra-directory paths resolve to the exact model and finish', () => {
+  const names = fs.readdirSync(path.join(__dirname, '../public/images'))
+    .filter((name) => /^(flash-tank-imenab-persian|sarodi-alma)-.*\.webp$/.test(name))
+  assert.equal(names.length, 9)
+  assert.deepEqual(getProductImageRewrites().sort((a, b) => a.source.localeCompare(b.source)),
+    names.sort().map((name) => ({ source: '/images/products/' + name, destination: '/images/' + name })))
+  for (const name of names) {
+    assert.equal(resolveProductImage('/images/products/' + name), '/images/' + name)
+    assert.equal(isDirectGalleryImage('/images/' + name), false)
+  }
+  assert.equal(resolveProductImage('/images/products/bamboo-dual-black.webp'), '/images/products/bamboo-dual-black.webp')
+  assert.equal(resolveProductImage('/images/bamboo-black.webp'), '/images/bamboo-black.webp')
+})
 
 test('legacy faucet variants resolve to the WebP for the same finish', () => {
   const cases = [

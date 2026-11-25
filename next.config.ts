@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
+import { getProductImageRewrites } from './lib/store-images'
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
@@ -9,6 +10,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400,
+  },
+
+  async rewrites() {
+    return { beforeFiles: [], afterFiles: [], fallback: getProductImageRewrites() }
   },
 
   async headers() {
