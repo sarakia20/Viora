@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Vazirmatn } from 'next/font/google'
+import { Geist, Vazirmatn } from 'next/font/google'
 import '../globals.css'
 import ClientProviders from '@/components/shared/client-providers'
 import { getDirection } from '@/i18n-config'
@@ -13,11 +13,6 @@ import { getStoreJsonLd } from '@/lib/store-schema'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
   subsets: ['latin'],
 })
 
@@ -51,11 +46,8 @@ export default async function AppLayout({
   params: Promise<{ locale: string }>
   children: React.ReactNode
 }) {
-  const setting = await getSetting()
-  const currencyCookie = (await cookies()).get('currency')
-  const currency = currencyCookie ? currencyCookie.value : 'USD'
-
-  const { locale } = await params
+  const [{ locale }, cookieStore] = await Promise.all([params, cookies()])
+  const currency = cookieStore.get('currency')?.value ?? 'USD'
 
   // Ensure that the incoming `locale` is valid
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,8 +55,9 @@ export default async function AppLayout({
     notFound()
   }
 
-  const messages = await getMessages()
-  const storeJsonLd = await getStoreJsonLd()
+  const [setting, messages, storeJsonLd] = await Promise.all([
+    getSetting(), getMessages(), getStoreJsonLd(),
+  ])
 
   return (
     <html
@@ -76,7 +69,7 @@ export default async function AppLayout({
         <meta name="enamad" content="14560157" /> 
       </head>
       <body
-        className={`min-h-screen ${geistSans.variable} ${geistMono.variable} ${vazir.variable} antialiased`}
+        className={`min-h-screen ${geistSans.variable} ${vazir.variable} antialiased`}
       >
         <script type='application/ld+json' dangerouslySetInnerHTML={{
           __html: JSON.stringify(storeJsonLd).replace(/</g, '\\u003c'),

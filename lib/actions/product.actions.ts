@@ -387,6 +387,12 @@ export async function getProductsForCard({
   }[]
 }
 
+// Listing cards need commercial display fields, not full descriptions or review breakdowns.
+const cardFields = {
+  name: 1, slug: 1, brand: 1, category: 1, images: 1, tags: 1, colors: 1, sizes: 1,
+  price: 1, listPrice: 1, countInStock: 1, stock: 1, avgRating: 1, variants: 1,
+} as const
+
 export async function getProductsByTag({
   tag,
   limit = 10,
@@ -406,7 +412,7 @@ export async function getProductsByTag({
   const products = await Product.find({
     tags: { $in: [tag] },
     isPublished: true,
-  })
+  }, cardFields, { lean: true })
     .sort({ createdAt: 'desc' })
     .limit(limit)
 
@@ -465,7 +471,7 @@ export async function getRelatedProductsByCategory({
     _id: { $ne: productId },
   }
 
-  const products = await Product.find(conditions)
+  const products = await Product.find(conditions, cardFields, { lean: true })
     .sort({ numSales: 'desc' })
     .skip(skipAmount)
     .limit(limit)
@@ -589,7 +595,7 @@ export async function getAllProducts({
   }
   const countProducts = await Product.countDocuments(conditions)
   // Avoid a large skip query for an out-of-range category page.
-  const products = page > Math.ceil(countProducts / limit) ? [] : await Product.find(conditions)
+  const products = page > Math.ceil(countProducts / limit) ? [] : await Product.find(conditions, cardFields)
   .sort({ ...order, _id: order._id ?? -1 })
   .skip(limit * (Number(page) - 1))
   .limit(limit)

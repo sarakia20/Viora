@@ -36,7 +36,13 @@ const nextConfig: NextConfig = {
       })
     }
 
-    return [{ source: '/(.*)', headers: securityHeaders }]
+    return [
+      { source: '/(.*)', headers: securityHeaders },
+      {
+        source: '/images/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=300, must-revalidate' }],
+      },
+    ]
   },
 
   eslint: {

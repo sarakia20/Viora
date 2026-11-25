@@ -44,7 +44,7 @@ export function HomeCard() {
                   src={`/images/${image}`}
                   alt=''
                   fill
-                  sizes='(min-width: 768px) 33vw, 50vw'
+                  sizes='(min-width: 1440px) 224px, (min-width: 1024px) 16vw, (min-width: 768px) 33vw, 50vw'
                   className='object-cover'
                 />
               </div>

@@ -16,7 +16,7 @@ import { useTranslations } from 'next-intl'
 import { ICarousel } from '@/types'
 
 export function HomeCarousel({ items }: { items: ICarousel[] }) {
-  const plugin = React.useRef(
+  const [plugin] = React.useState(() =>
     Autoplay({
       delay: 10000,
       stopOnInteraction: true,
@@ -48,10 +48,10 @@ export function HomeCarousel({ items }: { items: ICarousel[] }) {
   return (
     <Carousel
       dir='ltr'
-      plugins={[plugin.current]}
+      plugins={[plugin]}
       className='w-full overflow-hidden'
-      onMouseEnter={plugin.current.stop}
-      onMouseLeave={plugin.current.reset}
+      onMouseEnter={plugin.stop}
+      onMouseLeave={plugin.reset}
     >
       <CarouselContent className='ml-0'>
         {items.map((item, index) => (

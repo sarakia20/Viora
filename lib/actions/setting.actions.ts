@@ -1,5 +1,6 @@
 'use server'
 
+import { cache } from 'react'
 import { ISettingInput } from '@/types'
 import data from '../data'
 import Setting from '../db/models/setting.model'
@@ -23,7 +24,7 @@ export const getNoCachedSetting = async (): Promise<ISettingInput> => {
   return JSON.parse(JSON.stringify(setting)) as ISettingInput
 }
 
-export const getSetting = async (): Promise<ISettingInput> => {
+const getSettingForRequest = cache(async (): Promise<ISettingInput> => {
   if (isSkipDb) return data.settings[0] as ISettingInput
 
   if (!globalForSettings.cachedSettings) {
@@ -35,7 +36,9 @@ export const getSetting = async (): Promise<ISettingInput> => {
   }
 
   return globalForSettings.cachedSettings as ISettingInput
-}
+})
+
+export const getSetting = async () => getSettingForRequest()
 
 export const updateSetting = async (newSetting: ISettingInput) => {
   await requireAdmin()
