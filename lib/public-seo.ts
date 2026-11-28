@@ -1,3 +1,4 @@
+import { STORE_NAME } from './store-brand'
 import type { Metadata } from 'next'
 import { getAbsoluteUrl } from './site-url'
 
@@ -20,7 +21,7 @@ export function publicMetadata({
     alternates: { canonical },
     robots: { index, follow: true },
     openGraph: {
-      title, description, url: canonical, siteName: 'ویورا', type: 'website',
+      title, description, url: canonical, siteName: STORE_NAME, type: 'website',
       locale: 'fa_IR', images: socialImages,
     },
     twitter: { card: 'summary_large_image', title, description, images: socialImages },

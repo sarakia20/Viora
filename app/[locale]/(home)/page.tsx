@@ -1,3 +1,4 @@
+import { STORE_LABEL } from '@/lib/store-brand'
 import { HomeCard } from '@/components/shared/home/home-card'
 import { HomeCarousel } from '@/components/shared/home/home-carousel'
 import ProductSlider from '@/components/shared/product/product-slider'
@@ -10,9 +11,9 @@ import type { Metadata } from 'next'
 import { publicMetadata } from '@/lib/public-seo'
 
 export const metadata: Metadata = publicMetadata({
-  title: 'فروشگاه ویورا | خرید شیرآلات، سینک، هود و تجهیزات ساختمانی',
+  title: `${STORE_LABEL} | خرید شیرآلات، سینک، هود و تجهیزات ساختمانی`,
   description:
-    'خرید انواع شیرآلات، سینک ظرفشویی، هود، گاز، فلاش تانک و تجهیزات سرویس بهداشتی از فروشگاه ویورا. مشاهده مدل‌ها، مشخصات، قیمت و موجودی محصولات.',
+    `خرید انواع شیرآلات، سینک ظرفشویی، هود، گاز، فلاش تانک و تجهیزات سرویس بهداشتی از ${STORE_LABEL}. مشاهده مدل‌ها، مشخصات، قیمت و موجودی محصولات.`,
   path: '/',
 })
 

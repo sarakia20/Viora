@@ -149,7 +149,7 @@ test('missing/unpublished products are not rendered and database errors remain e
   await assert.rejects(loadPage(null, new Error('database unavailable')).default(props()), /database unavailable/)
 })
 
-test('Organization/WebSite use only persisted optional settings and stable linked identities', async () => {
+test('Organization/WebSite publish consistent brand identities and verified contact details', async () => {
   let site = null
   let fail = false
   const store = load('lib/store-schema.ts', {
@@ -161,13 +161,23 @@ test('Organization/WebSite use only persisted optional settings and stable linke
   })
   const empty = await store.getStoreJsonLd()
   assert.equal(empty['@graph'].length, 2)
-  assert.equal(empty['@graph'][0].name, 'ویورا')
-  for (const key of ['telephone', 'email', 'address', 'logo', 'sameAs']) assert.ok(!(key in empty['@graph'][0]))
-  site = { logo: '/real-logo.webp', phone: 'recorded-phone', email: 'recorded@example.test', address: 'آدرس ثبت‌شده' }
+  for (const node of empty['@graph']) {
+    assert.equal(node.name, 'ویورا')
+    assert.equal(node.alternateName, 'Viora')
+  }
+  assert.deepEqual(empty['@graph'][0].sameAs, [
+    'https://www.instagram.com/viora.rm/',
+    'https://t.me/Viora_RM',
+  ])
+  assert.equal(empty['@graph'][0].telephone, '09102145452')
+  assert.equal(empty['@graph'][0].address, 'تهران، شهرری، خیابان غیوری شمالی، بالاتر از چهارراه خط آهن، نبش کوچه بیاتی، پلاک ۶۲')
+  assert.ok(!('logo' in empty['@graph'][0]))
+  site = { logo: '/real-logo.webp', phone: '+1 (123) 456-7890', email: 'admin@example.com', address: 'ایران' }
   const graph = (await store.getStoreJsonLd())['@graph']
   assert.equal(graph[0].logo, 'https://viora-store.ir/real-logo.webp')
-  assert.equal(graph[0].telephone, site.phone)
-  assert.equal(graph[0].address, site.address)
+  assert.equal(graph[0].telephone, empty['@graph'][0].telephone)
+  assert.equal(graph[0].address, empty['@graph'][0].address)
+  assert.ok(!('email' in graph[0]))
   assert.equal(graph[1].publisher['@id'], graph[0]['@id'])
   assert.equal(store.buildStoreJsonLd({ logo: 'javascript:alert(1)' })['@graph'][0].logo, undefined)
   fail = true

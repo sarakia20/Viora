@@ -2,13 +2,14 @@ import { unstable_cache } from 'next/cache'
 import { connectToDatabase } from '@/lib/db'
 import Setting from '@/lib/db/models/setting.model'
 import { getAbsoluteUrl, SITE_URL } from '@/lib/site-url'
+import { STORE_ADDRESS, STORE_ALTERNATE_NAME, STORE_NAME, STORE_PHONE, STORE_SOCIAL } from '@/lib/store-brand'
 
-type StoreSite = { logo?: string; phone?: string; email?: string; address?: string }
+type StoreSite = { logo?: string }
 
 // Read only persisted settings: getSetting() can fall back to demonstration data.
 const getPersistedSite = unstable_cache(async () => {
   await connectToDatabase()
-  const setting = await Setting.findOne().select('site.logo site.phone site.email site.address -_id')
+  const setting = await Setting.findOne().select('site.logo -_id')
     .lean<{ site?: StoreSite }>()
   return setting?.site ?? null
 }, ['store-schema-settings-v1'], { revalidate: 3600 })
@@ -25,14 +26,16 @@ export function buildStoreJsonLd(site?: StoreSite | null) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: 'ویورا', url: SITE_URL,
+        '@type': 'Organization', '@id': `${SITE_URL}/#organization`,
+        name: STORE_NAME, alternateName: STORE_ALTERNATE_NAME, url: SITE_URL,
         ...(logo ? { logo } : {}),
-        ...(site?.phone?.trim() ? { telephone: site.phone.trim() } : {}),
-        ...(site?.email?.trim() ? { email: site.email.trim() } : {}),
-        ...(site?.address?.trim() ? { address: site.address.trim() } : {}),
+        telephone: STORE_PHONE,
+        address: STORE_ADDRESS,
+        sameAs: Object.values(STORE_SOCIAL),
       },
       {
-        '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: 'ویورا', url: SITE_URL,
+        '@type': 'WebSite', '@id': `${SITE_URL}/#website`,
+        name: STORE_NAME, alternateName: STORE_ALTERNATE_NAME, url: SITE_URL,
         inLanguage: 'fa-IR', publisher: { '@id': `${SITE_URL}/#organization` },
       },
     ],
@@ -40,7 +43,6 @@ export function buildStoreJsonLd(site?: StoreSite | null) {
 }
 
 export async function getStoreJsonLd() {
-  // No sample contacts or addresses in local design mode.
   if (process.env.SKIP_DB === 'true') return buildStoreJsonLd()
   try {
     return buildStoreJsonLd(await getPersistedSite())

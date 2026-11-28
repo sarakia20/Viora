@@ -11,6 +11,7 @@ import { getSetting } from '@/lib/actions/setting.actions'
 import { cookies } from 'next/headers'
 import { SITE_ORIGIN } from '@/lib/site-url'
 import { getStoreJsonLd } from '@/lib/store-schema'
+import { STORE_NAME } from '@/lib/store-brand'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -25,15 +26,16 @@ const vazir = Vazirmatn({
 
 export async function generateMetadata() {
   const {
-    site: { slogan, name, description },
+    site: { slogan, description },
   } = await getSetting()
   return {
     title: {
-      template: `%s | ${name}`,
-      default: `${name}. ${slogan}`,
+      template: `%s | ${STORE_NAME}`,
+      default: `${STORE_NAME}. ${slogan}`,
     },
     description: description,
     metadataBase: SITE_ORIGIN,
+    openGraph: { siteName: STORE_NAME, locale: 'fa_IR' },
     icons: {
       icon: { url: '/icon.png', type: 'image/png', sizes: '96x96' },
     },

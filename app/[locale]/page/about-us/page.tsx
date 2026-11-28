@@ -1,8 +1,9 @@
 import { publicMetadata } from '@/lib/public-seo'
+import { STORE_ADDRESS, STORE_ALTERNATE_NAME, STORE_LABEL, STORE_NAME, STORE_PHONE } from '@/lib/store-brand'
 
 export const metadata = publicMetadata({
-  title: 'درباره فروشگاه ویورا | تجهیزات ساختمان و آشپزخانه',
-  description: 'با فروشگاه ویورا، حوزه فعالیت در تجهیزات ساختمان، آشپزخانه و سرویس بهداشتی و راه‌های تماس و مراجعه حضوری در شهرری آشنا شوید.',
+  title: `درباره ${STORE_LABEL} | تجهیزات ساختمان و آشپزخانه`,
+  description: `با ${STORE_LABEL}، حوزه فعالیت در تجهیزات ساختمان، آشپزخانه و سرویس بهداشتی و راه‌های تماس و مراجعه حضوری در شهرری آشنا شوید.`,
   path: '/page/about-us',
   images: ['/images/viora-logo.png'],
 })
@@ -14,6 +15,9 @@ export default function AboutPage() {
       <div className="rounded-3xl bg-slate-900 text-white p-10 mb-8 text-center">
         <h1 className="mb-3 text-2xl font-bold sm:text-3xl">درباره ویورا</h1>
         <p className="text-slate-300">
+          {STORE_NAME} ({STORE_ALTERNATE_NAME})، فروشگاه تخصصی تجهیزات ساختمان، آشپزخانه، سرویس بهداشتی و تأمین متریال بازسازی است.
+        </p>
+        <p className="mt-3 text-slate-300">
           از سال ۱۳۹۰ همراه مطمئن شما در تجهیزات ساختمانی
         </p>
       </div>
@@ -66,9 +70,9 @@ export default function AboutPage() {
           </h2>
 
           <div className="space-y-3 text-slate-700">
-            <p>📞 تلفن: 09102145452</p>
+            <p>📞 تلفن: {STORE_PHONE}</p>
             
-            <p>📍آدرس: تهران، شهرری، خیابان غیوری شمالی، بالاتر از چهارراه خط آهن، نبش کوچه بیاتی، پلاک ۶۲</p>
+            <p>📍آدرس: {STORE_ADDRESS}</p>
             
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { STORE_LABEL } from '@/lib/store-brand'
 import Image from 'next/image'
 import Link from 'next/link'
 import Menu from './menu'
@@ -23,13 +24,14 @@ export default async function Header() {
 
           <Link
             href='/'
+            aria-label={STORE_LABEL}
             className='flex shrink-0 items-center gap-2 rounded-lg px-1 py-1 text-lg font-extrabold text-slate-900 md:px-2 md:text-2xl'
           >
             <Image
               src={logoSrc}
               width={36}
               height={36}
-              alt={`${site.name} logo`}
+              alt={STORE_LABEL}
               className='rounded-md'
             />
 
