@@ -15,6 +15,14 @@ import {
 const chevronClass = 'h-4 w-4 shrink-0 text-slate-600 motion-safe:transition-transform'
 const toggleClass = 'flex w-11 shrink-0 items-center justify-end pe-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700'
 
+// Match the grid columns after subtracting page padding, gaps and card borders.
+const categoryImageSizes = [
+  '(min-width: 1024px) calc((100vw - 134px) / 3)',
+  '(min-width: 768px) calc((100vw - 110px) / 3)',
+  '(min-width: 640px) calc((100vw - 52px) / 2)',
+  'calc((100vw - 48px) / 2)',
+].join(', ')
+
 const cards = [
   { group: 'چینی آلات بهداشتی', title: 'چینی‌آلات بهداشتی', image: 'viora-sanitary.webp' },
   { group: 'تجهیزات آشپزخانه', title: 'تجهیزات آشپزخانه', image: 'viora-kitchen.webp' },
@@ -46,7 +54,8 @@ export function HomeCard() {
                   src={`/images/${image}`}
                   alt=''
                   fill
-                  sizes='(min-width: 1440px) 224px, (min-width: 1024px) 16vw, (min-width: 768px) 33vw, 50vw'
+                  sizes={categoryImageSizes}
+                  quality={85}
                   className='object-cover'
                 />
               </div>
