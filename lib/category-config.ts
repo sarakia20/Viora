@@ -1,3 +1,5 @@
+import { flushTankCategory, flushTankSubCategories } from './flush-tank-catalog'
+
 export type CategoryLink = {
   label: string
   href: string
@@ -20,7 +22,7 @@ export type CategoryConfig = {
 export const categoryConfig = {
   'flush-tanks': {
     slug: 'flush-tanks',
-    productCategory: 'فلاش تانک',
+    productCategory: flushTankCategory,
     requireProducts: true,
     h1: 'خرید فلاش تانک',
     title: 'خرید فلاش تانک | مدل‌ها و قیمت محصولات | ویورا',
@@ -31,6 +33,10 @@ export const categoryConfig = {
       'پیش از خرید، روکار یا توکار بودن مخزن، محل ورودی آب و فضای نصب را مشخص کنید. در مدل توکار، دسترسی برای سرویس و سازگاری کلید با مخزن اهمیت دارد.',
       'مشخصات هر محصول و اقلام همراه آن را بخوانید؛ صفحه کلید یا قطعه جانبی با مخزن کامل تفاوت دارد. ابعاد، شیوه نصب و سازگاری قطعات را پیش از سفارش کنترل کنید.',
     ],
+    guideLinks: flushTankSubCategories.map((label) => ({
+      label,
+      href: `/search?category=${encodeURIComponent(flushTankCategory)}&subCategory=${encodeURIComponent(label)}`,
+    })),
   },
   hoods: {
     slug: 'hoods',
@@ -162,11 +168,11 @@ const categoryGroupConfig = {
   'sanitary-ware': {
     slug: 'sanitary-ware',
     productCategory: 'چینی آلات بهداشتی',
-    productCategories: ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی', 'فلاش تانک'],
+    productCategories: ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی'],
     h1: 'چینی‌آلات بهداشتی',
     title: 'چینی‌آلات بهداشتی | ویورا',
-    description: 'مدل‌های توالت ایرانی و فرنگی، روشویی و فلاش تانک فروشگاه ویورا را مقایسه کنید.',
-    intro: 'مدل‌های توالت ایرانی و فرنگی، روشویی و فلاش تانک را در فهرست تجهیزات بهداشتی مقایسه کنید.',
+    description: 'مدل‌های توالت ایرانی و فرنگی و روشویی فروشگاه ویورا را مقایسه کنید.',
+    intro: 'مدل‌های توالت ایرانی و فرنگی و روشویی را در فهرست چینی‌آلات بهداشتی مقایسه کنید.',
     guideTitle: 'راهنمای انتخاب چینی‌آلات بهداشتی',
     guideParagraphs: ['پیش از انتخاب، ابعاد محل نصب و موقعیت ورودی آب و خروجی فاضلاب را با مشخصات محصول تطبیق دهید.'],
   },

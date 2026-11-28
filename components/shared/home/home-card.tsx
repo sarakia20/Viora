@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useId, useState } from 'react'
 import { getCategoryGroupLandingPath } from '@/lib/category-config'
+import { flushTankCategory } from '@/lib/flush-tank-catalog'
 import {
   categoryGroups,
   getCategoryHref,
@@ -21,6 +22,7 @@ const cards = [
   { group: 'کاشی و سرامیک', title: 'کاشی و سرامیک', image: 'viora-tiles-900.webp' },
   { group: 'اکسسوری', title: 'اکسسوری', image: 'viora-accessories.webp' },
   { group: 'کف شور', title: 'کف‌شور', image: 'viora-floor-drain-white-gray-900.webp' },
+  { group: flushTankCategory, title: flushTankCategory, image: 'viora-flush-tank.webp' },
 ] as const
 
 export function HomeCard() {

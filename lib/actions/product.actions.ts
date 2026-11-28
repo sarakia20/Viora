@@ -14,6 +14,7 @@ import { normalizeProduct } from '../product-display'
 import { productSearchPattern } from '../product-search'
 import { Types } from 'mongoose'
 import { catalogSubcategoryFilter, matchesCatalogSubcategory } from '../catalog-landings'
+import { flushTankCategory } from '../flush-tank-catalog'
 
 const isSkipDb = process.env.SKIP_DB === 'true'
 
@@ -278,7 +279,7 @@ export async function getAllProductsForAdmin({
 }
 
 export async function getAllCategories() {
-  const requiredCategories = ['کف شور']
+  const requiredCategories = ['کف شور', flushTankCategory]
 
   if (isSkipDb) {
     const categories = Array.from(

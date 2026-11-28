@@ -8,7 +8,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { categoryGroups, getCategoryHref, getSubCategoryHref } from '@/lib/store-category-menu'
+import { categoryGroups, getCategoryHref, getSubCategoryHref, usesSubCategoryLinks } from '@/lib/store-category-menu'
 
 export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobileOnly?: boolean; mobileLinks?: { href: string; label: string }[] } = {}) {
   const [desktopOpen, setDesktopOpen] = useState(false)
@@ -147,10 +147,7 @@ export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobi
                               <div className='flex items-center'>
                                 <Link
                                   href={
-                                    item.title === 'اکسسوری' ||
-                                    item.title === 'شیرآلات' ||
-                                    item.title === 'کف شور' ||
-                                    item.title === 'چینی آلات بهداشتی'
+                                    usesSubCategoryLinks(item.title)
                                       ? getSubCategoryHref(
                                           item.title,
                                           child.title
@@ -196,7 +193,6 @@ export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobi
                                       href={
                                         child.title === 'سینک' ||
                                         child.title === 'اجاق گاز' ||
-                                        child.title === 'فلاش تانک' ||
                                         child.title === 'توالت فرنگی'
                                           ? getSubCategoryHref(
                                               child.title,
@@ -317,10 +313,7 @@ export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobi
                         >
                           <Link
                             href={
-                              activeItem.title === 'اکسسوری' ||
-                              activeItem.title === 'شیرآلات' ||
-                              activeItem.title === 'کف شور' ||
-                              activeItem.title === 'چینی آلات بهداشتی'
+                              usesSubCategoryLinks(activeItem.title)
                                 ? getSubCategoryHref(
                                     activeItem.title,
                                     child.title
@@ -350,7 +343,6 @@ export default function Sidebar({ mobileOnly = false, mobileLinks = [] }: { mobi
                                   href={
                                     child.title === 'سینک' ||
                                     child.title === 'اجاق گاز' ||
-                                    child.title === 'فلاش تانک' ||
                                     child.title === 'توالت فرنگی'
                                       ? getSubCategoryHref(
                                           child.title,

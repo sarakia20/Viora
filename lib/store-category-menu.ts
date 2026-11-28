@@ -1,4 +1,5 @@
 import { getCategoryLandingPath } from '@/lib/category-config'
+import { flushTankCategory, flushTankSubCategories } from '@/lib/flush-tank-catalog'
 
 type CategoryItem = {
   title: string
@@ -16,13 +17,6 @@ export const categoryGroups: Record<string, CategoryItem[]> = {
     },
     { title: 'توالت ایرانی' },
     { title: 'روشویی' },
-    {
-      title: 'فلاش تانک',
-      children: [
-        'فلاش تانک توکار',
-        'فلاش تانک روکار',
-      ],
-    },
   ],
 
   'تجهیزات آشپزخانه': [
@@ -70,7 +64,12 @@ export const categoryGroups: Record<string, CategoryItem[]> = {
     { title: 'کف شور خطی' },
     { title: 'کف شور مربعی' },
   ],
+
+  [flushTankCategory]: flushTankSubCategories.map((title) => ({ title })),
 }
+
+export const usesSubCategoryLinks = (category: string) =>
+  ['اکسسوری', 'شیرآلات', 'کف شور', 'چینی آلات بهداشتی', flushTankCategory].includes(category)
 
 export const getCategoryHref = (category: string) =>
   getCategoryLandingPath(category) ??

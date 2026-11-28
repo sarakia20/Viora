@@ -73,7 +73,7 @@ test('new and existing landings have metadata, one H1 and canonical breadcrumb',
 test('homepage group landings list all stored member categories with no subcategory filter', async () => {
   for (const [group, slug, categories] of [
     ['تجهیزات آشپزخانه', 'kitchen-equipment', ['تجهیزات آشپزخانه', 'هود', 'سینک', 'گاز', 'اجاق گاز', 'فر', 'ماکروویو']],
-    ['چینی آلات بهداشتی', 'sanitary-ware', ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی', 'فلاش تانک']],
+    ['چینی آلات بهداشتی', 'sanitary-ware', ['چینی آلات بهداشتی', 'توالت فرنگی', 'توالت ایرانی', 'روشویی']],
     ['کاشی و سرامیک', 'tiles-and-ceramics', ['کاشی و سرامیک', 'کاشی', 'سرامیک', 'کاشی دیوار', 'سرامیک کف']],
   ]) {
     const page = pageModule()
@@ -301,6 +301,9 @@ test('equivalent legacy search URLs keep their use and canonicalize to dedicated
   assert.equal(new URL(subcategory.alternates.canonical).pathname, '/subcategory/steel-cooktops')
   assert.equal(subcategory.robots.index, false)
   const searchMetadata = (searchParams) => search.generateMetadata({ searchParams: Promise.resolve(searchParams) })
+  const plates = await searchMetadata({ category: 'فلاش تانک', subCategory: 'صفحه کلید فلاش تانک توکار' })
+  assert.equal(new URL(plates.alternates.canonical).pathname, '/subcategory/flush-plates')
+  assert.equal(plates.robots.index, false)
   const selection = { category: 'اجاق گاز', subCategory: 'اجاق گاز استیل' }
   const second = await searchMetadata({ ...selection, page: '2', utm_source: 'audit' })
   assert.equal(second.robots.index, false)
@@ -339,7 +342,10 @@ test('pagination still renders real links for a valid second page', () => {
 
 test('desktop and mobile menus target verified landings while preserving ceramic search', () => {
   for (const [group, paths] of [
-    ['چینی آلات بهداشتی', ['/category/flush-tanks', '/category/toilet']],
+    ['چینی آلات بهداشتی', ['/category/toilet']],
+    ['فلاش تانک', ['فلاش تانک روکار', 'فلاش تانک توکار'].map(
+      (name) => '/search?category=' + encodeURIComponent('فلاش تانک') + '&subCategory=' + encodeURIComponent(name)
+    )],
     ['تجهیزات آشپزخانه', ['/category/hoods', '/category/cooktops', '/category/sink']],
     ['کاشی و سرامیک', ['/search?category=' + encodeURIComponent('سرامیک')]],
   ]) {
@@ -352,6 +358,9 @@ test('desktop and mobile menus target verified landings while preserving ceramic
     for (const path of paths) {
       assert.ok(tree.filter(node => node.props?.href === path).length >= 2, path)
     }
+    assert.equal(tree.some(node => node.props?.href?.includes(
+      encodeURIComponent('صفحه کلید فلاش تانک توکار')
+    )), false)
   }
 })
 
@@ -409,6 +418,18 @@ test('homepage category names navigate independently from exclusive disclosure b
   assert.equal(panel(tree, button(tree, 'اجاق گاز')).props.hidden, true)
   assert.ok(link(tree, '/category/toilet'))
   assert.ok(link(tree, '/category/flush-tanks'))
+  assert.equal(nodes(panel(tree, button(tree, 'چینی‌آلات بهداشتی')))
+    .some((node) => node.props?.href === '/category/flush-tanks'), false)
+  button(tree, 'فلاش تانک').props.onClick()
+  tree = render()
+  assert.equal(panel(tree, button(tree, 'چینی‌آلات بهداشتی')).props.inert, true)
+  assert.equal(panel(tree, button(tree, 'فلاش تانک')).props.inert, false)
+  assert.deepEqual(nodes(panel(tree, button(tree, 'فلاش تانک')))
+    .filter((node) => node.type === Link)
+    .map((node) => new URL(node.props.href, 'https://viora-store.ir').searchParams.get('subCategory')),
+  ['فلاش تانک روکار', 'فلاش تانک توکار'])
+  button(tree, 'چینی‌آلات بهداشتی').props.onClick()
+  tree = render()
   button(tree, 'چینی‌آلات بهداشتی').props.onClick()
   tree = render()
   assert.equal(panel(tree, button(tree, 'چینی‌آلات بهداشتی')).props.inert, true)
@@ -438,5 +459,31 @@ test('sign-in callback keeps the checkout destination and rejects self-redirects
   assert.equal(signInCallback('/checkout/order?retry=1'), '/checkout/order?retry=1')
   for (const URL of ['/sign-in', '/fa/sign-up', '//other.example', 'https://viora-store.ir//other.example', 'https://other.example/']) {
     assert.equal(signInCallback(URL), '/')
+  }
+})
+
+test('flush-tank filters retain concealed plates and isolate the other subcategories', () => {
+  const {
+    flushTankCategory: category,
+    surfaceFlushTanks: surface,
+    concealedFlushTanks: concealed,
+  } = load('lib/flush-tank-catalog.ts')
+  const plates = 'صفحه کلید فلاش تانک توکار'
+  const { matchesCatalogSubcategory, catalogSubcategoryFilter } = load('lib/catalog-landings.ts')
+  const products = [
+    { category, subCategory: surface, name: 'فلاش تانک روکار ایمن آب' },
+    { category, subCategory: concealed, name: 'مخزن توکار سارودی' },
+    { category, subCategory: plates, name: 'آرال ۱۰۰ سارودی' },
+    { category, subCategory: concealed, name: 'صفحه‌کلید ایمن آب' },
+    { category: 'اکسسوری', name: 'صفحه کلید' },
+  ]
+  for (const [subCategory, expected] of [[surface, [0]], [concealed, [1, 2, 3]], [plates, [2, 3]]]) {
+    const filter = catalogSubcategoryFilter(subCategory)
+    const clauses = filter.$or ?? [filter]
+    const matchesClause = (product, clause) => Object.entries(clause).every(
+      ([field, value]) => typeof value === 'string' ? product[field] === value : value.test(product[field])
+    )
+    assert.deepEqual(products.flatMap((p, i) => matchesCatalogSubcategory(p, subCategory) ? [i] : []), expected)
+    assert.deepEqual(products.flatMap((p, i) => clauses.some((clause) => matchesClause(p, clause)) ? [i] : []), expected)
   }
 })

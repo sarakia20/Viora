@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { getFilterUrl, toSlug } from '@/lib/utils'
+import { flushTankCategory, flushTankSubCategories } from '@/lib/flush-tank-catalog'
 import Rating from '@/components/shared/product/rating'
 
 const prices = [
@@ -26,6 +27,12 @@ const bathroomAccessoriesSubCategories = ['جا مایع', 'جا دستمال']
 const sinkSubCategories = ['گرانیتی', 'استیل توکار', 'سینک های دست ساز']
 
 const floorDrainSubCategories = ['کف شور خطی', 'کف شور مربعی']
+
+const subCategoryFilters: Record<string, readonly string[]> = {
+  سینک: sinkSubCategories,
+  'کف شور': floorDrainSubCategories,
+  [flushTankCategory]: flushTankSubCategories,
+}
 
 function getTagName(tag: string) {
   switch (tag) {
@@ -158,6 +165,9 @@ export default function SearchSidebar({
   const currentCategory = params.category || 'all'
   const currentSubCategory = params.subCategory || 'all'
   const currentBrand = params.brand || 'all'
+  const subCategories = Object.hasOwn(subCategoryFilters, currentCategory)
+    ? subCategoryFilters[currentCategory]
+    : undefined
 
   return (
     <div className='space-y-4'>
@@ -275,9 +285,9 @@ export default function SearchSidebar({
         </FilterSection>
       )}
 
-      {(currentCategory === 'سینک' || currentCategory === 'کف شور') && (
+      {subCategories && (
         <FilterSection
-          title={currentCategory === 'کف شور' ? 'نوع کف شور' : 'نوع سینک'}
+          title={`نوع ${currentCategory}`}
           id='subCategory'
           openSection={openSection}
           toggle={toggle}
@@ -289,10 +299,7 @@ export default function SearchSidebar({
             همه
           </FilterLink>
 
-          {(currentCategory === 'کف شور'
-            ? floorDrainSubCategories
-            : sinkSubCategories
-          ).map((subCategory) => (
+          {subCategories.map((subCategory) => (
             <FilterLink
               key={subCategory}
               href={getFilterUrl({ subCategory, params })}

@@ -20,6 +20,7 @@ import { IProduct } from '@/lib/db/models/product.model'
 import { getCatalogLandings } from '@/lib/catalog-data'
 import { brandHref, collectionHref, getBrandSlug, getExactCollection } from '@/lib/catalog-landings'
 import { getCategoryLandingPath } from '@/lib/category-config'
+import { flushTankCategory } from '@/lib/flush-tank-catalog'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
@@ -316,7 +317,8 @@ export default async function SearchPage(props: { searchParams: Promise<QueryPar
           position: 2,
           name: category,
           item: new URL(
-            `/search?${new URLSearchParams({ category }).toString()}`,
+            (category === flushTankCategory && getCategoryLandingPath(category)) ||
+              `/search?${new URLSearchParams({ category }).toString()}`,
             SITE_URL
           ).toString(),
         },
