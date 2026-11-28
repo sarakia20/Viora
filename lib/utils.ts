@@ -232,6 +232,7 @@ export const getFilterUrl = ({
 
   if (sort) {
     newParams.sort = sort
+    newParams.page = '1'
   }
 
   if (page) {

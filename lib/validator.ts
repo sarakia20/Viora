@@ -34,6 +34,7 @@ export const ProductInputSchema = z.object({
   slug: z.string().min(3, 'اسلاگ باید حداقل 3 کاراکتر باشد'),
   category: z.string().min(1, 'دسته‌بندی الزامی است'),
   subCategory: z.string().optional(),
+  sortOrder: z.number().int('اولویت نمایش باید عدد صحیح باشد').safe().nullish(),
   images: z.array(z.string()).min(1, 'محصول باید حداقل یک تصویر داشته باشد'),
   brand: z.string().min(1, 'برند الزامی است'),
   description: z.string().min(1, 'توضیحات الزامی است'),

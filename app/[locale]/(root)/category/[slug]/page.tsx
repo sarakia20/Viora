@@ -9,6 +9,7 @@ import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
 import { getCategoryConfig } from '@/lib/category-config'
 import { getAllProducts } from '@/lib/actions/product.actions'
+import { catalogSort } from '@/lib/catalog-order'
 import { IProduct } from '@/lib/db/models/product.model'
 import { normalizedPageHref, pageHref, parsePage, publicMetadata, type QueryParams } from '@/lib/public-seo'
 import { SITE_URL } from '@/lib/site-url'
@@ -27,7 +28,7 @@ const getCategoryPage = cache(async (slug: string, page: number) => {
     tag: 'all',
     price: 'all',
     rating: 'all',
-    sort: 'best-selling',
+    sort: catalogSort,
     page,
   })
   if (page > Math.max(1, data.totalPages) ||

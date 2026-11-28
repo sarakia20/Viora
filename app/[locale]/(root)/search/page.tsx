@@ -22,6 +22,7 @@ import { brandHref, collectionHref, getBrandSlug, getExactCollection } from '@/l
 import { getCategoryLandingPath } from '@/lib/category-config'
 import { flushTankCategory } from '@/lib/flush-tank-catalog'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
+import { catalogSort } from '@/lib/catalog-order'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
 import { getTranslations } from 'next-intl/server'
@@ -32,6 +33,7 @@ import MobileSearchControls from '@/components/shared/mobile-search-controls'
 import { SITE_URL } from '@/lib/site-url'
 
 const sortOrders = [
+  { value: catalogSort, name: 'ترتیب پیش‌فرض دسته‌بندی' },
   { value: 'price-low-to-high', name: 'قیمت: کم به زیاد' },
   { value: 'price-high-to-low', name: 'قیمت: زیاد به کم' },
   { value: 'newest-arrivals', name: 'جدیدترین' },
@@ -234,7 +236,7 @@ const getSearchPage = cache(async (queryKey: string) => {
   if (page === null) notFound()
   const category = selectionValue(searchParams.category)
   const subCategory = selectionValue(searchParams.subCategory)
-  const filters = { ...defaultFilters }
+  const filters = { ...defaultFilters, sort: category !== 'all' || subCategory !== 'all' ? catalogSort : defaultFilters.sort }
   for (const key of filterKeys) {
     const value = searchParams[key]
     if (typeof value === 'string' && value.trim()) filters[key] = value
@@ -298,6 +300,9 @@ export default async function SearchPage(props: { searchParams: Promise<QueryPar
   const { q, category, subCategory, brand, tag, price, rating, sort } = params
   const hasCategory = category !== 'all'
   const hasSubCategory = subCategory !== 'all'
+  const availableSortOrders = hasCategory || hasSubCategory
+    ? sortOrders
+    : sortOrders.filter((order) => order.value !== catalogSort)
   const paginationQuery = new URLSearchParams()
   for (const [key, value] of Object.entries(searchParams)) {
     if (key !== 'page' && !isTrackingParam(key) && typeof value === 'string') {
@@ -381,7 +386,7 @@ const cleanCategories = categories.filter(
 
     <div className='hidden md:block'>
       <ProductSortSelector
-        sortOrders={sortOrders}
+        sortOrders={availableSortOrders}
         sort={sort}
         params={params}
       />
@@ -396,7 +401,7 @@ const cleanCategories = categories.filter(
     rating={rating}
     price={price}
     tag={tag ?? 'all'}
-    sortOrders={sortOrders}
+    sortOrders={availableSortOrders}
     sort={sort}
   />
 

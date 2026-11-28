@@ -15,6 +15,7 @@ import { productSearchPattern } from '../product-search'
 import { Types } from 'mongoose'
 import { catalogSubcategoryFilter, matchesCatalogSubcategory } from '../catalog-landings'
 import { flushTankCategory } from '../flush-tank-catalog'
+import { catalogOrder, catalogSort } from '../catalog-order'
 
 const isSkipDb = process.env.SKIP_DB === 'true'
 
@@ -113,7 +114,9 @@ function filterProducts({
 function sortProducts(products: IProduct[], sort?: string) {
   const sorted = [...products]
 
-  if (sort === 'best-selling') {
+  if (sort === catalogSort) {
+    sorted.sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity))
+  } else if (sort === 'best-selling') {
     sorted.sort((a, b) => b.numSales - a.numSales)
   } else if (sort === 'price-low-to-high') {
     sorted.sort((a, b) => a.price - b.price)
@@ -138,9 +141,12 @@ export async function createProduct(dataInput: IProductInput) {
   }
 
   try {
-    const product = ProductInputSchema.parse(dataInput)
+    const { sortOrder, ...product } = ProductInputSchema.parse(dataInput)
     await connectToDatabase()
-    await Product.create(product)
+    await Product.create({
+      ...product,
+      ...(typeof sortOrder === 'number' ? { sortOrder, catalogPriority: -sortOrder } : {}),
+    })
     revalidatePath('/admin/products')
     return {
       success: true,
@@ -161,9 +167,12 @@ export async function updateProduct(dataInput: z.infer<typeof ProductUpdateSchem
   }
 
   try {
-    const product = ProductUpdateSchema.parse(dataInput)
+    const { _id, sortOrder, ...product } = ProductUpdateSchema.parse(dataInput)
     await connectToDatabase()
-    await Product.findByIdAndUpdate(product._id, product)
+    await Product.findByIdAndUpdate(_id, {
+      $set: { ...product, ...(typeof sortOrder === 'number' ? { sortOrder, catalogPriority: -sortOrder } : {}) },
+      ...(sortOrder === null ? { $unset: { sortOrder: 1, catalogPriority: 1 } } : {}),
+    })
     revalidatePath('/admin/products')
     return {
       success: true,
@@ -594,8 +603,11 @@ export async function getAllProducts({
   ...priceFilter,
   ...ratingFilter,
   }
+  const listingOrder: Record<string, 1 | -1> = sort === catalogSort ? catalogOrder
+    : sort === 'newest-arrivals' ? { createdAt: -1, _id: -1 }
+      : { ...order, _id: -1 }
   const readPage = () => Product.find(conditions, cardFields)
-    .sort({ ...order, _id: order._id ?? -1 })
+    .sort(listingOrder)
     .skip(limit * (page - 1))
     .limit(limit)
     .lean()

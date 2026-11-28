@@ -89,7 +89,13 @@ const ProductForm = ({
         router.push(`/admin/products`)
         return
       }
-      const res = await updateProduct({ ...values, _id: productId })
+      const { sortOrder, ...fields } = values
+      const priorityChanged = (sortOrder ?? null) !== (product?.sortOrder ?? null)
+      const res = await updateProduct({
+        ...fields,
+        _id: productId,
+        ...(priorityChanged ? { sortOrder: sortOrder ?? null } : {}),
+      })
       if (!res.success) {
         toast({
           variant: 'destructive',
@@ -109,6 +115,28 @@ const ProductForm = ({
         onSubmit={form.handleSubmit(onSubmit)}
         className='space-y-8'
       >
+        <FormField
+          control={form.control}
+          name='sortOrder'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>اولویت نمایش</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type='number'
+                  step={1}
+                  value={field.value ?? ''}
+                  onChange={(event) => field.onChange(
+                    event.currentTarget.value === '' ? null : event.currentTarget.valueAsNumber
+                  )}
+                />
+              </FormControl>
+              <FormDescription>عدد کوچک‌تر بالاتر نمایش داده می‌شود. مقدار خالی از ترتیب پایه استفاده می‌کند.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className='flex flex-col gap-5 md:flex-row'>
           <FormField
             control={form.control}

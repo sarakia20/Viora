@@ -1,7 +1,9 @@
 import { Document, Model, model, models, Schema } from 'mongoose'
 import { IProductInput } from '@/types'
+import { catalogOrder } from '../../catalog-order'
 
 export interface IProduct extends Document, IProductInput {
+  catalogPriority?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -112,6 +114,8 @@ const productSchema = new Schema<IProduct>(
       },
     ],
 
+    sortOrder: Number,
+    catalogPriority: Number,
     numSales: {
       type: Number,
       required: true,
@@ -136,6 +140,9 @@ const productSchema = new Schema<IProduct>(
     timestamps: true,
   }
 )
+
+productSchema.index({ isPublished: 1, category: 1, ...catalogOrder }, { name: 'catalog_category_id_order' })
+productSchema.index({ isPublished: 1, category: 1, subCategory: 1, ...catalogOrder }, { name: 'catalog_subcategory_id_order' })
 
 const Product =
   (models.Product as Model<IProduct>) ||
